@@ -50,6 +50,9 @@ services:
     environment:
       ETCD_ENDPOINTS: "http://etcd:2379"
     command: [runserver]
+    volumes:
+      - .:/go/src/github.com/RichardKnop/go-oauth2-server
+      - ./.gocache:/home/app/.cache/go-build
 
   app_testdata:
     container_name: go_oauth2_server_testdata

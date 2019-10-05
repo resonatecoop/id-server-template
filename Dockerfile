@@ -17,6 +17,10 @@ WORKDIR /go/src/github.com/RichardKnop/go-oauth2-server
 # Copy the local package files to the container's workspace.
 ADD . /go/src/github.com/RichardKnop/go-oauth2-server
 
+RUN mkdir -p /home/app/.cache/go-build
+
+RUN chown -R app:app /home/app/.cache/go-build
+
 # Set GO111MODULE=on variable to activate module support
 ENV GO111MODULE on
 
@@ -31,7 +35,7 @@ RUN chown app /home/app
 USER app
 
 # Install the api program
-RUN go install github.com/RichardKnop/go-oauth2-server
+RUN go install github.com/resonatecooop/go-oauth2-server
 
 # User docker-entrypoint.sh script as entrypoint
 ENTRYPOINT ["./docker-entrypoint.sh"]
