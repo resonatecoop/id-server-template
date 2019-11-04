@@ -8,23 +8,10 @@
 
   <title>{{ template "title" . }}</title>
 
-  <!-- Bootstrap core CSS -->
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
-
-  <!-- Custom CSS -->
-  <link href="/css/inside.css" rel="stylesheet">
-
+  <link href="/css/bundle.css" rel="stylesheet">
+  
   <!-- Custom styles for this template -->
   {{ template "links" . }}
-
-  <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
-  <!--[if lt IE 9]>
-    <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-  <![endif]-->
-
-  <!-- jQuery -->
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 </head>
 <body>
   <!-- Fixed navbar -->
@@ -56,6 +43,15 @@
       <p class="text-muted">Place sticky footer content here.</p>
     </div>
   </footer>
+
+  <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="display:none" width="100" height="100">
+    <symbol viewBox="0 0 100 100" id="icon-logo">
+      <path d="M100 50c0-12.9-5.5-24.5-14.2-33l-18 17.3a21.7 21.7 0 0 1 0 31.5l18 17.3a45.7 45.7 0 0 0 14.2-33zm-74.6 0c0-6 2.6-11.6 6.8-15.7L14.2 17a45.7 45.7 0 0 0 0 66.1l18-17.3c-4.2-4-6.8-9.6-6.8-15.7z"/>
+    </symbol>
+    <symbol viewBox="0 0 100 100" id="icon-circle">
+      <circle cx="50" cy="50" r="45" stroke-width="10" />
+    </symbol>
+  </svg>
 
   <!-- Bootstrap core JavaScript
   ================================================== -->

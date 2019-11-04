@@ -1,28 +1,52 @@
 {{ define "title"}}Authorize{{ end }}
 
 {{ define "content" }}
-<div class="container">
-  <div class="page-header">
-    <h1>Authorize</h1>
+<div id="app" class="flex flex-column flex-auto">
+  <div class="flex">
+    <h1 class="f3 lh-title">Authorize</h1>
   </div>
   {{ if .error }}
-  <div class="alert alert-danger" role="alert">{{ .error }}div>
+  <div class="alert alert-danger" role="alert">{{ .error }}</div>
   {{ else }}
   <form action="" method="post">
-    <div class="form-group">
+    <div class="flex flex-column">
       <p><b>{{ .clientID }}</b> would like to perform actions on your behalf.</p>
       {{ if .token }}
       <p>How long do you want to authorize <b>{{ .clientID }}</b> for?</p>
-      <div class="radio">
-        <label class="radio-inline">
-          <input type="radio" name="lifetime" value="3600"> 1 hour
-        </label>
-        <label class="radio-inline">
-          <input type="radio" name="lifetime" value="86400"> 1 day
-        </label>
-        <label class="radio-inline">
-          <input type="radio" name="lifetime" value="604800" checked> 1 week
-        </label>
+      <div class="flex flex-auto w-100">
+        <div class="flex items-center flex-auto">
+          <input id="week" tabindex="-1" type="radio" name="lifetime" value="3600">
+          <label tabindex="0" class="flex flex-auto items-center justify-center w-100" for="hour">
+            <div class="pa3 flex justify-center w-100 flex-auto">
+              <svg viewBox="0 0 16 16" class="icon icon-circle icon--sm icon icon--sm fill-white fill-black--dark fill-white--light"><use xlink:href="#icon-circle"></use></svg>
+            </div>
+            <div class="pv3 flex w-100 flex-auto">
+              1 hour
+            </div>
+          </label>
+        </div>
+        <div class="flex items-center flex-auto">
+          <input id="week" tabindex="-1" type="radio" name="lifetime" value="86400">
+          <label tabindex="0" class="flex flex-auto items-center justify-center w-100" for="week">
+            <div class="pa3 flex justify-center w-100 flex-auto">
+              <svg viewBox="0 0 16 16" class="icon icon-circle icon--sm icon icon--sm fill-white fill-black--dark fill-white--light"><use xlink:href="#icon-circle"></use></svg>
+            </div>
+            <div class="pv3 flex w-100 flex-auto">
+              1 day
+            </div>
+          </label>
+        </div>
+        <div class="flex items-center flex-auto">
+          <input id="week" tabindex="-1" type="radio" name="lifetime" value="604800">
+          <label tabindex="0" class="flex flex-auto items-center justify-center w-100" for="week">
+            <div class="pa3 flex justify-center w-100 flex-auto">
+              <svg viewBox="0 0 16 16" class="icon icon-circle icon--sm icon icon--sm fill-white fill-black--dark fill-white--light"><use xlink:href="#icon-circle"></use></svg>
+            </div>
+            <div class="pv3 flex w-100 flex-auto">
+              1 week
+            </div>
+          </label>
+        </div>
       </div>
       {{ end }}
     </div>

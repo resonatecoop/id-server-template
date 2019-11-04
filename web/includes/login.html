@@ -1,20 +1,31 @@
 {{ define "title"}}Log In{{ end }}
 
 {{ define "content" }}
-<div class="container">
-
-  <form class="form-signin" action="" method="post">
-    <h2 class="form-signin-heading">Log In</h2>
-    {{ if .error }}
-    <p class="text-danger">{{ .error }}</p>
-    {{ end }}
-    <label for="inputEmail" class="sr-only">Email address</label>
-    <input type="email" name="email" id="inputEmail" class="form-control" placeholder="Email address" required autofocus>
-    <label for="inputPassword" class="sr-only">Password</label>
-    <input type="password" name="password" id="inputPassword" class="form-control" placeholder="Password" required>
-    <button class="btn btn-lg btn-primary btn-block" type="submit">Log In</button>
-    <p>Don't have an account yet? <a href="/web/register{{ .queryString }}">Register</a>
-  </form>
-
-</div> <!-- /container -->
+<div id="app" class="flex flex-column flex-auto items-center justify-center min-vh-100 mh3 pt6 pb7">
+  <div class="bg-white black bg-black--dark white--dark bg-white--light black--light z-1 w-100 w-auto-l shadow-contour ph4 pt4 pb3">
+    <div class="flex flex-column flex-auto">
+      <form class="flex flex-column flex-auto ma0 pa0" action="" method="post">
+        <div>
+          <svg viewBox="0 0 16 16" class="icon icon-logo icon--sm icon icon--lg fill-black fill-white--dark fill-black--light">
+            <use xlink:href="#icon-logo" />
+          </svg>
+          <h2 class="f3 fw1 mt2 near-black near-black--light light-gray--dark lh-title">Log In</h2>
+          {{ if .error }}
+          <p class="text-danger">{{ .error }}</p>
+          {{ end }}
+          <div class="flex flex-column mb3">
+            <input class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3" type="email" name="email" id="inputEmail" placeholder="Email" required autofocus>
+          </div>
+          <div class="flex flex-column mb3">
+            <input class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3" type="password" name="password" id="inputPassword" placeholder="Password" required>
+          </div>
+          <div class="flex justify-end">
+            <a href="https://resonate.is/password-reset/" class="lightGrey f7 ma0 pt1 pr2" target="_blank" rel="noopener noreferer">Forgot your password?</a>
+          </div>
+          <button class="bg-black white bg-white--dark black--dark bg-black--light white--light b--black ba bw b pv2 ph4 flex-shrink-0 f5 grow" type="submit">Log In</button>
+        </div>
+      </form>
+    </div> <!-- /container -->
+  </div>
+</div>
 {{ end }}

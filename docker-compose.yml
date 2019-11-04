@@ -36,6 +36,8 @@ services:
   app:
     container_name: go_oauth2_server
     image: go-oauth2-server:latest
+    networks:
+      - login-network
     depends_on:
       - etcd_config
       - postgres
@@ -54,6 +56,33 @@ services:
       - .:/go/src/github.com/RichardKnop/go-oauth2-server
       - ./.gocache:/home/app/.cache/go-build
 
+  ssh-agent:
+    container_name: ssh-agent
+    image: nardeas/ssh-agent:latest
+    volumes:
+      - "dot_ssh:/root/.ssh"
+      - "socket_dir:/.ssh-agent"
+    environment:
+      - SSH_AUTH_SOCK=/.ssh-agent/socket
+
+  migrate-wp-user-to-oauth:
+    container_name: migrate-wp-user-to-oauth
+    image: "perl"
+    build: migrate-wp-users/.
+    depends_on:
+      - etcd_config
+      - postgres
+    links:
+      - etcd
+      - postgres
+    command: [ "perl", "./migrate_wp_user_to_oauth.pl" ]
+    volumes:
+      - "dot_ssh:/root/.ssh"
+      - "socket_dir:/.ssh-agent"
+    environment:
+      - SSH_AUTH_SOCK=/.ssh-agent/socket
+      - ETCD_ENDPOINTS="http://etcd:2379"
+
   app_testdata:
     container_name: go_oauth2_server_testdata
     image: go-oauth2-server:latest
@@ -70,6 +99,62 @@ services:
       - postgres
     command: ["loaddata", "oauth/fixtures/test_clients.yml"]
 
+  webserver:
+    image: nginx:mainline-alpine
+    container_name: webserver
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - web-root:/var/www/html
+      - ./nginx-conf:/etc/nginx/conf.d
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+      - dhparam:/etc/ssl/certs
+      - htpasswd:/etc/nginx/htpasswd
+    depends_on:
+      - app
+    networks:
+      - login-network
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+      - web-root:/var/www/html
+    depends_on:
+      - webserver
+    command: certonly --webroot --webroot-path=/var/www/html --email auggod@resonate.is --agree-tos --no-eff-email --force-renewal -d login.resonate.ninja
+
+networks:
+  login-network:
+    driver: bridge
+
 volumes:
   etcd-data:
   db-data:
+  dot_ssh:
+  socket_dir:
+  certbot-etc:
+  certbot-var:
+  htpasswd:
+    driver: local
+    driver_opts:
+      type: none
+      device: "${PWD}/htpasswd/"
+      o: bind
+  web-root:
+    driver: local
+    driver_opts:
+      type: none
+      device: "${PWD}/public/"
+      o: bind
+  dhparam:
+    driver: local
+    driver_opts:
+      type: none
+      device: "${PWD}/dhparam/"
+      o: bind
