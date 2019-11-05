@@ -10,6 +10,7 @@ htpasswd/
 nginx-conf/
 dhparam/
 
+*.sh
 # Logs
 logs
 *.log
