@@ -6,9 +6,9 @@
 
 - table: 'oauth_roles'
   pk:
-    id: 'superuser'
+    id: 'admin'
   fields:
-    name: 'Superuser'
+    name: 'Admin'
     created_at: 'ON_INSERT_NOW()'
     updated_at: 'ON_UPDATE_NOW()'
 
@@ -17,5 +17,77 @@
     id: 'user'
   fields:
     name: 'User'
+    created_at: 'ON_INSERT_NOW()'
+    updated_at: 'ON_UPDATE_NOW()'
+
+- table: 'oauth_roles'
+  pk:
+    id: 'member'
+  fields:
+    name: 'Member'
+    created_at: 'ON_INSERT_NOW()'
+    updated_at: 'ON_UPDATE_NOW()'
+
+- table: 'oauth_roles'
+  pk:
+    id: 'label-owner'
+  fields:
+    name: 'Label owner'
+    created_at: 'ON_INSERT_NOW()'
+    updated_at: 'ON_UPDATE_NOW()'
+
+- table: 'oauth_roles'
+  pk:
+    id: 'bands'
+  fields:
+    name: 'Bands'
+    created_at: 'ON_INSERT_NOW()'
+    updated_at: 'ON_UPDATE_NOW()'
+
+- table: 'oauth_roles'
+  pk:
+    id: 'listener'
+  fields:
+    name: 'Listener'
+    created_at: 'ON_INSERT_NOW()'
+    updated_at: 'ON_UPDATE_NOW()'
+
+- table: 'oauth_roles'
+  pk:
+    id: 'volunteer'
+  fields:
+    name: 'Volunteer'
+    created_at: 'ON_INSERT_NOW()'
+    updated_at: 'ON_UPDATE_NOW()'
+
+- table: 'oauth_roles'
+  pk:
+    id: 'board'
+  fields:
+    name: 'Board'
+    created_at: 'ON_INSERT_NOW()'
+    updated_at: 'ON_UPDATE_NOW()'
+
+- table: 'oauth_roles'
+  pk:
+    id: 'advisors'
+  fields:
+    name: 'Advisors'
+    created_at: 'ON_INSERT_NOW()'
+    updated_at: 'ON_UPDATE_NOW()'
+
+- table: 'oauth_roles'
+  pk:
+    id: 'tester'
+  fields:
+    name: 'Tester'
+    created_at: 'ON_INSERT_NOW()'
+    updated_at: 'ON_UPDATE_NOW()'
+
+- table: 'oauth_roles'
+  pk:
+    id: 'curators'
+  fields:
+    name: 'Curators'
     created_at: 'ON_INSERT_NOW()'
     updated_at: 'ON_UPDATE_NOW()'
