@@ -12,7 +12,7 @@ use Dotenv -load;
 
 my $pid=fork();
 if ($pid == 0) {
-  exec { '/usr/bin/ssh' } 'ssh','-L','4306:localhost:3306','-N',$ENV{REMOTE_SSH_HOST};
+  exec { '/usr/bin/ssh' } 'ssh', '-4', '-L','4306:localhost:3306', '-N', $ENV{REMOTE_SSH_HOST};
   # DOES NOT RETURN
 } elsif ($pid > 0) {
   sleep(1);
@@ -23,7 +23,7 @@ if ($pid == 0) {
 
 END { print STDERR "killing ssh tunnel now\n"; kill('KILL',$pid) if $pid != 0 }
 
-my $dsn = "DBI:mysql:$ENV{MYSQL_DB_NAME}";
+my $dsn = "DBI:mysql:database=$ENV{MYSQL_DB_NAME};host=127.0.0.1;port=4306";
 my $dbh_wp=DBI->connect($dsn, $ENV{MYSQL_DB_USER}, $ENV{MYSQL_DB_PASS},
   {RaiseError=>1, AutoCommit=>0, FetchHashKeyName=>"NAME_lc", mysql_enable_utf8=>1}
 ) or die "can't connect to WP database: $DBI::errstr";
