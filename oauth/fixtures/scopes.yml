@@ -27,6 +27,15 @@
     id: "3"
   fields:
     scope: 'stream2own'
+    is_default: true
+    created_at: 'ON_INSERT_NOW()'
+    updated_at: 'ON_UPDATE_NOW()'
+
+- table: 'oauth_scopes'
+  pk:
+    id: "4"
+  fields:
+    scope: 'upload'
     is_default: false
     created_at: 'ON_INSERT_NOW()'
     updated_at: 'ON_UPDATE_NOW()'
