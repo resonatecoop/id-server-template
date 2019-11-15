@@ -112,7 +112,6 @@ services:
       - certbot-etc:/etc/letsencrypt
       - certbot-var:/var/lib/letsencrypt
       - dhparam:/etc/ssl/certs
-      - htpasswd:/etc/nginx/htpasswd
     depends_on:
       - app
     networks:
@@ -140,12 +139,6 @@ volumes:
   socket_dir:
   certbot-etc:
   certbot-var:
-  htpasswd:
-    driver: local
-    driver_opts:
-      type: none
-      device: "${PWD}/htpasswd/"
-      o: bind
   web-root:
     driver: local
     driver_opts:
