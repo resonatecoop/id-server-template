@@ -2,8 +2,10 @@ const browserify = require('browserify')
 const gulp = require('gulp')
 const source = require('vinyl-source-stream')
 const buffer = require('vinyl-buffer')
+const hash = require('gulp-hash')
 const uglify = require('gulp-uglify-es').default
-const del = require('del')
+const references = require('gulp-hash-references')
+const path = require('path')
 const postcss = require('gulp-postcss')
 
 function javascript () {
@@ -15,19 +17,20 @@ function javascript () {
     ]
   })
 
-  del(['public/js/**/*'])
-
   return b.bundle()
     .pipe(source('main.js'))
     .pipe(buffer())
     .pipe(uglify())
+    .pipe(hash())
     .pipe(gulp.dest('public/js'))
-    .pipe(gulp.dest('data/js'))
+    .pipe(hash.manifest('data/js/hash.json', {
+      deleteOld: true,
+      sourceDir: path.join(__dirname, '/public/js')
+    }))
+    .pipe(gulp.dest('.'))
 }
 
 function css () {
-  del(['public/css/**/*'])
-
   return gulp.src('./web/css/main.css')
     .pipe(postcss([
       require('postcss-import')(),
@@ -46,16 +49,39 @@ function css () {
         }]
       })
     ]))
-    .pipe(gulp.dest('static/dist/css'))
-    .pipe(gulp.dest('data/css'))
+    .pipe(hash())
+    .pipe(gulp.dest('public/css'))
+    .pipe(hash.manifest('data/css/hash.json', {
+      deleteOld: true,
+      sourceDir: path.join(__dirname, '/public/css')
+    }))
+    .pipe(gulp.dest('.'))
 }
 
-gulp.task('javascript', javascript)
-gulp.task('css', css)
+function derev () {
+  return gulp.src('web/layouts/*.html')
+    .pipe(references([
+      path.join(__dirname, './data/js/hash.json'),
+      path.join(__dirname, './data/css/hash.json')
+    ], { dereference: true }))
+    .pipe(gulp.dest('web/layouts'))
+}
+
+function rev () {
+  return gulp.src('web/layouts/*.html')
+    .pipe(references([
+      path.join(__dirname, './data/js/hash.json'),
+      path.join(__dirname, './data/css/hash.json')
+    ]))
+    .pipe(gulp.dest('web/layouts'))
+}
+
+gulp.task('javascript', gulp.series(derev, javascript, rev))
+gulp.task('derev', derev)
+gulp.task('rev', rev)
+gulp.task('css', gulp.series(derev, css, rev))
 
 gulp.task('watch', () => {
   gulp.watch('./css/**/*', css)
   gulp.watch('./js/**/*', javascript)
 })
-
-gulp.task('default', gulp.series(gulp.parallel('javascript', 'css')))
