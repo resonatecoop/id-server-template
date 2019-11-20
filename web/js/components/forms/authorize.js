@@ -2,9 +2,6 @@ const html = require('choo/html')
 const Component = require('choo/component')
 const nanostate = require('nanostate')
 const icon = require('@resonate/icon-element')
-const button = require('@resonate/button')
-
-/* global fetch */
 
 const lifetimes = [
   { value: 3600, text: '1 hour', id: 'hour' },
@@ -41,6 +38,19 @@ class Authorize extends Component {
   }
 
   createElement (props) {
+    const input = (props) => {
+      const attrs = Object.assign({
+        type: 'submit',
+        name: 'allow',
+        class: 'bg-white ba bw b--dark-gray f5 b pv3 ph5 grow',
+        value: 'Allow'
+      }, props)
+
+      return html`
+        <input ${attrs}>
+      `
+    }
+
     return html`
       <div class="flex flex-column flex-auto">
         <form action="" method="post">
@@ -81,25 +91,15 @@ class Authorize extends Component {
           </div>
           <div class="flex">
             <div class="mr2">
-              ${button({
-                type: 'submit',
+              ${input({
                 name: 'allow',
-                prefix: 'bg-white ba bw b--dark-gray f5 b pv3 ph5 grow',
-                value: 'Allow',
-                text: 'Allow',
-                style: 'none',
-                size: 'none'
+                value: 'Allow'
               })}
             </div>
             <div>
-              ${button({
-                type: 'submit',
+              ${input({
                 name: 'deny',
-                prefix: 'bg-white ba bw b--dark-gray f5 b pv3 ph5 grow',
-                value: 'Deny',
-                text: 'Deny',
-                style: 'none',
-                size: 'none'
+                value: 'Deny'
               })}
             </div>
           </div>
