@@ -69,6 +69,7 @@ class Login extends Component {
 
           const response = await fetch('', {
             method: 'POST',
+            credentials: 'include',
             headers: { 'Content-type': 'application/x-www-form-urlencoded' },
             body: `email=${email}&password=${password}`
           })
