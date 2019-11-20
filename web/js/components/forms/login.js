@@ -67,11 +67,15 @@ class Login extends Component {
           const email = data.email.value
           const password = data.password.value
 
-          await fetch('', {
+          const response = await fetch('', {
             method: 'POST',
             headers: { 'Content-type': 'application/x-www-form-urlencoded' },
             body: `email=${email}&password=${password}`
           })
+
+          if (response.redirected) {
+            window.location.href = response.url
+          }
         } catch (err) {
           console.log(err)
         }
