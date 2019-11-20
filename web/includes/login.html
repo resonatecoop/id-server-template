@@ -1,5 +1,9 @@
 {{ define "title"}}Log In{{ end }}
 
+{{ if .error }}
+<p class="text-danger">{{ .error }}</p>
+{{ end }}
+
 {{ define "content" }}
 <div id="app" class="flex flex-column flex-auto items-center justify-center min-vh-100 mh3 pt6 pb7">
   <div class="bg-white black bg-black--dark white--dark bg-white--light black--light z-1 w-100 w-auto-l shadow-contour ph4 pt4 pb3">
@@ -10,9 +14,6 @@
             <use xlink:href="#icon-logo" />
           </svg>
           <h2 class="f3 fw1 mt2 near-black near-black--light light-gray--dark lh-title">Log In</h2>
-          {{ if .error }}
-          <p class="text-danger">{{ .error }}</p>
-          {{ end }}
           <div class="flex flex-column mb3">
             <input class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3" type="email" name="email" id="inputEmail" placeholder="Email" required autofocus>
           </div>

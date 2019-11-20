@@ -6,7 +6,7 @@ const isEmail = require('validator/lib/isEmail')
 const isEmpty = require('validator/lib/isEmpty')
 const validateFormdata = require('validate-formdata')
 
-/* global fetch, FormData */
+/* global fetch */
 
 class Login extends Component {
   constructor (name, state, emit) {
@@ -67,20 +67,11 @@ class Login extends Component {
           const email = data.email.value
           const password = data.password.value
 
-          const formData = new FormData()
-
-          formData.append('email', email)
-          formData.append('password', password)
-
-          const response = await fetch('', {
+          await fetch('', {
             method: 'POST',
-            redirect: 'follow',
-            body: formData
+            headers: { 'Content-type': 'application/x-www-form-urlencoded' },
+            body: `email=${email}&password=${password}`
           })
-
-          if (response.redirected) {
-            window.location.href = response.url
-          }
         } catch (err) {
           console.log(err)
         }

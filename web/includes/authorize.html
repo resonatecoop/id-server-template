@@ -1,5 +1,9 @@
 {{ define "title"}}Authorize{{ end }}
 
+{{ if .error }}
+  <div class="alert alert-danger" role="alert">{{ .error }}</div>
+{{ end }}
+
 {{ define "content" }}
 <div id="app" class="flex flex-column flex-auto">
   <div class="flex">
