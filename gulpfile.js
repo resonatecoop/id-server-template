@@ -13,7 +13,18 @@ function javascript () {
     entries: './web/app/main.js',
     debug: true,
     transform: [
-      ['babelify', { presets: ['@babel/preset-env'] }]
+      ['babelify', {
+        presets: ['@babel/preset-env'],
+        plugins: [
+          ['@babel/plugin-transform-runtime', {
+            absoluteRuntime: false,
+            corejs: false,
+            helpers: true,
+            regenerator: true,
+            useESModules: false
+          }]
+        ]
+      }]
     ]
   })
 
