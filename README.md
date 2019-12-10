@@ -533,6 +533,20 @@ createuser --createdb go_oauth2_server
 createdb -U go_oauth2_server go_oauth2_server
 ```
 
+### JS frontend (choo app)
+
+You can run a development server to test the interface.
+
+```sh
+npm run dev
+```
+
+To process css and js files for production, we use `gulp`.
+
+```
+gulp javascript
+```
+
 ## Compile & Run
 
 Compile the app:

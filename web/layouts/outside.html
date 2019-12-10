@@ -2,18 +2,27 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="preload" as="font" crossorigin="" href="https://static.resonate.is/fonts/Graphik-Semibold.woff2">
+  <link rel="preload" as="font" crossorigin="" href="https://static.resonate.is/fonts/Graphik-Semibold.woff">
+  <link rel="preload" as="font" crossorigin="" href="https://static.resonate.is/fonts/Graphik-Regular.woff2">
+  <link rel="preload" as="font" crossorigin="" href="https://static.resonate.is/fonts/Graphik-Regular.woff">
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <title>{{ template "title" . }}</title>
 
-  <link href="css/main-29627fc6.css" rel="stylesheet">
+  <link href="css/index-547882da.css" rel="stylesheet">
 
-  <script type="text/javascript" defer src="js/main-3faebc5f.js"></script>
+  <script type="text/javascript" defer src="js/main-12e5c16e.js"></script>
 </head>
 <body class="sans-serif">
-  <!-- Begin page content -->
+  <header role="banner" style="height:3rem" class="bg-white black bg-black--dark white--dark bg-white--light black--light sticky left-0 top-0 right-0 w-100 z-9999 flex items-center shadow-contour">
+    <div class="flex">
+      <h1 class="ml2"><a href="https://resonate.is" title="Resonate Coop" class="link flex items-center flex-shrink-0 h-100 grow ph3 overflow-hidden"><svg viewBox="0 0 16 16" transform="scale(1, 1)" class="icon icon-logo icon--md fill-black fill-white--dark fill-black--light"><use xlink:href="#icon-logo"></use></svg></a></h1>
+    </div>
+  </header>
+
   {{ template "content" . }}
 
   <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="display:none" width="100" height="100">

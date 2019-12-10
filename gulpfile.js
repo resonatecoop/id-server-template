@@ -10,7 +10,7 @@ const postcss = require('gulp-postcss')
 
 function javascript () {
   const b = browserify({
-    entries: './web/js/main.js',
+    entries: './web/app/main.js',
     debug: true,
     transform: [
       ['babelify', { presets: ['@babel/preset-env'] }]
@@ -31,7 +31,7 @@ function javascript () {
 }
 
 function css () {
-  return gulp.src('./web/css/main.css')
+  return gulp.src('./web/app/index.css')
     .pipe(postcss([
       require('postcss-import')(),
       require('postcss-preset-env')({
@@ -82,6 +82,6 @@ gulp.task('rev', rev)
 gulp.task('css', gulp.series(derev, css, rev))
 
 gulp.task('watch', () => {
-  gulp.watch('./css/**/*', css)
-  gulp.watch('./js/**/*', javascript)
+  gulp.watch('./web/app/index.css', css)
+  gulp.watch('./web/app/**/*', javascript)
 })

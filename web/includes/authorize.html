@@ -9,57 +9,16 @@
   <div class="flex">
     <h1 class="f3 lh-title">Authorize</h1>
   </div>
-  {{ if .error }}
-  <div class="alert alert-danger" role="alert">{{ .error }}</div>
-  {{ else }}
   <form action="" method="post">
     <div class="flex flex-column">
       <p><b>{{ .clientID }}</b> would like to perform actions on your behalf.</p>
-      {{ if .token }}
-      <p>How long do you want to authorize <b>{{ .clientID }}</b> for?</p>
-      <div class="flex flex-auto w-100">
-        <div class="flex items-center flex-auto">
-          <input id="week" tabindex="-1" type="radio" name="lifetime" value="3600">
-          <label tabindex="0" class="flex flex-auto items-center justify-center w-100" for="hour">
-            <div class="pa3 flex justify-center w-100 flex-auto">
-              <svg viewBox="0 0 16 16" class="icon icon-circle icon--sm icon icon--sm fill-white fill-black--dark fill-white--light"><use xlink:href="#icon-circle"></use></svg>
-            </div>
-            <div class="pv3 flex w-100 flex-auto">
-              1 hour
-            </div>
-          </label>
-        </div>
-        <div class="flex items-center flex-auto">
-          <input id="week" tabindex="-1" type="radio" name="lifetime" value="86400">
-          <label tabindex="0" class="flex flex-auto items-center justify-center w-100" for="week">
-            <div class="pa3 flex justify-center w-100 flex-auto">
-              <svg viewBox="0 0 16 16" class="icon icon-circle icon--sm icon icon--sm fill-white fill-black--dark fill-white--light"><use xlink:href="#icon-circle"></use></svg>
-            </div>
-            <div class="pv3 flex w-100 flex-auto">
-              1 day
-            </div>
-          </label>
-        </div>
-        <div class="flex items-center flex-auto">
-          <input id="week" tabindex="-1" type="radio" name="lifetime" value="604800">
-          <label tabindex="0" class="flex flex-auto items-center justify-center w-100" for="week">
-            <div class="pa3 flex justify-center w-100 flex-auto">
-              <svg viewBox="0 0 16 16" class="icon icon-circle icon--sm icon icon--sm fill-white fill-black--dark fill-white--light"><use xlink:href="#icon-circle"></use></svg>
-            </div>
-            <div class="pv3 flex w-100 flex-auto">
-              1 week
-            </div>
-          </label>
-        </div>
-      </div>
-      {{ end }}
     </div>
-    <div class="row">
-      <div class="col-md-3 col-sm-4 col-xs-6">
-        <input type="submit" class="btn btn-lg btn-block btn-primary" name="allow" value="Allow">
+    <div class="flex">
+      <div class="mr2">
+        <input type="submit" class="bg-white ba bw b--dark-gray f5 b pv3 ph5 grow" name="allow" value="Allow">
       </div>
-      <div class="col-md-3 col-sm-4 col-xs-6">
-        <input type="submit" class="btn btn-lg btn-block btn-danger" name="deny" value="Deny">
+      <div>
+        <input type="submit" class="bg-white ba bw b--dark-gray f5 b pv3 ph5 grow" name="deny" value="Deny">
       </div>
     </div>
   </form>
