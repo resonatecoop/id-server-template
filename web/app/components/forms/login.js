@@ -64,14 +64,16 @@ class Login extends Component {
       ],
       submit: async (data) => {
         try {
-          const email = data.email.value
-          const password = data.password.value
+          const formBody = new URLSearchParams({
+            email: data.email.value,
+            password: data.password.value
+          })
 
           const response = await fetch('', {
             method: 'POST',
             credentials: 'include',
-            headers: { 'Content-type': 'application/x-www-form-urlencoded' },
-            body: `email=${email}&password=${password}`
+            headers: { 'Content-type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+            body: formBody.toString()
           })
 
           if (response.redirected) {
