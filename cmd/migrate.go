@@ -7,11 +7,12 @@ import (
 
 // Migrate runs database migrations
 func Migrate(configBackend string) error {
-	_, db, err := initConfigDB(true, false, configBackend)
+	_, db, db2, err := initConfigDB(true, false, configBackend)
 	if err != nil {
 		return err
 	}
 	defer db.Close()
+	defer db2.Close()
 
 	// Bootstrap migrations
 	if err := migrations.Bootstrap(db); err != nil {

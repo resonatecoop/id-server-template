@@ -1,34 +1,9 @@
+/* global fetch */
+
 const Component = require('choo/component')
 const html = require('choo/html')
 const logger = require('nanologger')
 const log = logger('artists-grid')
-const apiFactoryGenerator = require('@resonate/api-factory-generator')
-
-const api = apiFactoryGenerator({
-  artists: {
-    find: {
-      path: '/artists',
-      schema: {
-        type: 'object',
-        properties: {
-          limit: {
-            type: 'number',
-            minimum: 0,
-            maximum: 100
-          },
-          order: {
-            type: 'string'
-          }
-        }
-      }
-    }
-  }
-}, {
-  scheme: 'https://',
-  domain: 'api.resonate.is',
-  prefix: '/v1',
-  version: 1
-})
 
 class ArtistsRandomGrid extends Component {
   constructor (name, state, emit) {
@@ -74,10 +49,13 @@ class ArtistsRandomGrid extends Component {
 
   async fetch () {
     try {
-      const response = await api.artists.find({
+      const url = new URL('/v1/artists', 'https://api.resonate.is')
+      url.search = new URLSearchParams({
         limit: 100,
         order: 'random'
       })
+
+      const response = await (await fetch(url.href)).json()
 
       if (response.data) {
         this.items = response.data

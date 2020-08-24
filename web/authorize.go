@@ -3,12 +3,14 @@ package web
 import (
 	"errors"
 	"fmt"
+	"html/template"
 	"net/http"
 	"net/url"
 	"strconv"
 
 	"github.com/RichardKnop/go-oauth2-server/models"
 	"github.com/RichardKnop/go-oauth2-server/session"
+	"github.com/gorilla/csrf"
 )
 
 // ErrIncorrectResponseType a form value for response_type was not set to token or code
@@ -21,15 +23,27 @@ func (s *Service) authorizeForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("X-CSRF-Token", csrf.Token(r))
+
 	// Render the template
 	errMsg, _ := sessionService.GetFlashMessage()
 	query := r.URL.Query()
 	query.Set("login_redirect_uri", r.URL.Path)
+
+	// Inject initial state into choo app
+	fragment := fmt.Sprintf(
+		`<script>window.initialState=JSON.parse('{"applicationName":"%s"}')</script>`,
+		client.ApplicationName.String,
+	)
+
 	renderTemplate(w, "authorize.html", map[string]interface{}{
-		"error":       errMsg,
-		"clientID":    client.Key,
-		"queryString": getQueryString(query),
-		"token":       responseType == "token",
+		"error":           errMsg,
+		"clientID":        client.Key,
+		"applicationName": client.ApplicationName.String,
+		"queryString":     getQueryString(query),
+		"token":           responseType == "token",
+		"initialState":    template.HTML(fragment),
+		csrf.TemplateTag:  csrf.TemplateField(r),
 	})
 }
 
@@ -44,7 +58,7 @@ func (s *Service) authorize(w http.ResponseWriter, r *http.Request) {
 	state := r.Form.Get("state")
 
 	// Has the resource owner or authorization server denied the request?
-	authorized := len(r.Form.Get("allow")) > 0
+	authorized := len(r.Form.Get("continue")) > 0
 	if !authorized {
 		errorRedirect(w, r, redirectURI, "access_denied", state, responseType)
 		return
@@ -140,7 +154,7 @@ func (s *Service) authorizeCommon(r *http.Request) (session.ServiceInterface, *m
 	}
 
 	// Fetch the user
-	user, err := s.oauthService.FindUserByUsername(
+	user, _, err := s.oauthService.FindUserByUsername(
 		userSession.Username,
 	)
 	if err != nil {

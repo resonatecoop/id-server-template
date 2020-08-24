@@ -51,18 +51,27 @@ func UseSessionService(s session.ServiceInterface) {
 }
 
 // Init starts up all services
-func Init(cnf *config.Config, db *gorm.DB) error {
+func Init(cnf *config.Config, db *gorm.DB, db2 *gorm.DB) error {
 	if nil == reflect.TypeOf(HealthService) {
 		HealthService = health.NewService(db)
 	}
 
 	if nil == reflect.TypeOf(OauthService) {
-		OauthService = oauth.NewService(cnf, db)
+		OauthService = oauth.NewService(cnf, db, db2)
 	}
 
 	if nil == reflect.TypeOf(SessionService) {
 		// note: default session store is CookieStore
-		SessionService = session.NewService(cnf, sessions.NewCookieStore([]byte(cnf.Session.Secret)))
+		store := sessions.NewCookieStore([]byte(cnf.Session.Secret))
+
+		store.Options = &sessions.Options{
+			Path:     cnf.Session.Path,
+			MaxAge:   cnf.Session.MaxAge,
+			Secure:   cnf.Session.Secure,
+			HttpOnly: cnf.Session.HTTPOnly,
+		}
+
+		SessionService = session.NewService(cnf, store)
 	}
 
 	if nil == reflect.TypeOf(WebService) {

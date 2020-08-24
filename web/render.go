@@ -60,9 +60,11 @@ func loadTemplates() {
 		"web/layouts/outside.html": {
 			"./web/includes/register.html",
 			"./web/includes/login.html",
+			"./web/includes/home.html",
 		},
 		"web/layouts/inside.html": {
 			"./web/includes/authorize.html",
+			"./web/includes/profile.html",
 		},
 	}
 

@@ -23,10 +23,12 @@ func (suite *OauthTestSuite) TestUserExistsDoesntFindInvalidUser() {
 }
 
 func (suite *OauthTestSuite) TestUpdateUsernameWorksWithValidEntry() {
-	user, err := suite.service.CreateUser(
+	user, _, err := suite.service.CreateUser(
 		roles.User,      // role ID
 		"test@newuser",  // username
 		"test_password", // password
+		"tester", // login
+		"Test User", // display name
 	)
 
 	assert.NoError(suite.T(), err)
@@ -43,10 +45,12 @@ func (suite *OauthTestSuite) TestUpdateUsernameWorksWithValidEntry() {
 }
 
 func (suite *OauthTestSuite) TestUpdateUsernameTxWorksWithValidEntry() {
-	user, err := suite.service.CreateUser(
+	user, _, err := suite.service.CreateUser(
 		roles.User,      // role ID
 		"test@newuser",  // username
 		"test_password", // password
+		"tester", // login
+		"Test User", // display name
 	)
 
 	assert.NoError(suite.T(), err)
@@ -63,10 +67,12 @@ func (suite *OauthTestSuite) TestUpdateUsernameTxWorksWithValidEntry() {
 }
 
 func (suite *OauthTestSuite) TestUpdateUsernameFailsWithABlankEntry() {
-	user, err := suite.service.CreateUser(
+	user, _, err := suite.service.CreateUser(
 		roles.User,      // role ID
 		"test@newuser",  // username
 		"test_password", // password
+		"tester", // login
+		"Test User", // display name
 	)
 
 	assert.NoError(suite.T(), err)
@@ -89,7 +95,7 @@ func (suite *OauthTestSuite) TestFindUserByUsername() {
 	)
 
 	// When we try to find a user with a bogus username
-	user, err = suite.service.FindUserByUsername("bogus")
+	user, _, err = suite.service.FindUserByUsername("bogus")
 
 	// User object should be nil
 	assert.Nil(suite.T(), user)
@@ -100,7 +106,7 @@ func (suite *OauthTestSuite) TestFindUserByUsername() {
 	}
 
 	// When we try to find a user with a valid username
-	user, err = suite.service.FindUserByUsername("test@user")
+	user, _, err = suite.service.FindUserByUsername("test@user")
 
 	// Error should be nil
 	assert.Nil(suite.T(), err)
@@ -111,7 +117,7 @@ func (suite *OauthTestSuite) TestFindUserByUsername() {
 	}
 
 	// Test username case insensitiviness
-	user, err = suite.service.FindUserByUsername("TeSt@UsEr")
+	user, _, err = suite.service.FindUserByUsername("TeSt@UsEr")
 
 	// Error should be nil
 	assert.Nil(suite.T(), err)
@@ -129,10 +135,12 @@ func (suite *OauthTestSuite) TestCreateUser() {
 	)
 
 	// We try to insert a non unique user
-	user, err = suite.service.CreateUser(
+	user, _, err = suite.service.CreateUser(
 		roles.User,      // role ID
 		"test@user",     // username
 		"test_password", // password
+		"tester", // login
+		"Test User", // display name
 	)
 
 	// User object should be nil
@@ -144,10 +152,12 @@ func (suite *OauthTestSuite) TestCreateUser() {
 	}
 
 	// We try to insert a unique user
-	user, err = suite.service.CreateUser(
+	user, _, err = suite.service.CreateUser(
 		roles.User,      // role ID
 		"test@newuser",  // username
 		"test_password", // password
+		"tester", // login
+		"Test User", // display name
 	)
 
 	// Error should be nil
@@ -159,10 +169,12 @@ func (suite *OauthTestSuite) TestCreateUser() {
 	}
 
 	// Test username case insensitivity
-	user, err = suite.service.CreateUser(
+	user, _, err = suite.service.CreateUser(
 		roles.User,      // role ID
 		"TeSt@NeWuSeR2", // username
 		"test_password", // password
+		"tester", // login
+		"Test User", // display name
 	)
 
 	// Error should be nil
@@ -292,10 +304,12 @@ func (suite *OauthTestSuite) TestBlankPassword() {
 		err  error
 	)
 
-	user, err = suite.service.CreateUser(
+	user, _, err = suite.service.CreateUser(
 		roles.User,         // role ID
 		"test@user_nopass", // username
-		"",                 // password
+		"",                 // password,
+		"tester", // login
+		"Test User", // display name
 	)
 
 	// Error should be nil

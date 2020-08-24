@@ -17,6 +17,15 @@ var (
 // Cnf ...
 // Let's start with some sensible defaults
 var Cnf = &Config{
+	CSRF: CSRFConfig{
+		Key:            "",
+		Origins:        "",
+	},
+	Mailgun: MailgunConfig{
+		Sender:         "members@resonate.is",
+		Key:            "",
+		Domain:         "mailgun.resonate.is",
+	},
 	Database: DatabaseConfig{
 		Type:         "postgres",
 		Host:         "postgres",
@@ -26,6 +35,14 @@ var Cnf = &Config{
 		DatabaseName: "go_oauth2_server",
 		MaxIdleConns: 5,
 		MaxOpenConns: 5,
+	},
+	Database2: Database2Config{
+		Type:         "mysql",
+		Host:         "localhost",
+		Port:         5432,
+		User:         "resonate_is",
+		Password:     "",
+		DatabaseName: "resonate_is",
 	},
 	Oauth: OauthConfig{
 		AccessTokenLifetime:  3600,    // 1 hour

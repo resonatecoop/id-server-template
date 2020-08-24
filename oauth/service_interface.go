@@ -24,9 +24,11 @@ type ServiceInterface interface {
 	CreateClientTx(tx *gorm.DB, clientID, secret, redirectURI string) (*models.OauthClient, error)
 	AuthClient(clientID, secret string) (*models.OauthClient, error)
 	UserExists(username string) bool
-	FindUserByUsername(username string) (*models.OauthUser, error)
-	CreateUser(roleID, username, password string) (*models.OauthUser, error)
-	CreateUserTx(tx *gorm.DB, roleID, username, password string) (*models.OauthUser, error)
+	LoginTaken(login string) bool
+	FindUserByUsername(username string) (*models.OauthUser, *models.WpUser, error)
+	FindUserByLogin(login string) (*models.WpUser, error)
+	CreateUser(roleID, username, password, login, displayName string) (*models.OauthUser, *models.WpUser, error)
+	CreateUserTx(tx *gorm.DB, tx2 *gorm.DB, roleID, username, password, login, displayName string) (*models.OauthUser, *models.WpUser, error)
 	SetPassword(user *models.OauthUser, password string) error
 	SetPasswordTx(tx *gorm.DB, user *models.OauthUser, password string) error
 	UpdateUsername(user *models.OauthUser, username string) error

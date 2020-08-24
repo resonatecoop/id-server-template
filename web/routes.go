@@ -2,6 +2,8 @@ package web
 
 import (
 	"github.com/RichardKnop/go-oauth2-server/util/routes"
+	"github.com/didip/tollbooth"
+	"github.com/didip/tollbooth_negroni"
 	"github.com/gorilla/mux"
 	"github.com/urfave/negroni"
 )
@@ -15,6 +17,16 @@ func (s *Service) RegisterRoutes(router *mux.Router, prefix string) {
 // GetRoutes returns []routes.Route slice for the health service
 func (s *Service) GetRoutes() []routes.Route {
 	return []routes.Route{
+		{
+			Name:        "home",
+			Method:      "GET",
+			Pattern:     "",
+			HandlerFunc: s.homeForm,
+			Middlewares: []negroni.Handler{
+				new(parseFormMiddleware),
+				newGuestMiddleware(s),
+			},
+		},
 		{
 			Name:        "register_form",
 			Method:      "GET",
@@ -32,6 +44,9 @@ func (s *Service) GetRoutes() []routes.Route {
 			Pattern:     "/register",
 			HandlerFunc: s.register,
 			Middlewares: []negroni.Handler{
+				tollbooth_negroni.LimitHandler(
+					tollbooth.NewLimiter(1, nil),
+				),
 				new(parseFormMiddleware),
 				newGuestMiddleware(s),
 				newClientMiddleware(s),
@@ -54,6 +69,9 @@ func (s *Service) GetRoutes() []routes.Route {
 			Pattern:     "/login",
 			HandlerFunc: s.login,
 			Middlewares: []negroni.Handler{
+				tollbooth_negroni.LimitHandler(
+					tollbooth.NewLimiter(1, nil),
+				),
 				new(parseFormMiddleware),
 				newGuestMiddleware(s),
 				newClientMiddleware(s),
@@ -86,6 +104,34 @@ func (s *Service) GetRoutes() []routes.Route {
 			Pattern:     "/authorize",
 			HandlerFunc: s.authorize,
 			Middlewares: []negroni.Handler{
+				tollbooth_negroni.LimitHandler(
+					tollbooth.NewLimiter(1, nil),
+				),
+				new(parseFormMiddleware),
+				newLoggedInMiddleware(s),
+				newClientMiddleware(s),
+			},
+		},
+		{
+			Name:        "profile_form",
+			Method:      "GET",
+			Pattern:     "/profile",
+			HandlerFunc: s.profileForm,
+			Middlewares: []negroni.Handler{
+				new(parseFormMiddleware),
+				newLoggedInMiddleware(s),
+				newClientMiddleware(s),
+			},
+		},
+		{
+			Name:        "profile",
+			Method:      "POST",
+			Pattern:     "/profile",
+			HandlerFunc: s.profile,
+			Middlewares: []negroni.Handler{
+				tollbooth_negroni.LimitHandler(
+					tollbooth.NewLimiter(1, nil),
+				),
 				new(parseFormMiddleware),
 				newLoggedInMiddleware(s),
 				newClientMiddleware(s),

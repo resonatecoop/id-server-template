@@ -1,3 +1,27 @@
+FROM node:12-alpine as builder
+
+RUN apk --no-cache add git
+
+WORKDIR /var/www/app
+
+COPY ./package* ./
+COPY ./gulpfile.js ./
+COPY ./data ./data
+COPY ./web/layouts ./web/layouts
+COPY ./web/app ./web/app
+
+ENV NODE_ENV development
+
+RUN npm install
+
+RUN npm install -g gulp
+
+ENV NODE_ENV production
+
+RUN gulp javascript
+
+RUN gulp css
+
 # Start from a Debian image with the latest version of Go installed
 # and a workspace (GOPATH) configured at /go.
 FROM golang
@@ -36,6 +60,9 @@ USER app
 
 # Install the api program
 RUN go install github.com/RichardKnop/go-oauth2-server
+
+COPY --from=builder /var/www/app/public /go/src/github.com/RichardKnop/go-oauth2-server/public/
+COPY --from=builder /var/www/app/web/layouts /go/src/github.com/RichardKnop/go-oauth2-server/web/layouts/
 
 # User docker-entrypoint.sh script as entrypoint
 ENTRYPOINT ["./docker-entrypoint.sh"]

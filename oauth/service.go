@@ -10,14 +10,16 @@ import (
 type Service struct {
 	cnf          *config.Config
 	db           *gorm.DB
+	db2          *gorm.DB
 	allowedRoles []string
 }
 
 // NewService returns a new Service instance
-func NewService(cnf *config.Config, db *gorm.DB) *Service {
+func NewService(cnf *config.Config, db *gorm.DB, db2 *gorm.DB) *Service {
 	return &Service{
 		cnf:          cnf,
 		db:           db,
+		db2:          db2,
 		allowedRoles: []string{roles.Superuser, roles.User},
 	}
 }

@@ -41,6 +41,7 @@ type OauthTestSuite struct {
 	suite.Suite
 	cnf     *config.Config
 	db      *gorm.DB
+	db2      *gorm.DB
 	service *oauth.Service
 	clients []*models.OauthClient
 	users   []*models.OauthUser
@@ -65,6 +66,7 @@ func (suite *OauthTestSuite) SetupSuite() {
 		log.ERROR.Fatal(err)
 	}
 	suite.db = db
+	suite.db2 = nil // TODO setup test mysql db client
 
 	// Fetch test client
 	suite.clients = make([]*models.OauthClient, 0)
@@ -79,7 +81,7 @@ func (suite *OauthTestSuite) SetupSuite() {
 	}
 
 	// Initialise the service
-	suite.service = oauth.NewService(suite.cnf, suite.db)
+	suite.service = oauth.NewService(suite.cnf, suite.db, suite.db2)
 
 	// Register routes
 	suite.router = mux.NewRouter()

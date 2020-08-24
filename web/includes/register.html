@@ -1,20 +1,54 @@
-{{ define "title"}}Register{{ end }}
+{{ define "title"}}Join{{ end }}
 
 {{ define "content" }}
-<div id="app" class="container">
-
-  <form class="form-signin" action="" method="post">
-    <h2 class="form-signin-heading">Register</h2>
-    {{ if .error }}
-    <p class="text-danger">{{ .error }}</p>
-    {{ end }}
-    <label for="inputEmail" class="sr-only">Email address</label>
-    <input type="email" name="email" id="inputEmail" class="form-control" placeholder="Email address" required autofocus>
-    <label for="inputPassword" class="sr-only">Password</label>
-    <input type="password" name="password" id="inputPassword" class="form-control" placeholder="Password" required>
-    <button class="btn btn-lg btn-primary btn-block" type="submit">Register</button>
-    <p>Already registered? <a href="/web/login{{ .queryString }}">Log in</a>
-  </form>
-
-</div> <!-- /container -->
+<div id="app" class="flex flex-column flex-auto items-center justify-center min-vh-100 mh3 pt6 pb7">
+  <div class="bg-white black bg-black--dark white--dark bg-white--light black--light z-1 w-100 w-auto-l shadow-contour ph4 pt4 pb3">
+    <div class="flex flex-column flex-auto">
+      <svg viewBox="0 0 16 16" class="icon icon-logo icon--sm icon icon--lg fill-black fill-white--dark fill-black--light">
+        <use xlink:href="#icon-logo"></use>
+      </svg>
+      <div class="flex flex-column">
+        <h2 class="f3 fw1 mt2 near-black near-black--light light-gray--dark lh-title">Join</h2>
+        {{ if .error }}
+        <p class="text-danger">{{ .error }}</p>
+        {{ end }}
+        <div class="flex flex-auto">
+          <div class="flex flex-column flex-auto">
+            <form id="signup" action="" method="POST" class="flex flex-column flex-auto ma0 pa0">
+              {{ .csrfField }}
+              <div>
+                <div class="flex flex-column mb3">
+                  <div class="relative">
+                    <input autocomplete="false" id="email" type="email" name="email" placeholder="Email" required="required" class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid"></div>
+                </div>
+                <div class="flex flex-column mb3">
+                  <div class="relative">
+                    <input autocomplete="false" minlength=9 maxlength=72 id="password" type="password" name="password" placeholder="Password" required="required" class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid">
+                  </div>
+                </div>
+                <div class="flex flex-column mb3">
+                  <div class="relative">
+                    <input value="" autocomplete="false" id="login" type="text" name="login" placeholder="Username" required="required" class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid">
+                  </div>
+                </div>
+                <div class="flex flex-column mb3">
+                  <div class="relative">
+                    <input value="" autocomplete="false" id="display_name" type="text" name="display_name" placeholder="Display name" required="required" class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid">
+                  </div>
+                </div>
+              </div>
+              <div class="flex mt3">
+                <div class="flex mr3">
+                </div>
+                <div class="flex flex-auto justify-end">
+                  <button type="submit" class="bg-black white bg-white--dark black--dark bg-black--light white--light b--black ba bw b pv2 ph4 flex-shrink-0 f5 grow">Join</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 {{ end }}

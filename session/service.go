@@ -49,6 +49,7 @@ func NewService(cnf *config.Config, sessionStore sessions.Store) *Service {
 		sessionOptions: &sessions.Options{
 			Path:     cnf.Session.Path,
 			MaxAge:   cnf.Session.MaxAge,
+			Secure:   cnf.Session.Secure,
 			HttpOnly: cnf.Session.HTTPOnly,
 		},
 	}
