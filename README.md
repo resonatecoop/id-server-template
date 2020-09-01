@@ -489,6 +489,15 @@ Load a development configuration into `consul`:
 
 ```sh
 consul kv put /config/go_oauth2_server.json '{
+  "CSRF": {
+    "Key": "my-secure-csrf-key",
+    "Origins": "upload.resonate.localhost,beta.resonate.localhost"
+  },
+  "Mailgun": {
+    "Sender": "postmaster@sandboxXXXX.mailgun.org",
+    "Key": "key-xxx",
+    "Domain": "sandboxxxxxxx.mailgun.org"
+  },
   "Database": {
     "Type": "postgres",
     "Host": "localhost",
@@ -499,6 +508,14 @@ consul kv put /config/go_oauth2_server.json '{
     "MaxIdleConns": 5,
     "MaxOpenConns": 5
   },
+  "Database2": {
+    "Type": "mysql",
+    "Host": "host.docker.internal",
+    "Port": 3306,
+    "User": "go_oauth2_server",
+    "Password": "",
+    "DatabaseName": "resonate_is"
+  },
   "Oauth": {
     "AccessTokenLifetime": 3600,
     "RefreshTokenLifetime": 1209600,
@@ -508,6 +525,7 @@ consul kv put /config/go_oauth2_server.json '{
     "Secret": "test_secret",
     "Path": "/",
     "MaxAge": 604800,
+    "Secure": true,
     "HTTPOnly": true
   },
   "IsDevelopment": true
