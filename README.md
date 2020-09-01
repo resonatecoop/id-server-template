@@ -446,6 +446,15 @@ Load a development configuration into `etcd`:
 
 ```sh
 ETCDCTL_API=3 etcdctl put /config/go_oauth2_server.json '{
+  "CSRF": {
+    "Key": "my-secure-csrf-key",
+    "Origins": "upload.resonate.localhost,beta.resonate.localhost"
+  },
+  "Mailgun": {
+    "Sender": "postmaster@sandboxXXXX.mailgun.org",
+    "Key": "key-xxx",
+    "Domain": "sandboxxxxxxx.mailgun.org"
+  },
   "Database": {
     "Type": "postgres",
     "Host": "localhost",
@@ -456,6 +465,14 @@ ETCDCTL_API=3 etcdctl put /config/go_oauth2_server.json '{
     "MaxIdleConns": 5,
     "MaxOpenConns": 5
   },
+  "Database2": {
+    "Type": "mysql",
+    "Host": "host.docker.internal",
+    "Port": 3306,
+    "User": "go_oauth2_server",
+    "Password": "",
+    "DatabaseName": "resonate_is"
+  },
   "Oauth": {
     "AccessTokenLifetime": 3600,
     "RefreshTokenLifetime": 1209600,
@@ -465,6 +482,7 @@ ETCDCTL_API=3 etcdctl put /config/go_oauth2_server.json '{
     "Secret": "test_secret",
     "Path": "/",
     "MaxAge": 604800,
+    "Secure": true,
     "HTTPOnly": true
   },
   "IsDevelopment": true
