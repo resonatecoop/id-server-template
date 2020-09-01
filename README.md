@@ -33,6 +33,7 @@ This service implements [OAuth 2.0 specification](https://tools.ietf.org/html/rf
   * [etcd](#etcd)
   * [consul](#consul)
   * [postgres](#postgres)
+  * [mysql](#mysql)
 * [Compile & Run Data](#compile--run)
 * [Testing](#testing)
 * [Docker](#docker)
@@ -568,6 +569,16 @@ You might want to create a `Postgres` database:
 createuser --createdb go_oauth2_server
 createdb -U go_oauth2_server go_oauth2_server
 ```
+
+### Mysql
+
+As a temporary hack we need to make a direct connection to a wordpress database.
+
+Ideally we would use `resonatecoop/user-api` instead but this api is not ready yet.
+
+Follow your prefered way to install mysql (using percona for example). There's no need to run wordpress itself.
+
+Only requirement is to have your wp tables prefixed with `rsntr_`.
 
 ### JS frontend (choo app)
 
