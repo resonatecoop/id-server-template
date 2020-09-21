@@ -8,8 +8,8 @@ import (
 	"github.com/jinzhu/gorm"
 
 	// Drivers
+	_ "github.com/jinzhu/gorm/dialects/mysql"
 	_ "github.com/lib/pq"
-  _ "github.com/jinzhu/gorm/dialects/mysql"
 )
 
 func init() {
