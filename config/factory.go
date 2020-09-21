@@ -18,13 +18,13 @@ var (
 // Let's start with some sensible defaults
 var Cnf = &Config{
 	CSRF: CSRFConfig{
-		Key:            "",
-		Origins:        "",
+		Key:     "",
+		Origins: "upload.resonate.is",
 	},
 	Mailgun: MailgunConfig{
-		Sender:         "members@resonate.is",
-		Key:            "",
-		Domain:         "mailgun.resonate.is",
+		Sender: "members@resonate.is",
+		Key:    "",
+		Domain: "mailgun.resonate.is",
 	},
 	Database: DatabaseConfig{
 		Type:         "postgres",
@@ -36,7 +36,7 @@ var Cnf = &Config{
 		MaxIdleConns: 5,
 		MaxOpenConns: 5,
 	},
-	Database2: Database2Config{
+	Database2: DatabaseConfig{
 		Type:         "mysql",
 		Host:         "localhost",
 		Port:         5432,
@@ -55,7 +55,17 @@ var Cnf = &Config{
 		MaxAge:   86400 * 7, // 7 days
 		HTTPOnly: true,
 	},
-	IsDevelopment: true,
+	Clients: []ClientConfig{
+		{
+			ConnectUrl:  "https://upload.resonate.is/api/user/connect/resonate",
+			Name:        "Upload Tool",
+			Description: "for creators",
+		},
+	},
+	IsDevelopment:  true,
+	Port:           ":8080",
+	ApplicationURL: "https://upload.resonate.is",
+	Origins:        []string{"upload.resonate.is", "beta.stream.resonate.is"},
 }
 
 // NewConfig loads configuration from etcd and returns *Config struct

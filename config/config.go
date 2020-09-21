@@ -1,29 +1,24 @@
 package config
 
+type ClientConfig struct {
+	ConnectUrl  string `json:"connectUrl"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
 type CSRFConfig struct {
-	Key         string
-	Origins     string
+	Key     string
+	Origins string
 }
 
 type MailgunConfig struct {
-	Sender         string
-	Key            string
-	Domain         string
+	Sender string
+	Key    string
+	Domain string
 }
 
 // DatabaseConfig stores database connection options
 type DatabaseConfig struct {
-	Type         string
-	Host         string
-	Port         int
-	User         string
-	Password     string
-	DatabaseName string
-	MaxIdleConns int
-	MaxOpenConns int
-}
-
-type Database2Config struct {
 	Type         string
 	Host         string
 	Port         int
@@ -60,11 +55,15 @@ type SessionConfig struct {
 
 // Config stores all configuration options
 type Config struct {
-	CSRF          CSRFConfig
-	Mailgun       MailgunConfig
-	Database      DatabaseConfig
-	Database2     Database2Config
-	Oauth         OauthConfig
-	Session       SessionConfig
-	IsDevelopment bool
+	CSRF           CSRFConfig
+	Mailgun        MailgunConfig
+	Database       DatabaseConfig
+	Database2      DatabaseConfig
+	Oauth          OauthConfig
+	Session        SessionConfig
+	IsDevelopment  bool
+	Clients        []ClientConfig
+	Port           string
+	ApplicationURL string
+	Origins        []string
 }

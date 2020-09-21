@@ -67,8 +67,8 @@ func RunServer(configBackend string) error {
 	// Set the router
 	app.UseHandler(router)
 
-	// Run the server on port 8080, gracefully stop on SIGTERM signal
-	graceful.Run(":8080", 5*time.Second, app)
+	// Run the server on port 8080 by default, gracefully stop on SIGTERM signal
+	graceful.Run(cnf.Port, 5*time.Second, app)
 
 	return nil
 }
