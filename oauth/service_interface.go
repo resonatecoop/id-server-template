@@ -26,6 +26,7 @@ type ServiceInterface interface {
 	AuthClient(clientID, secret string) (*models.OauthClient, error)
 	UserExists(username string) bool
 	LoginTaken(login string) bool
+	FindNicknameByWpUserID(id uint64) (string, error)
 	FindUserByUsername(username string) (*models.OauthUser, *models.WpUser, error)
 	FindUserByLogin(login string) (*models.WpUser, error)
 	CreateUser(roleID, username, password, login, displayName string) (*models.OauthUser, *models.WpUser, error)

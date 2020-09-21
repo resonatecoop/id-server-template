@@ -27,8 +27,8 @@ func (suite *OauthTestSuite) TestUpdateUsernameWorksWithValidEntry() {
 		roles.User,      // role ID
 		"test@newuser",  // username
 		"test_password", // password
-		"tester", // login
-		"Test User", // display name
+		"tester",        // login
+		"Test User",     // display name
 	)
 
 	assert.NoError(suite.T(), err)
@@ -49,8 +49,8 @@ func (suite *OauthTestSuite) TestUpdateUsernameTxWorksWithValidEntry() {
 		roles.User,      // role ID
 		"test@newuser",  // username
 		"test_password", // password
-		"tester", // login
-		"Test User", // display name
+		"tester",        // login
+		"Test User",     // display name
 	)
 
 	assert.NoError(suite.T(), err)
@@ -71,8 +71,8 @@ func (suite *OauthTestSuite) TestUpdateUsernameFailsWithABlankEntry() {
 		roles.User,      // role ID
 		"test@newuser",  // username
 		"test_password", // password
-		"tester", // login
-		"Test User", // display name
+		"tester",        // login
+		"Test User",     // display name
 	)
 
 	assert.NoError(suite.T(), err)
@@ -139,8 +139,8 @@ func (suite *OauthTestSuite) TestCreateUser() {
 		roles.User,      // role ID
 		"test@user",     // username
 		"test_password", // password
-		"tester", // login
-		"Test User", // display name
+		"tester",        // login
+		"Test User",     // display name
 	)
 
 	// User object should be nil
@@ -156,8 +156,8 @@ func (suite *OauthTestSuite) TestCreateUser() {
 		roles.User,      // role ID
 		"test@newuser",  // username
 		"test_password", // password
-		"tester", // login
-		"Test User", // display name
+		"tester",        // login
+		"Test User",     // display name
 	)
 
 	// Error should be nil
@@ -173,8 +173,8 @@ func (suite *OauthTestSuite) TestCreateUser() {
 		roles.User,      // role ID
 		"TeSt@NeWuSeR2", // username
 		"test_password", // password
-		"tester", // login
-		"Test User", // display name
+		"tester",        // login
+		"Test User",     // display name
 	)
 
 	// Error should be nil
@@ -308,8 +308,8 @@ func (suite *OauthTestSuite) TestBlankPassword() {
 		roles.User,         // role ID
 		"test@user_nopass", // username
 		"",                 // password,
-		"tester", // login
-		"Test User", // display name
+		"tester",           // login
+		"Test User",        // display name
 	)
 
 	// Error should be nil

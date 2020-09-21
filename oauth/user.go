@@ -14,6 +14,7 @@ import (
 	"github.com/apokalyptik/phpass"
 	"github.com/gosimple/slug"
 	"github.com/jinzhu/gorm"
+	"github.com/trustelem/zxcvbn"
 )
 
 var (
@@ -51,18 +52,30 @@ var (
 		MaxPasswordLength,
 	)
 
+	// ErrLoginRequired ...
+	ErrLoginRequired = errors.New("Login is required")
+	// ErrDisplayNameRequired ...
+	ErrDisplayNameRequired = errors.New("Display Name is required")
+	// ErrPasswordRequired ...
+	ErrPasswordRequired = errors.New("Password is required")
+	// ErrUsernameRequired ...
+	ErrUsernameRequired = errors.New("Username/Email is required")
 	// ErrLoginTaken ...
 	ErrLoginTaken = errors.New("Login taken")
 	// ErrUserNotFound ...
 	ErrUserNotFound = errors.New("User not found")
 	// ErrInvalidUserPassword ...
 	ErrInvalidUserPassword = errors.New("Invalid user password")
+	// ErrPasswordTooWeak ...
+	ErrPasswordTooWeak = errors.New("Password is too weak")
 	// ErrCannotSetEmptyUsername ...
 	ErrCannotSetEmptyUsername = errors.New("Cannot set empty username")
 	// ErrUserPasswordNotSet ...
 	ErrUserPasswordNotSet = errors.New("User password not set")
-	// ErrEmailTaken ...
-	ErrEmailTaken = errors.New("Email taken")
+	// ErrUsernameTaken ...
+	ErrUsernameTaken = errors.New("Username/Email taken")
+	// ErrEmailInvalid
+	ErrEmailInvalid = errors.New("Not a valid email")
 )
 
 // UserExists returns true if user exists
@@ -88,7 +101,7 @@ func (s *Service) FindUserByUsername(username string) (*models.OauthUser, *model
 	}
 
 	wpuser := new(models.WpUser)
-	wpuserNotFound := s.db2.Table("rsntr_users").Select("user_email").Where("user_email = ?", username).
+	wpuserNotFound := s.db2.Table("rsntr_users").Where("user_email = ?", username).
 		First(wpuser).RecordNotFound()
 
 	// Not found
@@ -99,10 +112,23 @@ func (s *Service) FindUserByUsername(username string) (*models.OauthUser, *model
 	return user, wpuser, nil
 }
 
+func (s *Service) FindNicknameByWpUserID(id uint64) (string, error) {
+	wpusermeta := new(models.WpUserMeta)
+	notFound := s.db2.Table("rsntr_usermeta").Select("meta_value").Where("user_id = ? AND meta_key = ?", id, "nickname").
+		First(wpusermeta).RecordNotFound()
+
+	// Not found
+	if notFound {
+		return "", errors.New("Data not found")
+	}
+
+	return wpusermeta.MetaValue, nil
+}
+
 // FindUserByLogin looks up a user by login (wordpress)
 func (s *Service) FindUserByLogin(login string) (*models.WpUser, error) {
 	wpuser := new(models.WpUser)
-	notFound := s.db2.Table("rsntr_users").Select("user_login").Where("user_login = ?", login).
+	notFound := s.db2.Table("rsntr_users").Where("user_login = ?", login).
 		First(wpuser).RecordNotFound()
 
 	// Not found
@@ -159,6 +185,10 @@ func (s *Service) UpdateUsername(user *models.OauthUser, username string) error 
 	if username == "" {
 		return ErrCannotSetEmptyUsername
 	}
+	// Check the email/username is available
+	if s.UserExists(username) {
+		return ErrUsernameTaken
+	}
 
 	return s.updateUsernameCommon(s.db, user, username)
 }
@@ -170,6 +200,22 @@ func (s *Service) UpdateUsernameTx(tx *gorm.DB, user *models.OauthUser, username
 
 func (s *Service) createUserCommon(db *gorm.DB, db2 *gorm.DB, roleID, username, password, login, displayName string) (*models.OauthUser, *models.WpUser, error) {
 	// Start with a user without a password
+	if displayName == "" {
+		return nil, nil, ErrDisplayNameRequired
+	}
+
+	if login == "" {
+		return nil, nil, ErrLoginRequired
+	}
+
+	if password == "" {
+		return nil, nil, ErrPasswordRequired
+	}
+
+	if username == "" {
+		return nil, nil, ErrUsernameRequired
+	}
+
 	user := &models.OauthUser{
 		MyGormModel: models.MyGormModel{
 			ID:        uuid.New(),
@@ -186,51 +232,62 @@ func (s *Service) createUserCommon(db *gorm.DB, db2 *gorm.DB, roleID, username, 
 		Password:   util.StringOrNull(""),
 	}
 
-	if displayName != "" {
-		wpuser.DisplayName = displayName
+	wpuser.DisplayName = displayName
+
+	if len(login) < MinLoginLength {
+		return nil, nil, ErrLoginTooShort
 	}
 
-	if login != "" {
-		if len(login) < MinLoginLength {
-			return nil, nil, ErrLoginTooShort
-		}
-
-		if len(login) > MaxLoginLength {
-			return nil, nil, ErrLoginTooLong
-		}
-
-		wpuser.Login = login
-		wpuser.Nicename = slug.Make(login)
+	if len(login) > MaxLoginLength {
+		return nil, nil, ErrLoginTooLong
 	}
 
-	// If the password is being set already, create a bcrypt and phpass
-	if password != "" {
-		if len(password) < MinPasswordLength {
-			return nil, nil, ErrPasswordTooShort
-		}
-		if len(password) > MaxPasswordLength {
-			return nil, nil, ErrPasswordTooLong
-		}
-		passwordHash, err := pass.HashPassword(password)
-		if err != nil {
-			return nil, nil, err
-		}
-		user.Password = util.StringOrNull(string(passwordHash))
+	wpuser.Login = login
+	wpuser.Nicename = slug.Make(login)
 
-		phpassMutex.Lock()
-		passwordHashWp, err := phpassVar.Hash([]byte(password))
-		phpassMutex.Unlock()
+	if len(password) < MinPasswordLength {
+		return nil, nil, ErrPasswordTooShort
+	}
 
-		if err != nil {
-			return nil, nil, err
-		}
+	if len(password) > MaxPasswordLength {
+		return nil, nil, ErrPasswordTooLong
+	}
 
-		wpuser.Password = util.StringOrNull(string(passwordHashWp))
+	// enforce strong enough passwords
+	passwordStrength := zxcvbn.PasswordStrength(password, nil)
+
+	if passwordStrength.Score < 3 {
+		return nil, nil, ErrPasswordTooWeak
+	}
+
+	// hash bcrypt password
+	passwordHash, err := pass.HashPassword(password)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	user.Password = util.StringOrNull(string(passwordHash))
+
+	// hash wp password
+	phpassMutex.Lock()
+	passwordHashWp, err := phpassVar.Hash([]byte(password))
+	phpassMutex.Unlock()
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	wpuser.Password = util.StringOrNull(string(passwordHashWp))
+
+	// Check if email address is valid
+	if !util.ValidateEmail(user.Username) {
+		return nil, nil, ErrEmailInvalid
 	}
 
 	// Check the email/username is available
 	if s.UserExists(user.Username) {
-		return nil, nil, ErrEmailTaken
+		return nil, nil, ErrUsernameTaken
 	}
 
 	// Check the login is available
@@ -294,6 +351,10 @@ func (s *Service) setPasswordCommon(db *gorm.DB, user *models.OauthUser, passwor
 func (s *Service) updateUsernameCommon(db *gorm.DB, user *models.OauthUser, username string) error {
 	if username == "" {
 		return ErrCannotSetEmptyUsername
+	}
+	// Check the email/username is available
+	if s.UserExists(username) {
+		return ErrUsernameTaken
 	}
 	return db.Model(user).UpdateColumn("username", strings.ToLower(username)).Error
 }
