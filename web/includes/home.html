@@ -1,6 +1,30 @@
 {{ define "title"}}Resonate{{ end }}
 
 {{ define "content" }}
-<div id="app">
+<div id="app" class="flex flex-column">
+  <main class="flex flex-auto">
+    <div class="flex flex-auto flex-column w-100 pb6">
+      <article class="mh2 mt3 cf">
+        {{ range .clients }}
+        <div class="fl w-50 pa2 mw4-ns mw5-l">
+          <a href="{{.ConnectUrl}}" class="link db aspect-ratio aspect-ratio--1x1 dim ba bw b--near-black">
+            <div class="flex flex-column justify-center aspect-ratio--object pa2 pa3-ns pa4-l">
+              <span class="f3 f4-ns f3-l lh-title">{{.Name}}</span>
+              <span class="f4 f5-ns f4-l lh-copy">{{.Description}}</span>
+            </div>
+          </a>
+        </div>
+        {{end}}
+        <div class="fl w-50 pa2 mw4-ns mw5-l">
+          <a href="/apps/create" class="link db aspect-ratio aspect-ratio--1x1 dim bg-gray black">
+            <div class="flex flex-column justify-center aspect-ratio--object pa2 pa3-ns pa4-l">
+              <span class="f4 f5-ns f4-l lh-copy">Register a new app</span>
+            </div>
+          </a>
+        </div>
+      </article>
+      <p class="ml3 lh-copy measure f4 f5-ns f4-l">Not a member yet? <a class="link b" href="/join">Join now!</a></p>
+    </div>
+  </main>
 </div>
 {{ end }}

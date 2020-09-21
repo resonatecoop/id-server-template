@@ -1,8 +1,7 @@
 const html = require('choo/html')
 const Component = require('choo/component')
-const inputEl = require('@resonate/input-element')
-const button = require('@resonate/button')
 const icon = require('@resonate/icon-element')
+const input = require('@resonate/input-element')
 
 class Form extends Component {
   constructor (id, state, emit) {
@@ -19,7 +18,8 @@ class Form extends Component {
     this.validate = props.validate
     this.submit = props.submit
 
-    this.local.fields = props.fields
+    this.local.fields = props.fields || []
+    this.local.altButton = props.altButton
     this.local.buttonText = props.buttonText || ''
     this.local.id = props.id
     this.local.action = props.action
@@ -31,9 +31,17 @@ class Form extends Component {
 
     const inputs = this.local.fields.map(fieldProps => {
       const { name = fieldProps.type, help } = fieldProps
+
+      fieldProps.onInput = typeof fieldProps.onInput === 'function'
+        ? fieldProps.onInput.bind(this)
+        : null
+
       const props = Object.assign({}, fieldProps, {
         onchange: (e) => {
-          this.validate({ name: e.target.name, value: e.target.value })
+          this.validate({
+            name: e.target.name,
+            value: e.target.value
+          })
           this.rerender()
         },
         value: values[name]
@@ -41,17 +49,21 @@ class Form extends Component {
 
       return html`
         <div class="flex flex-column mb3">
-          ${fieldProps.label ? html`<label for=${fieldProps.id || name} class="f5 db mb1">${fieldProps.label}</label>` : ''}
+          ${fieldProps.label ? html`
+            <label for=${fieldProps.id || name} class="f5 db mb1">${fieldProps.label}</label>
+          ` : ''}
           <div class="relative">
-            ${inputEl(props)}
+            ${input(props)}
             ${errors[name] && !pristine[name] ? html`
               <div class="absolute left-0 ph1 flex items-center" style="top:50%;transform: translate(-100%, -50%);">
                 ${icon('info', { class: 'fill-red', size: 'sm' })}
               </div>
             ` : ''}
           </div>
-          ${errors[name] && !pristine[name] ? html`<span class="message f5 pb2">${errors[name].message}</span>` : ''}
-          ${help}
+          ${typeof help === 'function' ? help(values[name]) : help}
+          ${errors[name] && !pristine[name] ? html`
+            <span class="message f5 pb2">${errors[name].message}</span>
+          ` : ''}
         </div>
       `
     })
@@ -80,6 +92,15 @@ class Form extends Component {
       }
     }
 
+    const submitButton = () => {
+      const attrs = {
+        class: 'bg-white dib grow ba bw b--near-black b pv2 ph4 flex-shrink-0 f5',
+        type: 'submit'
+      }
+
+      return html`<button ${attrs}>${this.local.buttonText}</button>`
+    }
+
     return html`
       <div class="flex flex-column flex-auto">
         <form ${attrs}>
@@ -88,9 +109,10 @@ class Form extends Component {
           </div>
           <div class="flex mt3">
             <div class="flex mr3">
+              ${this.local.altButton}
             </div>
-            <div class="flex flex-auto justify-end">
-              ${button({ type: 'submit', size: 'none', text: this.local.buttonText })}
+            <div class="flex flex-auto justify-end pr1">
+              ${submitButton()}
             </div>
           </div>
         </form>

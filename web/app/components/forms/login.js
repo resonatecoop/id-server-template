@@ -87,6 +87,9 @@ class Login extends Component {
         errors: {}
       },
       buttonText: 'Log In',
+      altButton: html`
+        <p class="f5 lh-copy">Don't have an account? <a class="link b" href="/join">Join</a>.</p>
+      `,
       fields: [
         { type: 'email', autofocus: true, placeholder: 'E-mail' },
         {
@@ -94,7 +97,7 @@ class Login extends Component {
           placeholder: 'Password',
           help: html`
             <div class="flex justify-end">
-              <a href="https://resonate.is/password-reset/" class="lightGrey f7 ma0 pt1 pr2" target="_blank" rel="noopener noreferer">
+              <a href="/password-reset/" class="link underline lightGrey f7 ma0 mt1">
                 Forgot your password?
               </a>
             </div>
@@ -182,7 +185,7 @@ class Login extends Component {
   load () {
     this.validator.field('email', data => {
       if (isEmpty(data)) return new Error('Email is required')
-      if (!(isEmail(data))) return new Error('Email is not valid')
+      if (!(isEmail(data))) return new Error('This is not valid email address')
     })
 
     this.validator.field('password', data => {

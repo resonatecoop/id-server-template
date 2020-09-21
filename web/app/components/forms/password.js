@@ -6,12 +6,9 @@ const nanostate = require('nanostate')
 const Form = require('./generic')
 const isEmail = require('validator/lib/isEmail')
 const isEmpty = require('validator/lib/isEmpty')
-const isLength = require('validator/lib/isLength')
 const validateFormdata = require('validate-formdata')
-const PasswordMeter = require('../password-meter')
-const zxcvbnAsync = require('zxcvbn-async')
 
-class Signup extends Component {
+class Password extends Component {
   constructor (id, state, emit) {
     super(id)
 
@@ -74,14 +71,11 @@ class Signup extends Component {
     return html`
       <div class="flex flex-column flex-auto">
         ${message}
-        ${this.state.cache(Form, 'signup-form').render({
-          id: 'signup',
+        ${this.state.cache(Form, 'password-form').render({
+          id: 'password',
           method: 'POST',
           action: '',
-          buttonText: 'Sign up',
-          altButton: html`
-            <p class="f5 lh-copy">Already have an account? <a class="link b" href="/login">Log In</a>.</p>
-          `,
+          buttonText: 'Reset my password',
           validate: (props) => {
             this.validator.validate(props.name, props.value)
             this.rerender()
@@ -97,28 +91,8 @@ class Signup extends Component {
           fields: [
             {
               type: 'email',
-              placeholder: 'E-mail'
-            },
-            {
-              type: 'password',
-              placeholder: 'Password',
-              help: (value) => {
-                return this.state.cache(PasswordMeter, 'password-meter').render({
-                  password: value
-                })
-              }
-            },
-            {
-              type: 'text',
-              name: 'login',
-              placeholder: 'Username',
-              help: html`<p class="ma0 mt1 lh-copy f7">Can be used to login to your profile</p>`
-            },
-            {
-              type: 'text',
-              name: 'display_name',
-              placeholder: 'Name',
-              help: html`<p class="ma0 mt1 lh-copy f7">Your artist name, nickname or label name</p>`
+              label: 'To reset your password, please enter your email address below',
+              placeholder: 'Enter your email address'
             }
           ],
           submit: async (data) => {
@@ -145,8 +119,7 @@ class Signup extends Component {
                   'X-CSRF-Token': csrfToken
                 },
                 body: new URLSearchParams({
-                  email: data.email.value,
-                  password: data.password.value
+                  email: data.email.value
                 })
               })
 
@@ -186,50 +159,9 @@ class Signup extends Component {
   }
 
   load () {
-    const zxcvbn = zxcvbnAsync.load({
-      sync: true,
-      libUrl: 'https://cdn.jsdelivr.net/npm/zxcvbn@4.4.2/dist/zxcvbn.js',
-      libIntegrity: 'sha256-9CxlH0BQastrZiSQ8zjdR6WVHTMSA5xKuP5QkEhPNRo='
-    })
-
     this.validator.field('email', (data) => {
-      if (isEmpty(data)) {
-        return new Error('Please tell us your email address')
-      }
-      if (!isEmail(data)) {
-        return new Error('This is not a valid email address')
-      }
-    })
-    this.validator.field('password', (data) => {
-      if (isEmpty(data)) {
-        return new Error('A strong password is very important')
-      }
-      if (!isLength(data, { min: 9 })) {
-        return new Error('Password length should not be less than 9 characters')
-      }
-      const { score, feedback } = zxcvbn(data)
-      if (score < 3) {
-        return new Error(feedback.warning || (feedback.suggestions.length ? feedback.suggestions[0] : 'Password is too weak'))
-      }
-      if (!isLength(data, { max: 72 })) {
-        return new Error('Password length should not be more than 72 characters')
-      }
-    })
-    this.validator.field('display_name', (data) => {
-      if (isEmpty(data)) {
-        return new Error('What is your name?')
-      }
-      if (!isLength(data, { max: 50 })) {
-        return new Error('The name can\'t be longer than 50 characters')
-      }
-    })
-    this.validator.field('login', (data) => {
-      if (isEmpty(data)) {
-        return new Error('An username is required')
-      }
-      if (!isLength(data, { max: 60 })) {
-        return new Error('Username name is too long')
-      }
+      if (isEmpty(data)) return new Error('Please enter your email address')
+      if (!(isEmail(data))) return new Error('This is not a valid email address')
     })
   }
 
@@ -238,4 +170,4 @@ class Signup extends Component {
   }
 }
 
-module.exports = Signup
+module.exports = Password
