@@ -19,9 +19,7 @@ RUN npm install -g gulp
 
 ENV NODE_ENV production
 
-RUN gulp javascript
-
-RUN gulp css
+RUN npm run build
 
 # Start from a Debian image with the latest version of Go installed
 # and a workspace (GOPATH) configured at /go.

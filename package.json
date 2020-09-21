@@ -5,11 +5,23 @@
   "main": "./web/app/main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "node -r ./node_modules/dotenv/config ./web/app/server.js"
+    "start": "node -r ./node_modules/dotenv/config ./web/app/server.js",
+    "dev": "jalla ./web/app/main.js --port 8081",
+    "build": "NODE_ENV=production && gulp javascript && gulp css"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/resonatecoop/go-oauth2-server.git"
+  },
+  "browserify": {
+    "transform": [
+      [
+        "./web/app/lib/envlocalify",
+        {
+          "global": true
+        }
+      ]
+    ]
   },
   "keywords": [
     "golang",
