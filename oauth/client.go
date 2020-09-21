@@ -42,6 +42,20 @@ func (s *Service) FindClientByClientID(clientID string) (*models.OauthClient, er
 	return client, nil
 }
 
+// FindClientByRedirectURI looks up a client by redirect URI
+func (s *Service) FindClientByApplicationURL(applicationURL string) (*models.OauthClient, error) {
+	client := new(models.OauthClient)
+	notFound := s.db.Where("application_url = ? AND application_hostname IN (?)", applicationURL, s.cnf.Origins).
+		First(client).RecordNotFound()
+
+	// Not found
+	if notFound {
+		return nil, ErrClientNotFound
+	}
+
+	return client, nil
+}
+
 // CreateClient saves a new client to database
 func (s *Service) CreateClient(clientID, secret, redirectURI string) (*models.OauthClient, error) {
 	return s.createClientCommon(s.db, clientID, secret, redirectURI)
