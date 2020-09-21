@@ -101,6 +101,8 @@ func NewDatabase2(cnf *config.Config) (*gorm.DB, error) {
 		if err != nil {
 			return db, err
 		}
+		// Database logging
+		db.LogMode(cnf.IsDevelopment)
 		return db, nil
 	}
 
