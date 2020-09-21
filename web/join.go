@@ -1,7 +1,9 @@
 package web
 
 import (
+	"encoding/json"
 	"fmt"
+	"html/template"
 	"net/http"
 
 	"github.com/RichardKnop/go-oauth2-server/util/mailer"
@@ -9,10 +11,9 @@ import (
 	"github.com/gorilla/csrf"
 
 	"github.com/RichardKnop/go-oauth2-server/oauth/roles"
-	"github.com/RichardKnop/go-oauth2-server/util"
 )
 
-func (s *Service) registerForm(w http.ResponseWriter, r *http.Request) {
+func (s *Service) joinForm(w http.ResponseWriter, r *http.Request) {
 	// Get the session service from the request context
 	sessionService, err := getSessionService(r)
 	if err != nil {
@@ -22,31 +23,31 @@ func (s *Service) registerForm(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("X-CSRF-Token", csrf.Token(r))
 
+	initialState, _ := json.Marshal(map[string]interface{}{
+		"clients": s.cnf.Clients,
+	})
+
+	// Inject initial state into choo app
+	fragment := fmt.Sprintf(
+		`<script>window.initialState=JSON.parse('%s')</script>`,
+		string(initialState),
+	)
+
 	// Render the template
 	errMsg, _ := sessionService.GetFlashMessage()
-	renderTemplate(w, "register.html", map[string]interface{}{
+	renderTemplate(w, "join.html", map[string]interface{}{
 		"error":          errMsg,
+		"initialState":   template.HTML(fragment),
 		"queryString":    getQueryString(r.URL.Query()),
 		csrf.TemplateTag: csrf.TemplateField(r),
 	})
 }
 
-func (s *Service) register(w http.ResponseWriter, r *http.Request) {
+func (s *Service) join(w http.ResponseWriter, r *http.Request) {
 	// Get the session service from the request context
 	sessionService, err := getSessionService(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if !util.ValidateEmail(r.Form.Get("email")) {
-		switch r.Header.Get("Accept") {
-		case "application/json":
-			response.Error(w, "Email is not valid", http.StatusBadRequest)
-		default:
-			sessionService.SetFlashMessage("Email is not valid")
-			http.Redirect(w, r, r.RequestURI, http.StatusFound)
-		}
 		return
 	}
 

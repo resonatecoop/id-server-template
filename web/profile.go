@@ -1,18 +1,19 @@
 package web
 
 import (
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"net/http"
-	"net/url"
 
 	"github.com/RichardKnop/go-oauth2-server/models"
 	"github.com/RichardKnop/go-oauth2-server/session"
+	"github.com/RichardKnop/go-oauth2-server/util/response"
 	"github.com/gorilla/csrf"
 )
 
 func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
-	sessionService, client, _, responseType, _, err := s.authorizeCommon(r)
+	sessionService, client, _, wpuser, nickname, err := s.profileCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -25,78 +26,125 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	query.Set("login_redirect_uri", r.URL.Path)
 
+	profile := &Profile{
+		ID:          wpuser.ID,
+		Email:       wpuser.Email,
+		DisplayName: nickname,
+	}
+
+	initialState, err := json.Marshal(NewInitialState(
+		s.cnf,
+		client,
+		profile,
+	))
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	// Inject initial state into choo app
 	fragment := fmt.Sprintf(
-		`<script>window.initialState=JSON.parse('{"applicationName":"%s"}')</script>`,
-		client.ApplicationName.String,
+		`<script>window.initialState=JSON.parse('%s')</script>`,
+		string(initialState),
 	)
 
-	renderTemplate(w, "authorize.html", map[string]interface{}{
-		"error":           errMsg,
-		"clientID":        client.Key,
-		"applicationName": client.ApplicationName.String,
-		"queryString":     getQueryString(query),
-		"token":           responseType == "token",
-		"initialState":    template.HTML(fragment),
-		csrf.TemplateTag:  csrf.TemplateField(r),
-	})
+	switch r.Header.Get("Accept") {
+	case "application/json":
+		response.WriteJSON(w, profile, http.StatusCreated)
+	default:
+		renderTemplate(w, "profile.html", map[string]interface{}{
+			"error":           errMsg,
+			"clientID":        client.Key,
+			"applicationName": client.ApplicationName.String,
+			"profile":         profile,
+			"queryString":     getQueryString(query),
+			"initialState":    template.HTML(fragment),
+			csrf.TemplateTag:  csrf.TemplateField(r),
+		})
+	}
 }
 
-func (s *Service) profile(w http.ResponseWriter, r *http.Request) {
-	// _, client, user, responseType, redirectURI, err := s.authorizeCommon(r)
-	// if err != nil {
-	//	http.Error(w, err.Error(), http.StatusBadRequest)
-	//	return
-	//}
+func (s *Service) profileUpdate(w http.ResponseWriter, r *http.Request) {
+	sessionService, _, user, _, _, err := s.profileCommon(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-	// Get the state parameter
-	//state := r.Form.Get("state")
+	w.Header().Set("X-CSRF-Token", csrf.Token(r))
+
+	if s.oauthService.UpdateUsername(
+		user,
+		r.Form.Get("email"),
+	); err != nil {
+		switch r.Header.Get("Accept") {
+		case "application/json":
+			response.Error(w, err.Error(), http.StatusBadRequest)
+		default:
+			sessionService.SetFlashMessage(err.Error())
+			http.Redirect(w, r, r.RequestURI, http.StatusFound)
+		}
+		return
+	}
 }
 
-func (s *Service) profileCommon(r *http.Request) (session.ServiceInterface, *models.OauthClient, *models.OauthUser, string, *url.URL, error) {
+/**
+ * Soft delete profiles by setting deleted_at to current date
+ * Deletion will automatically happen after x days
+ */
+
+func (s *Service) profileDelete(w http.ResponseWriter, r *http.Request) {
+	_, _, _, _, _, err := s.profileCommon(r)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("X-CSRF-Token", csrf.Token(r))
+
+	// TODO
+}
+
+func (s *Service) profileCommon(r *http.Request) (
+	session.ServiceInterface,
+	*models.OauthClient,
+	*models.OauthUser,
+	*models.WpUser,
+	string,
+	error,
+) {
 	// Get the session service from the request context
 	sessionService, err := getSessionService(r)
 	if err != nil {
-		return nil, nil, nil, "", nil, err
+		return nil, nil, nil, nil, "", err
 	}
 
 	// Get the client from the request context
 	client, err := getClient(r)
 	if err != nil {
-		return nil, nil, nil, "", nil, err
+		return nil, nil, nil, nil, "", err
 	}
 
 	// Get the user session
 	userSession, err := sessionService.GetUserSession()
 	if err != nil {
-		return nil, nil, nil, "", nil, err
+		return nil, nil, nil, nil, "", err
 	}
 
 	// Fetch the user
-	user, _, err := s.oauthService.FindUserByUsername(
+	user, wpuser, err := s.oauthService.FindUserByUsername(
 		userSession.Username,
 	)
 	if err != nil {
-		return nil, nil, nil, "", nil, err
+		return nil, nil, nil, nil, "", err
 	}
 
-	// Check the response_type is either "code" or "token"
-	responseType := r.Form.Get("response_type")
-	if responseType != "code" && responseType != "token" {
-		return nil, nil, nil, "", nil, ErrIncorrectResponseType
-	}
-
-	// Fallback to the client redirect URI if not in query string
-	redirectURI := r.Form.Get("redirect_uri")
-	if redirectURI == "" {
-		redirectURI = client.RedirectURI.String
-	}
-
-	// // Parse the redirect URL
-	parsedRedirectURI, err := url.ParseRequestURI(redirectURI)
+	nickname, err := s.oauthService.FindNicknameByWpUserID(wpuser.ID)
 	if err != nil {
-		return nil, nil, nil, "", nil, err
+		return nil, nil, nil, nil, "", err
 	}
 
-	return sessionService, client, user, responseType, parsedRedirectURI, nil
+	return sessionService, client, user, wpuser, nickname, nil
 }

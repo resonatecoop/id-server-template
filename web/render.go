@@ -58,8 +58,9 @@ func loadTemplates() {
 
 	layoutTemplates := map[string][]string{
 		"web/layouts/outside.html": {
-			"./web/includes/register.html",
+			"./web/includes/join.html",
 			"./web/includes/login.html",
+			"./web/includes/password_reset.html",
 			"./web/includes/home.html",
 		},
 		"web/layouts/inside.html": {

@@ -9,7 +9,7 @@ import (
 	"github.com/gorilla/csrf"
 )
 
-func (s *Service) homeForm(w http.ResponseWriter, r *http.Request) {
+func (s *Service) passwordResetForm(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("X-CSRF-Token", csrf.Token(r))
 
 	initialState, _ := json.Marshal(map[string]interface{}{
@@ -22,9 +22,13 @@ func (s *Service) homeForm(w http.ResponseWriter, r *http.Request) {
 		string(initialState),
 	)
 
-	renderTemplate(w, "home.html", map[string]interface{}{
+	renderTemplate(w, "password_reset.html", map[string]interface{}{
 		"clients":        s.cnf.Clients,
 		"initialState":   template.HTML(fragment),
 		csrf.TemplateTag: csrf.TemplateField(r),
 	})
+}
+
+func (s *Service) passwordReset(w http.ResponseWriter, r *http.Request) {
+
 }
