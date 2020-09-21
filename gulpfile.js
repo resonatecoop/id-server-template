@@ -13,6 +13,9 @@ function javascript () {
     entries: './web/app/main.js',
     debug: true,
     transform: [
+      [
+        './web/app/lib/envlocalify', { NODE_ENV: 'development', global: true }
+      ],
       ['babelify', {
         presets: ['@babel/preset-env'],
         plugins: [
