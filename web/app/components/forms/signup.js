@@ -146,7 +146,9 @@ class Signup extends Component {
                 },
                 body: new URLSearchParams({
                   email: data.email.value,
-                  password: data.password.value
+                  password: data.password.value,
+                  display_name: data.display_name.value,
+                  login: data.login.value
                 })
               })
 
