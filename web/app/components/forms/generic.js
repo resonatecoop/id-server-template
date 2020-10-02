@@ -11,6 +11,7 @@ class Form extends Component {
     this.state = state
 
     this.local = state.components[id] = {}
+    this.local.submitted = false
   }
 
   createElement (props) {
@@ -70,7 +71,7 @@ class Form extends Component {
 
     const attrs = {
       novalidate: 'novalidate',
-      class: 'flex flex-column flex-auto ma0 pa0',
+      class: 'flex flex-column flex-auto',
       id: this.local.id,
       action: this.local.action,
       method: this.local.method,
@@ -84,19 +85,20 @@ class Form extends Component {
           if (isRequired) this.validate({ name, value })
         }
 
-        this.rerender()
-
         if (this.form.valid) {
           this.submit(e.target)
         }
+
+        this.rerender()
       }
     }
 
-    const submitButton = () => {
-      const attrs = {
-        class: 'bg-white dib grow ba bw b--near-black b pv2 ph4 flex-shrink-0 f5',
+    const submitButton = (props = {}) => {
+      const attrs = Object.assign({
+        disabled: false,
+        class: `bg-white dib ba bw b--near-black b pv2 ph4 flex-shrink-0 f5 ${props.disabled ? 'o-50' : 'grow'}`,
         type: 'submit'
-      }
+      }, props)
 
       return html`<button ${attrs}>${this.local.buttonText}</button>`
     }
@@ -112,7 +114,7 @@ class Form extends Component {
               ${this.local.altButton}
             </div>
             <div class="flex flex-auto justify-end pr1">
-              ${submitButton()}
+              ${submitButton({ disabled: this.local.submitted })}
             </div>
           </div>
         </form>

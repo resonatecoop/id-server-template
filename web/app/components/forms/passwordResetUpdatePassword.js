@@ -4,14 +4,13 @@ const html = require('choo/html')
 const Component = require('choo/component')
 const nanostate = require('nanostate')
 const Form = require('./generic')
-const isEmail = require('validator/lib/isEmail')
-const isEmpty = require('validator/lib/isEmpty')
 const isLength = require('validator/lib/isLength')
+const isEmpty = require('validator/lib/isEmpty')
 const validateFormdata = require('validate-formdata')
 const PasswordMeter = require('../password-meter')
 const zxcvbnAsync = require('zxcvbn-async')
 
-class Signup extends Component {
+class PasswordResetUpdatePassword extends Component {
   constructor (id, state, emit) {
     super(id)
 
@@ -34,6 +33,8 @@ class Signup extends Component {
     })
 
     this.local.error = {}
+    this.local.success = {}
+    this.local.data = {}
 
     this.local.machine.on('request:error', () => {
       if (this.element) this.rerender()
@@ -64,6 +65,8 @@ class Signup extends Component {
   }
 
   createElement (props) {
+    this.local.token = props.token
+
     const message = {
       loading: html`<p class="status w-100 pa1">Loading...</p>`,
       error: html`<p class="status bg-yellow w-100 black pa1">${this.local.error.message}</p>`,
@@ -74,15 +77,13 @@ class Signup extends Component {
     return html`
       <div class="flex flex-column flex-auto">
         ${message}
-        ${this.state.cache(Form, 'signup-form').render({
-          id: 'signup',
+        ${this.state.cache(Form, 'password-form').render({
+          id: 'password-reset-update-password',
           method: 'POST',
           action: '',
-          buttonText: 'Sign up',
-          altButton: html`
-            <p class="f5 lh-copy">Already have an account? <a class="link b" href="/login">Log In</a>.</p>
-          `,
+          buttonText: 'Update your password',
           validate: (props) => {
+            this.local.data[props.name] = props.value
             this.validator.validate(props.name, props.value)
             this.rerender()
           },
@@ -96,12 +97,9 @@ class Signup extends Component {
           },
           fields: [
             {
-              type: 'email',
-              placeholder: 'E-mail'
-            },
-            {
               type: 'password',
-              placeholder: 'Password',
+              name: 'password_new',
+              placeholder: 'New password',
               help: (value) => {
                 return this.state.cache(PasswordMeter, 'password-meter').render({
                   password: value
@@ -109,16 +107,9 @@ class Signup extends Component {
               }
             },
             {
-              type: 'text',
-              name: 'login',
-              placeholder: 'Username',
-              help: html`<p class="ma0 mt1 lh-copy f7">Can be used to login to your profile</p>`
-            },
-            {
-              type: 'text',
-              name: 'display_name',
-              placeholder: 'Name',
-              help: html`<p class="ma0 mt1 lh-copy f7">Your artist name, nickname or label name</p>`
+              type: 'password',
+              name: 'password_confirm',
+              placeholder: 'Password confirmation'
             }
           ],
           submit: async (data) => {
@@ -137,19 +128,20 @@ class Signup extends Component {
 
               const csrfToken = response.headers.get('X-CSRF-Token')
 
+              const payload = {
+                token: this.local.token,
+                password_new: data.password_new.value,
+                password_confirm: data.password_confirm.value
+              }
+
               response = await fetch('', {
-                method: 'POST',
+                method: 'PUT',
                 credentials: 'include',
                 headers: {
                   Accept: 'application/json',
                   'X-CSRF-Token': csrfToken
                 },
-                body: new URLSearchParams({
-                  email: data.email.value,
-                  password: data.password.value,
-                  display_name: data.display_name.value,
-                  login: data.login.value
-                })
+                body: new URLSearchParams(payload)
               })
 
               const isRedirected = response.redirected
@@ -169,7 +161,10 @@ class Signup extends Component {
                 return this.local.machine.emit('request:error')
               }
 
-              if (status === 201) {
+              const { message } = await response.json()
+
+              if (status === 202) {
+                this.emit('notify', { message })
                 this.emit(this.state.events.PUSHSTATE, '/login')
               }
 
@@ -194,15 +189,7 @@ class Signup extends Component {
       libIntegrity: 'sha256-9CxlH0BQastrZiSQ8zjdR6WVHTMSA5xKuP5QkEhPNRo='
     })
 
-    this.validator.field('email', (data) => {
-      if (isEmpty(data)) {
-        return new Error('Please tell us your email address')
-      }
-      if (!isEmail(data)) {
-        return new Error('This is not a valid email address')
-      }
-    })
-    this.validator.field('password', (data) => {
+    this.validator.field('password_new', (data) => {
       if (isEmpty(data)) {
         return new Error('A strong password is very important')
       }
@@ -217,21 +204,9 @@ class Signup extends Component {
         return new Error('Password length should not be more than 72 characters')
       }
     })
-    this.validator.field('display_name', (data) => {
-      if (isEmpty(data)) {
-        return new Error('What is your name?')
-      }
-      if (!isLength(data, { max: 50 })) {
-        return new Error('The name can\'t be longer than 50 characters')
-      }
-    })
-    this.validator.field('login', (data) => {
-      if (isEmpty(data)) {
-        return new Error('An username is required')
-      }
-      if (!isLength(data, { max: 60 })) {
-        return new Error('Username name is too long')
-      }
+    this.validator.field('password_confirm', (data) => {
+      if (isEmpty(data)) return new Error('Password confirmation is required')
+      if (data !== this.local.data.password_new) return new Error('Password mismatch')
     })
   }
 
@@ -240,4 +215,4 @@ class Signup extends Component {
   }
 }
 
-module.exports = Signup
+module.exports = PasswordResetUpdatePassword

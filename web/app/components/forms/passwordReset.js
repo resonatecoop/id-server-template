@@ -8,7 +8,7 @@ const isEmail = require('validator/lib/isEmail')
 const isEmpty = require('validator/lib/isEmpty')
 const validateFormdata = require('validate-formdata')
 
-class Password extends Component {
+class PasswordReset extends Component {
   constructor (id, state, emit) {
     super(id)
 
@@ -31,6 +31,7 @@ class Password extends Component {
     })
 
     this.local.error = {}
+    this.local.success = {}
 
     this.local.machine.on('request:error', () => {
       if (this.element) this.rerender()
@@ -62,9 +63,9 @@ class Password extends Component {
 
   createElement (props) {
     const message = {
-      loading: html`<p class="status white w-100 pa2">Loading...</p>`,
+      loading: html`<p class="status w-100 pa1">Loading...</p>`,
       error: html`<p class="status bg-yellow w-100 black pa1">${this.local.error.message}</p>`,
-      data: '',
+      data: html`<p class="w-100 pa1">${this.local.success.message}</p>`,
       noResults: html`<p class="status bg-yellow w-100 black pa1">An error occured.</p>`
     }[this.local.machine.state.request]
 
@@ -72,7 +73,7 @@ class Password extends Component {
       <div class="flex flex-column flex-auto">
         ${message}
         ${this.state.cache(Form, 'password-form').render({
-          id: 'password',
+          id: 'password-reset',
           method: 'POST',
           action: '',
           buttonText: 'Reset my password',
@@ -111,6 +112,8 @@ class Password extends Component {
 
               const csrfToken = response.headers.get('X-CSRF-Token')
 
+              const payload = { email: data.email.value }
+
               response = await fetch('', {
                 method: 'POST',
                 credentials: 'include',
@@ -118,9 +121,7 @@ class Password extends Component {
                   Accept: 'application/json',
                   'X-CSRF-Token': csrfToken
                 },
-                body: new URLSearchParams({
-                  email: data.email.value
-                })
+                body: new URLSearchParams(payload)
               })
 
               const isRedirected = response.redirected
@@ -140,11 +141,13 @@ class Password extends Component {
                 return this.local.machine.emit('request:error')
               }
 
-              if (status === 201) {
-                this.emit(this.state.events.PUSHSTATE, '/login')
-              }
+              const { message } = await response.json()
 
-              this.machine.emit('request:resolve')
+              this.local.success.message = message
+
+              this.local.machine.emit('request:resolve')
+
+              this.rerender()
             } catch (err) {
               this.local.error.message = err.message
               this.local.machine.emit('request:reject')
@@ -170,4 +173,4 @@ class Password extends Component {
   }
 }
 
-module.exports = Password
+module.exports = PasswordReset

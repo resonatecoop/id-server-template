@@ -6,6 +6,7 @@ import (
 
 	"github.com/RichardKnop/go-oauth2-server/util"
 	"github.com/RichardKnop/uuid"
+	"github.com/form3tech-oss/jwt-go"
 	"github.com/jinzhu/gorm"
 )
 
@@ -17,6 +18,7 @@ type OauthClient struct {
 	RedirectURI         sql.NullString `sql:"type:varchar(200)"`
 	ApplicationName     sql.NullString `sql:"type:varchar(200)"`
 	ApplicationHostname sql.NullString `sql:"type:varchar(200)"`
+	ApplicationURL      sql.NullString `sql:"type:varchar(200)"`
 }
 
 // TableName specifies table name
@@ -52,29 +54,11 @@ func (r *OauthRole) TableName() string {
 // OauthUser ...
 type OauthUser struct {
 	MyGormModel
-	RoleID   sql.NullString `sql:"type:varchar(20);index;not null"`
-	Role     *OauthRole
-	Username string         `sql:"type:varchar(254);unique;not null"`
-	Password sql.NullString `sql:"type:varchar(60)"`
-}
-
-// WpUser ...
-type WpUser struct {
-	ID          uint64         `gorm:"column:ID;primary_key;auto_increment;not_null"`
-	Email       string         `gorm:"column:user_email" sql:"type:varchar(100);unique;not null"`
-	Login       string         `gorm:"column:user_login" sql:"type:varchar(60)"`
-	Registered  time.Time      `gorm:"column:user_registered" sql:"type:datetime"`
-	Nicename    string         `gorm:"column:user_nicename" sql:"type:varchar(50)"`
-	DisplayName string         `gorm:"column:display_name" sql:"type:varchar(250)"`
-	Password    sql.NullString `gorm:"column:user_pass" sql:"type:varchar(255)"`
-}
-
-// UserMeta ...
-type WpUserMeta struct {
-	ID        uint64 `gorm:"column:umeta_id;primary_key;auto_increment;not_null"`
-	UserId    uint64 `gorm:"column:user_id" sql:"not null"`
-	MetaKey   string `gorm:"column:meta_key" sql:"type:varchar(255)"`
-	MetaValue string `gorm:"column:meta_value" sql:"type:longtext"`
+	RoleID         sql.NullString `sql:"type:varchar(20);index;not null"`
+	Role           *OauthRole
+	Username       string         `sql:"type:varchar(254);unique;not null"`
+	Password       sql.NullString `sql:"type:varchar(60)"`
+	EmailConfirmed bool           `sql:"default:false;not null"`
 }
 
 // TableName specifies table name
@@ -132,6 +116,45 @@ type OauthAuthorizationCode struct {
 // TableName specifies table name
 func (ac *OauthAuthorizationCode) TableName() string {
 	return "oauth_authorization_codes"
+}
+
+// TableName specifies table name
+func (ac *EmailTokenModel) TableName() string {
+	return "oauth_email_tokens"
+}
+
+// NewEmailToken creates new OauthEmailToken instance
+func NewOauthEmailToken(expiresIn *time.Duration) *EmailTokenModel {
+	return &EmailTokenModel{
+		MyGormModel: MyGormModel{
+			ID:        uuid.New(),
+			CreatedAt: time.Now().UTC(),
+		},
+		Reference: uuid.New(),
+		EmailSent: false,
+		ExpiresAt: time.Now().UTC().Add(*expiresIn),
+	}
+}
+
+// NewOauthEmailTokenClaims creates new NewOauthEmailTokenClaims instance
+func NewOauthEmailTokenClaims(email string, emailToken *EmailTokenModel) *EmailTokenClaimsModel {
+	return &EmailTokenClaimsModel{
+		Username:  email,
+		Reference: emailToken.Reference,
+		StandardClaims: jwt.StandardClaims{
+			// In JWT, the expiry time is expressed as unix milliseconds
+			ExpiresAt: emailToken.ExpiresAt.Unix(),
+		},
+	}
+}
+
+// NewOauthEmail
+func NewOauthEmail(email, subject, template string) *MailgunEmailModel {
+	return &MailgunEmailModel{
+		Recipient: email,
+		Subject:   subject,
+		Template:  template,
+	}
 }
 
 // NewOauthRefreshToken creates new OauthRefreshToken instance

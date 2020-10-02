@@ -4,17 +4,30 @@ const html = require('choo/html')
 const Authorize = require('./components/forms/authorize')
 const Login = require('./components/forms/login')
 const Signup = require('./components/forms/signup')
-const Password = require('./components/forms/password')
+const PasswordReset = require('./components/forms/passwordReset')
+const PasswordResetUpdatePassword = require('./components/forms/passwordResetUpdatePassword')
 const UpdateProfileForm = require('./components/forms/profile')
 const UpdatePasswordForm = require('./components/forms/passwordUpdate')
+const Notifications = require('./components/notifications')
 const imagePlaceholder = require('./lib/image-placeholder')
 const Dialog = require('@resonate/dialog-component')
 const Button = require('@resonate/button-component')
-
+const { isBrowser } = require('browser-or-node')
 const setTitle = require('./lib/title')
 
-if (process.env.NODE_ENV !== 'production') {
-  app.use(require('choo-devtools')())
+if (isBrowser) {
+  require('web-animations-js/web-animations.min')
+
+  window.localStorage.DISABLE_NANOTIMING = process.env.DISABLE_NANOTIMING === 'yes'
+  window.localStorage.logLevel = process.env.LOG_LEVEL
+
+  if (process.env.NODE_ENV !== 'production') {
+    app.use(require('choo-devtools')())
+  }
+
+  if ('Notification' in window) {
+    app.use(require('choo-notification')())
+  }
 }
 
 app.use(require('choo-meta')())
@@ -22,14 +35,18 @@ app.use(require('choo-meta')())
 app.use((state, emitter) => {
   state.clients = state.clients || [
     {
-      connectUrl: 'https://upload.resonate.localhost/api/user/connect/resonate',
+      connectUrl: 'https://upload.resonate.is/api/user/connect/resonate',
       name: 'Upload Tool',
       description: 'for creators'
     }
   ]
   state.profile = state.profile || {
-    displayName: 'Test'
+    displayName: ''
   }
+
+  emitter.on(state.events.DOMCONTENTLOADED, () => {
+    setMeta()
+  })
 
   emitter.on(state.events.NAVIGATE, () => {
     setMeta()
@@ -37,8 +54,12 @@ app.use((state, emitter) => {
 
   function setMeta () {
     const title = {
-      '*': 'Login',
+      '*': 'Page not found',
+      '/': 'Apps',
+      login: 'Log In',
       authorize: 'Authorize',
+      profile: 'Profile',
+      'password-reset': 'Password reset',
       join: 'Join'
     }[state.route]
 
@@ -52,6 +73,50 @@ app.use((state, emitter) => {
       title: fullTitle
     })
   }
+})
+
+app.use((state, emitter) => {
+  state.messages = state.messages || []
+
+  emitter.on(state.events.DOMCONTENTLOADED, _ => {
+    emitter.on('notification:denied', () => {
+      emitter.emit('notify', {
+        type: 'warning',
+        timeout: 6000,
+        message: 'Notifications are blocked, you should modify your browser site settings'
+      })
+    })
+
+    emitter.on('notification:granted', () => {
+      emitter.emit('notify', {
+        type: 'success',
+        message: 'Notifications are enabled'
+      })
+    })
+
+    emitter.on('notify', (props) => {
+      const { message } = props
+
+      if (!state.notification.permission) {
+        const dialog = document.querySelector('dialog')
+        const name = dialog ? 'notifications' : 'notifications-dialog'
+        const notifications = state.cache(Notifications, name)
+        const host = props.host || (dialog || document.body)
+
+        if (notifications.element) {
+          notifications.add(props)
+        } else {
+          const el = notifications.render({
+            size: dialog ? 'small' : 'default'
+          })
+          host.insertBefore(el, host.firstChild)
+          notifications.add(props)
+        }
+      } else {
+        emitter.emit('notification:new', message)
+      }
+    })
+  })
 })
 
 const layout = (view) => {
@@ -164,12 +229,27 @@ app.route('/apps/create', layoutNarrow((state, emit) => {
 }))
 
 app.route('/password-reset', layoutNarrow((state, emit) => {
-  const passwordReset = state.cache(Password, 'password')
+  const passwordReset = state.cache(PasswordReset, 'password-reset')
+  const passwordResetUpdatePassword = state.cache(PasswordResetUpdatePassword, 'password-reset-update')
 
   return html`
     <div class="flex flex-column">
       <h2 class="f3 fw1 mt3 near-black near-black--light light-gray--dark lh-title">Reset your password</h2>
-      ${passwordReset.render()}
+
+      ${state.query.token ? passwordResetUpdatePassword.render({
+        token: state.query.token
+      }) : passwordReset.render()}
+    </div>
+  `
+}))
+
+/**
+ * Note: keep this as placeholder ?
+ */
+
+app.route('/email-confirmation', layoutNarrow((state, emit) => {
+  return html`
+    <div class="flex flex-column">
     </div>
   `
 }))

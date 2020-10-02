@@ -10,8 +10,10 @@
             <svg viewBox="0 0 16 16" class="icon icon-logo icon--sm icon icon--lg fill-black fill-white--dark fill-black--light"><use xlink:href="#icon-logo"></use></svg>
             <div class="flex flex-column">
               <h2 class="f3 fw1 mt3 near-black near-black--light light-gray--dark lh-title">Join now</h2>
-              {{ if .error }}
-              <p class="text-danger">{{ .error }}</p>
+              {{ if .flash }}
+              <div>
+                <p{{ if eq .flash.Type "Error" }} class="red"{{ end }}>{{ .flash.Message }}</p>
+              </div>
               {{ end }}
               <div class="flex flex-column flex-auto">
                 <div class="flex flex-column flex-auto">

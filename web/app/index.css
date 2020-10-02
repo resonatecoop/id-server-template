@@ -1,4 +1,5 @@
 @import '@resonate/tachyons';
+@import './components/notifications/index.css';
 
 .dropdown-navigation li {
   position: relative;

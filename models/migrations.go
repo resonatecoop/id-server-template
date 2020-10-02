@@ -13,6 +13,14 @@ var (
 			Name:     "initial",
 			Function: migrate0001,
 		},
+		{
+			Name:     "run_auto_migrate_clients_and_users",
+			Function: migrate0002,
+		},
+		{
+			Name:     "email_tokens",
+			Function: migrate0003,
+		},
 	}
 )
 
@@ -105,5 +113,31 @@ func migrate0001(db *gorm.DB, name string) error {
 			"oauth_authorization_codes.user_id for oauth_users(id): %s", err)
 	}
 
+	return nil
+}
+
+func migrate0002(db *gorm.DB, name string) error {
+	// Auto migrate clients table
+	// Added application_name,application_hostname,application_url columns
+	if err := db.AutoMigrate(&OauthClient{}).Error; err != nil {
+		return fmt.Errorf("Error while auto migrating oauth client table: %s", err)
+	}
+	// Auto migrate clients table
+	// Added email_confirmed column
+	if err := db.AutoMigrate(&OauthUser{}).Error; err != nil {
+		return fmt.Errorf("Error while auto migrating oauth user table: %s", err)
+	}
+	return nil
+}
+
+func migrate0003(db *gorm.DB, name string) error {
+	//-------------
+	// OAUTH models
+	//-------------
+
+	// Create tables
+	if err := db.CreateTable(new(EmailTokenModel)).Error; err != nil {
+		return fmt.Errorf("Error creating oauth_email_tokens table: %s", err)
+	}
 	return nil
 }

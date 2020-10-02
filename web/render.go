@@ -61,10 +61,12 @@ func loadTemplates() {
 			"./web/includes/join.html",
 			"./web/includes/login.html",
 			"./web/includes/password_reset.html",
+			"./web/includes/password_reset_update_password.html",
 			"./web/includes/home.html",
 		},
 		"web/layouts/inside.html": {
 			"./web/includes/authorize.html",
+			"./web/includes/client.html",
 			"./web/includes/profile.html",
 		},
 	}

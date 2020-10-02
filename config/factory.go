@@ -17,6 +17,7 @@ var (
 // Cnf ...
 // Let's start with some sensible defaults
 var Cnf = &Config{
+	Hostname: "id.resonate.coop",
 	CSRF: CSRFConfig{
 		Key:     "",
 		Origins: "upload.resonate.is",
@@ -62,10 +63,11 @@ var Cnf = &Config{
 			Description: "for creators",
 		},
 	},
-	IsDevelopment:  true,
-	Port:           ":8080",
-	ApplicationURL: "https://upload.resonate.is",
-	Origins:        []string{"upload.resonate.is", "beta.stream.resonate.is"},
+	IsDevelopment:       true,
+	Port:                ":8080",
+	ApplicationURL:      "https://upload.resonate.is",
+	Origins:             []string{"upload.resonate.is", "beta.stream.resonate.is"},
+	EmailTokenSecretKey: "super secret key",
 }
 
 // NewConfig loads configuration from etcd and returns *Config struct

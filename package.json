@@ -55,9 +55,11 @@
     "@resonate/tachyons": "^1.3.4",
     "@resonate/theme-skins": "^1.1.2",
     "babel-polyfill": "^6.26.0",
+    "browser-or-node": "^1.3.0",
     "choo": "^7.0.0",
     "choo-devtools": "^3.0.3",
     "choo-meta": "^2.0.0",
+    "choo-notification": "^1.0.0",
     "classnames": "^2.2.6",
     "dotenv": "^8.2.0",
     "is-equal-shallow": "^0.1.3",
@@ -67,8 +69,10 @@
     "nanologger": "^2.0.0",
     "nanostate": "^1.2.1",
     "on-intersect": "^2.0.0",
+    "shallow-clone": "^3.0.1",
     "validate-formdata": "^2.1.0",
     "validator": "^12.0.0",
+    "web-animations-js": "^2.3.2",
     "zxcvbn-async": "0.0.6"
   },
   "devDependencies": {

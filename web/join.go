@@ -6,11 +6,13 @@ import (
 	"html/template"
 	"net/http"
 
-	"github.com/RichardKnop/go-oauth2-server/util/mailer"
-	"github.com/RichardKnop/go-oauth2-server/util/response"
-	"github.com/gorilla/csrf"
-
+	"github.com/RichardKnop/go-oauth2-server/log"
+	"github.com/RichardKnop/go-oauth2-server/models"
 	"github.com/RichardKnop/go-oauth2-server/oauth/roles"
+	"github.com/RichardKnop/go-oauth2-server/session"
+	"github.com/RichardKnop/go-oauth2-server/util/response"
+
+	"github.com/gorilla/csrf"
 )
 
 func (s *Service) joinForm(w http.ResponseWriter, r *http.Request) {
@@ -34,9 +36,9 @@ func (s *Service) joinForm(w http.ResponseWriter, r *http.Request) {
 	)
 
 	// Render the template
-	errMsg, _ := sessionService.GetFlashMessage()
+	flash, _ := sessionService.GetFlashMessage()
 	renderTemplate(w, "join.html", map[string]interface{}{
-		"error":          errMsg,
+		"flash":          flash,
 		"initialState":   template.HTML(fragment),
 		"queryString":    getQueryString(r.URL.Query()),
 		csrf.TemplateTag: csrf.TemplateField(r),
@@ -52,45 +54,82 @@ func (s *Service) join(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create a user
-	_, _, err = s.oauthService.CreateUser(
-		roles.User,                 // role ID
-		r.Form.Get("email"),        // username
-		r.Form.Get("password"),     // password
-		r.Form.Get("login"),        // wp login
-		r.Form.Get("display_name"), // wp display name
-	)
+	_, wpuser, err := s.createUserAndWpUser(r)
+
 	if err != nil {
 		switch r.Header.Get("Accept") {
 		case "application/json":
 			response.Error(w, err.Error(), http.StatusBadRequest)
 		default:
-			sessionService.SetFlashMessage(err.Error())
+			sessionService.SetFlashMessage(&session.Flash{
+				Type:    "Error",
+				Message: err.Error(),
+			})
 			http.Redirect(w, r, r.RequestURI, http.StatusFound)
 		}
 		return
 	}
 
-	recipient := r.Form.Get("email")
-
-	_, _, err = mailer.Send(s.cnf, recipient, "signup")
-
-	if err != nil {
-		sessionService.SetFlashMessage(err.Error())
-		http.Redirect(w, r, r.RequestURI, http.StatusFound)
-		return
-	}
+	message := fmt.Sprintf(
+		"A confirmation email will be sent to %s", wpuser.Email,
+	)
 
 	if r.Header.Get("Accept") == "application/json" {
-		message := fmt.Sprintf(
-			"A confirmation email has been sent to %s", recipient,
-		)
 		obj := map[string]interface{}{
 			"message": message,
 			"status":  http.StatusCreated,
 		}
 		response.WriteJSON(w, obj, http.StatusCreated)
 	} else {
-		// Redirect to the login page
+		sessionService.SetFlashMessage(&session.Flash{
+			Type:    "Error",
+			Message: err.Error(),
+		})
 		redirectWithQueryString("/web/login", r.URL.Query(), w, r)
 	}
+
+	_, err = s.oauthService.SendEmailToken(
+		models.NewOauthEmail(
+			r.Form.Get("email"), // Recipient
+			"Member details",    // Subject
+			"signup",            // Template (mailgun)
+		),
+		fmt.Sprintf(
+			"https://%s/email-confirmation",
+			s.cnf.Hostname,
+		),
+	)
+
+	if err != nil {
+		log.ERROR.Print(err)
+	}
+}
+
+func (s *Service) createUserAndWpUser(r *http.Request) (
+	*models.OauthUser,
+	*models.WpUser,
+	error,
+) {
+	wpuser, err := s.oauthService.CreateWpUser(
+		r.Form.Get("email"),        // username
+		r.Form.Get("password"),     // password
+		r.Form.Get("login"),        // wp login
+		r.Form.Get("display_name"), // wp display name
+	)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	user, err := s.oauthService.CreateUser(
+		roles.User,             // role ID
+		r.Form.Get("email"),    // username
+		r.Form.Get("password"), // password
+	)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return user, wpuser, nil
 }

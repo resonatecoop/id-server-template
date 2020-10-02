@@ -11,6 +11,11 @@ import (
 	"github.com/gorilla/csrf"
 )
 
+type Credentials struct {
+	Login    string
+	Password string
+}
+
 func (s *Service) loginForm(w http.ResponseWriter, r *http.Request) {
 	// Get the session service from the request context
 	sessionService, err := getSessionService(r)
@@ -31,10 +36,10 @@ func (s *Service) loginForm(w http.ResponseWriter, r *http.Request) {
 		string(initialState),
 	)
 
-	// Render the template
-	errMsg, _ := sessionService.GetFlashMessage()
+	flash, _ := sessionService.GetFlashMessage()
+
 	renderTemplate(w, "login.html", map[string]interface{}{
-		"error":          errMsg,
+		"flash":          flash,
 		"queryString":    getQueryString(r.URL.Query()),
 		"initialState":   template.HTML(fragment),
 		csrf.TemplateTag: csrf.TemplateField(r),
@@ -56,10 +61,15 @@ func (s *Service) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	creds := &Credentials{
+		Login:    r.Form.Get("email"),
+		Password: r.Form.Get("password"),
+	}
+
 	// Authenticate the user
 	user, err := s.oauthService.AuthUser(
-		r.Form.Get("email"),    // username
-		r.Form.Get("password"), // password
+		creds.Login,    // email/username
+		creds.Password, // password
 	)
 
 	if err != nil {
@@ -67,7 +77,10 @@ func (s *Service) login(w http.ResponseWriter, r *http.Request) {
 		case "application/json":
 			response.Error(w, err.Error(), http.StatusBadRequest)
 		default:
-			sessionService.SetFlashMessage(err.Error())
+			sessionService.SetFlashMessage(&session.Flash{
+				Type:    "Error",
+				Message: err.Error(),
+			})
 			http.Redirect(w, r, r.RequestURI, http.StatusFound)
 		}
 		return
@@ -76,7 +89,10 @@ func (s *Service) login(w http.ResponseWriter, r *http.Request) {
 	// Get the scope string
 	scope, err := s.oauthService.GetScope(r.Form.Get("scope"))
 	if err != nil {
-		sessionService.SetFlashMessage(err.Error())
+		sessionService.SetFlashMessage(&session.Flash{
+			Type:    "Error",
+			Message: err.Error(),
+		})
 		http.Redirect(w, r, r.RequestURI, http.StatusFound)
 		return
 	}
@@ -88,7 +104,10 @@ func (s *Service) login(w http.ResponseWriter, r *http.Request) {
 		scope,
 	)
 	if err != nil {
-		sessionService.SetFlashMessage(err.Error())
+		sessionService.SetFlashMessage(&session.Flash{
+			Type:    "Error",
+			Message: err.Error(),
+		})
 		http.Redirect(w, r, r.RequestURI, http.StatusFound)
 		return
 	}
@@ -101,7 +120,10 @@ func (s *Service) login(w http.ResponseWriter, r *http.Request) {
 		RefreshToken: refreshToken.Token,
 	}
 	if err := sessionService.SetUserSession(userSession); err != nil {
-		sessionService.SetFlashMessage(err.Error())
+		sessionService.SetFlashMessage(&session.Flash{
+			Type:    "Error",
+			Message: err.Error(),
+		})
 		http.Redirect(w, r, r.RequestURI, http.StatusFound)
 		return
 	}

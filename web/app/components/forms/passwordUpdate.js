@@ -1,6 +1,8 @@
+/* global fetch */
+
 const html = require('choo/html')
 const Component = require('choo/component')
-const input = require('@resonate/input-element')
+const Form = require('./generic')
 const Button = require('@resonate/button-component')
 const messages = require('./messages')
 const Dialog = require('@resonate/dialog-component')
@@ -11,7 +13,6 @@ const isEmpty = require('validator/lib/isEmpty')
 const isLength = require('validator/lib/isLength')
 const validateFormdata = require('validate-formdata')
 const nanostate = require('nanostate')
-const inputField = require('../../elements/input-field')
 
 class UpdatePasswordForm extends Component {
   constructor (id, state, emit) {
@@ -155,11 +156,7 @@ class UpdatePasswordForm extends Component {
     this.local.form = this.validator.state
   }
 
-  createElement () {
-    const pristine = this.local.form.pristine
-    const errors = this.local.form.errors
-    const values = this.local.form.values
-
+  createElement (props) {
     const submitButton = new Button('update-profile-button', this.state, this.emit)
     const disabled = (this.local.machine.state.form === 'submitted' && this.local.form.valid) || !this.local.form.changed
 
@@ -171,63 +168,102 @@ class UpdatePasswordForm extends Component {
           e.preventDefault()
           this.local.machine.emit('form:submit')
         }}>
-          <fieldset id="change_password" class="ma0 pa0 bn flex flex-column w-100">
-            <legend class="f3 mb3">Change password</legend>
-
-            ${inputField(input({
-              name: 'password',
-              type: 'password',
-              required: true,
-              invalid: errors.password && !pristine.password,
-              value: values.password,
-              onchange: (e) => {
-                this.validator.validate(e.target.name, e.target.value)
-                this.local.data[e.target.name] = e.target.value
-                this.rerender()
+          ${this.state.cache(Form, 'password-update-form').render({
+            id: 'password',
+            method: 'POST',
+            action: '',
+            buttonText: 'Update my password',
+            validate: (props) => {
+              this.local.data[props.name] = props.value
+              this.validator.validate(props.name, props.value)
+              this.rerender()
+            },
+            form: this.form || {
+              changed: false,
+              valid: true,
+              pristine: {},
+              required: {},
+              values: {},
+              errors: {}
+            },
+            fields: [
+              {
+                type: 'password',
+                name: 'password',
+                placeholder: 'Current password'
+              },
+              {
+                type: 'password',
+                name: 'password_new',
+                placeholder: 'New password'
+              },
+              {
+                type: 'password',
+                name: 'password_confirm',
+                placeholder: 'Password confirmation'
               }
-            }), this.local.form)({
-              prefix: 'mb3',
-              labelText: 'Current password',
-              inputName: 'password',
-              displayErrors: true
-            })}
-
-            ${inputField(input({
-              name: 'password_new',
-              required: true,
-              invalid: errors.password_new && !pristine.password_new,
-              type: 'password',
-              value: values.password_new,
-              onchange: (e) => {
-                this.validator.validate(e.target.name, e.target.value)
-                this.local.data[e.target.name] = e.target.value
-                this.rerender()
+            ],
+            submit: async (data) => {
+              if (this.local.machine.state === 'loading') {
+                return
               }
-            }), this.local.form)({
-              prefix: 'mb3',
-              labelText: 'New password',
-              inputName: 'password_new',
-              displayErrors: true
-            })}
 
-            ${inputField(input({
-              name: 'password_confirm',
-              required: true,
-              invalid: errors.password_confirm && !pristine.password_confirm,
-              type: 'password',
-              value: values.password_confirm,
-              onchange: (e) => {
-                this.validator.validate(e.target.name, e.target.value)
-                this.local.data[e.target.name] = e.target.value
-                this.rerender()
+              const loaderTimeout = setTimeout(() => {
+                this.local.machine.emit('loader:toggle')
+              }, 1000)
+
+              try {
+                this.local.machine.emit('request:start')
+
+                let response = await fetch('')
+
+                const csrfToken = response.headers.get('X-CSRF-Token')
+
+                response = await fetch('', {
+                  method: 'POST',
+                  credentials: 'include',
+                  headers: {
+                    Accept: 'application/json',
+                    'X-CSRF-Token': csrfToken
+                  },
+                  body: new URLSearchParams({
+                    password: data.password.value,
+                    password_new: data.password_new.value,
+                    password_confirm: data.password_confirm.value
+                  })
+                })
+
+                const isRedirected = response.redirected
+
+                if (isRedirected) {
+                  window.location.href = response.url
+                }
+
+                this.local.machine.state.loader === 'on' && this.local.machine.emit('loader:toggle')
+
+                const status = response.status
+                const contentType = response.headers.get('content-type')
+
+                if (status >= 400 && contentType && contentType.indexOf('application/json') !== -1) {
+                  const { error } = await response.json()
+                  this.local.error.message = error
+                  return this.local.machine.emit('request:error')
+                }
+
+                if (status === 201) {
+                  this.emit(this.state.events.PUSHSTATE, '/login')
+                }
+
+                this.machine.emit('request:resolve')
+              } catch (err) {
+                this.local.error.message = err.message
+                this.local.machine.emit('request:reject')
+                this.emit('error', err)
+              } finally {
+                clearTimeout(loaderTimeout)
               }
-            }), this.local.form)({
-              prefix: 'mb3',
-              labelText: 'Password verification',
-              inputName: 'password_confirm',
-              displayErrors: true
-            })}
-          </fieldset>
+            }
+          })}
 
           ${submitButton.render({
             type: 'submit',
@@ -243,7 +279,7 @@ class UpdatePasswordForm extends Component {
   }
 
   load () {
-    this.validator.field('password', (data) => {
+    this.validator.field('password', { required: !!this.local.token }, (data) => {
       if (isEmpty(data)) return new Error('Current password is required')
       if (new RegExp(/[À-ÖØ-öø-ÿ]/).test(data)) return new Error('Current password contain unsupported characters. You should ask for a password reset.')
     })

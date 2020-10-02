@@ -29,7 +29,7 @@ func (s *Service) authorizeForm(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("X-CSRF-Token", csrfToken)
 
 	// Render the template
-	errMsg, _ := sessionService.GetFlashMessage()
+	flash, _ := sessionService.GetFlashMessage()
 	query := r.URL.Query()
 	query.Set("login_redirect_uri", r.URL.Path)
 
@@ -57,7 +57,7 @@ func (s *Service) authorizeForm(w http.ResponseWriter, r *http.Request) {
 	)
 
 	renderTemplate(w, "authorize.html", map[string]interface{}{
-		"error":           errMsg,
+		"flash":           flash,
 		"clientID":        client.Key,
 		"applicationName": client.ApplicationName.String,
 		"queryString":     getQueryString(query),
@@ -183,7 +183,15 @@ func (s *Service) authorizeCommon(r *http.Request) (
 	}
 
 	// Fetch the user
-	user, wpuser, err := s.oauthService.FindUserByUsername(
+	user, err := s.oauthService.FindUserByUsername(
+		userSession.Username,
+	)
+	if err != nil {
+		return nil, nil, nil, nil, "", "", nil, err
+	}
+
+	// Fetch the user
+	wpuser, err := s.oauthService.FindWpUserByEmail(
 		userSession.Username,
 	)
 	if err != nil {

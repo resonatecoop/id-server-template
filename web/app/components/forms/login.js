@@ -97,7 +97,7 @@ class Login extends Component {
           placeholder: 'Password',
           help: html`
             <div class="flex justify-end">
-              <a href="/password-reset/" class="link underline lightGrey f7 ma0 mt1">
+              <a href="/password-reset" class="link underline lightGrey f7 ma0 mt1">
                 Forgot your password?
               </a>
             </div>

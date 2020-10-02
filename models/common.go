@@ -1,6 +1,7 @@
 package models
 
 import (
+	"github.com/form3tech-oss/jwt-go"
 	"time"
 )
 
@@ -27,4 +28,16 @@ type EmailTokenModel struct {
 	EmailSent   bool   `sql:"index;not null"`
 	EmailSentAt *time.Time
 	ExpiresAt   time.Time `sql:"index;not null"`
+}
+
+type EmailTokenClaimsModel struct {
+	Username  string `json:"username"`
+	Reference string `json:"reference"`
+	jwt.StandardClaims
+}
+
+type MailgunEmailModel struct {
+	Recipient string
+	Subject   string
+	Template  string
 }

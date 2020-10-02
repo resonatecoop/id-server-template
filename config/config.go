@@ -55,15 +55,17 @@ type SessionConfig struct {
 
 // Config stores all configuration options
 type Config struct {
-	CSRF           CSRFConfig
-	Mailgun        MailgunConfig
-	Database       DatabaseConfig
-	Database2      DatabaseConfig
-	Oauth          OauthConfig
-	Session        SessionConfig
-	IsDevelopment  bool
-	Clients        []ClientConfig
-	Port           string
-	ApplicationURL string
-	Origins        []string
+	Hostname            string
+	CSRF                CSRFConfig
+	Mailgun             MailgunConfig
+	Database            DatabaseConfig
+	Database2           DatabaseConfig
+	Oauth               OauthConfig
+	Session             SessionConfig
+	IsDevelopment       bool
+	Clients             []ClientConfig
+	Port                string
+	ApplicationURL      string
+	Origins             []string
+	EmailTokenSecretKey string
 }

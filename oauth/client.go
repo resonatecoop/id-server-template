@@ -57,13 +57,13 @@ func (s *Service) FindClientByApplicationURL(applicationURL string) (*models.Oau
 }
 
 // CreateClient saves a new client to database
-func (s *Service) CreateClient(clientID, secret, redirectURI string) (*models.OauthClient, error) {
-	return s.createClientCommon(s.db, clientID, secret, redirectURI)
+func (s *Service) CreateClient(clientID, secret, redirectURI, applicationName, applicationHostname, applicationURL string) (*models.OauthClient, error) {
+	return s.createClientCommon(s.db, clientID, secret, redirectURI, applicationName, applicationHostname, applicationURL)
 }
 
 // CreateClientTx saves a new client to database using injected db object
-func (s *Service) CreateClientTx(tx *gorm.DB, clientID, secret, redirectURI string) (*models.OauthClient, error) {
-	return s.createClientCommon(tx, clientID, secret, redirectURI)
+func (s *Service) CreateClientTx(tx *gorm.DB, clientID, secret, redirectURI, applicationName, applicationHostname, applicationURL string) (*models.OauthClient, error) {
+	return s.createClientCommon(tx, clientID, secret, redirectURI, applicationName, applicationHostname, applicationURL)
 }
 
 // AuthClient authenticates client
@@ -82,7 +82,7 @@ func (s *Service) AuthClient(clientID, secret string) (*models.OauthClient, erro
 	return client, nil
 }
 
-func (s *Service) createClientCommon(db *gorm.DB, clientID, secret, redirectURI string) (*models.OauthClient, error) {
+func (s *Service) createClientCommon(db *gorm.DB, clientID, secret, redirectURI, applicationName, applicationHostname, applicationURL string) (*models.OauthClient, error) {
 	// Check client ID
 	if s.ClientExists(clientID) {
 		return nil, ErrClientIDTaken
@@ -99,9 +99,12 @@ func (s *Service) createClientCommon(db *gorm.DB, clientID, secret, redirectURI 
 			ID:        uuid.New(),
 			CreatedAt: time.Now().UTC(),
 		},
-		Key:         strings.ToLower(clientID),
-		Secret:      string(secretHash),
-		RedirectURI: util.StringOrNull(redirectURI),
+		Key:                 strings.ToLower(clientID),
+		Secret:              string(secretHash),
+		RedirectURI:         util.StringOrNull(redirectURI),
+		ApplicationName:     util.StringOrNull(applicationName),
+		ApplicationHostname: util.StringOrNull(strings.ToLower(applicationHostname)),
+		ApplicationURL:      util.StringOrNull(strings.ToLower(applicationURL)),
 	}
 	if err := db.Create(client).Error; err != nil {
 		return nil, err

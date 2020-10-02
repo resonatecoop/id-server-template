@@ -10,10 +10,12 @@ import (
 	"github.com/RichardKnop/go-oauth2-server/session"
 	"github.com/RichardKnop/go-oauth2-server/util/response"
 	"github.com/gorilla/csrf"
+	"github.com/rs/xid"
+	"github.com/thanhpk/randstr"
 )
 
-func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
-	sessionService, client, _, wpuser, nickname, err := s.profileCommon(r)
+func (s *Service) clientForm(w http.ResponseWriter, r *http.Request) {
+	sessionService, client, _, wpuser, nickname, err := s.clientCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -49,24 +51,20 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 		string(initialState),
 	)
 
-	switch r.Header.Get("Accept") {
-	case "application/json":
-		response.WriteJSON(w, profile, http.StatusCreated)
-	default:
-		renderTemplate(w, "profile.html", map[string]interface{}{
-			"flash":           flash,
-			"clientID":        client.Key,
-			"applicationName": client.ApplicationName.String,
-			"profile":         profile,
-			"queryString":     getQueryString(query),
-			"initialState":    template.HTML(fragment),
-			csrf.TemplateTag:  csrf.TemplateField(r),
-		})
-	}
+	renderTemplate(w, "client.html", map[string]interface{}{
+		"flash":           flash,
+		"clientID":        client.Key,
+		"applicationName": client.ApplicationName.String,
+		"profile":         profile,
+		"queryString":     getQueryString(query),
+		"initialState":    template.HTML(fragment),
+		csrf.TemplateTag:  csrf.TemplateField(r),
+	})
 }
 
-func (s *Service) profileUpdate(w http.ResponseWriter, r *http.Request) {
-	sessionService, _, user, _, _, err := s.profileCommon(r)
+func (s *Service) client(w http.ResponseWriter, r *http.Request) {
+	sessionService, _, _, _, _, err := s.clientCommon(r)
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -74,10 +72,21 @@ func (s *Service) profileUpdate(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("X-CSRF-Token", csrf.Token(r))
 
-	if s.oauthService.UpdateUsername(
-		user,
-		r.Form.Get("email"),
-	); err != nil {
+	guid := xid.New()
+
+	secret := randstr.Hex(16)
+
+	// Create a new client
+	client, err := s.oauthService.CreateClient(
+		guid.String(), // client id
+		secret,        // client secret
+		r.Form.Get("redirect_uri"),
+		r.Form.Get("application_name"), // name or short description
+		r.Form.Get("application_hostname"),
+		r.Form.Get("application_url"),
+	)
+
+	if err != nil {
 		switch r.Header.Get("Accept") {
 		case "application/json":
 			response.Error(w, err.Error(), http.StatusBadRequest)
@@ -90,15 +99,32 @@ func (s *Service) profileUpdate(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	switch r.Header.Get("Accept") {
+	case "application/json":
+		data := map[string]interface{}{
+			"clientId":            client.Key,
+			"secret":              secret,
+			"applicationName":     client.ApplicationName,
+			"applicationHostname": client.ApplicationHostname,
+			"applicationURL":      client.ApplicationURL,
+		}
+
+		response.WriteJSON(w, map[string]interface{}{
+			"data":   data,
+			"status": http.StatusCreated,
+		}, http.StatusCreated)
+	default:
+		sessionService.SetFlashMessage(&session.Flash{
+			Type:    "Info",
+			Message: "New client created",
+		})
+		redirectWithQueryString("/web/apps", r.URL.Query(), w, r)
+	}
 }
 
-/**
- * Soft delete profiles by setting deleted_at to current date
- * Deletion will automatically happen after x days
- */
-
-func (s *Service) profileDelete(w http.ResponseWriter, r *http.Request) {
-	_, _, _, _, _, err := s.profileCommon(r)
+func (s *Service) clientDelete(w http.ResponseWriter, r *http.Request) {
+	_, _, _, _, _, err := s.clientCommon(r)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -110,7 +136,7 @@ func (s *Service) profileDelete(w http.ResponseWriter, r *http.Request) {
 	// TODO
 }
 
-func (s *Service) profileCommon(r *http.Request) (
+func (s *Service) clientCommon(r *http.Request) (
 	session.ServiceInterface,
 	*models.OauthClient,
 	*models.OauthUser,
@@ -144,7 +170,7 @@ func (s *Service) profileCommon(r *http.Request) (
 		return nil, nil, nil, nil, "", err
 	}
 
-	// Fetch the wp user
+	// Fetch the wpuser
 	wpuser, err := s.oauthService.FindWpUserByEmail(
 		userSession.Username,
 	)

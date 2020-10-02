@@ -1,7 +1,12 @@
-{{ define "title"}}Resonate{{ end }}
+{{ define "title"}}Apps{{ end }}
 
 {{ define "content" }}
 <div id="app" class="flex flex-column">
+  {{ if .flash }}
+  <div>
+    <p{{ if eq .flash.Type "Error" }} class="red"{{ end }}>{{ .flash.Message }}</p>
+  </div>
+  {{ end }}
   <main class="flex flex-auto">
     <div class="flex flex-auto flex-column w-100 pb6">
       <article class="mh2 mt3 cf">

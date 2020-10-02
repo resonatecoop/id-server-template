@@ -9,7 +9,7 @@ type ServiceInterface interface {
 	GetUserSession() (*UserSession, error)
 	SetUserSession(userSession *UserSession) error
 	ClearUserSession() error
-	SetFlashMessage(msg string) error
+	SetFlashMessage(flash *Flash) error
 	GetFlashMessage() (interface{}, error)
 	Close()
 }

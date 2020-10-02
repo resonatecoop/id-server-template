@@ -46,6 +46,9 @@ func (suite *OauthTestSuite) TestCreateClient() {
 		"test_client_1",           // client ID
 		"test_secret",             // secret
 		"https://www.example.com", // redirect URI
+		"",
+		"",
+		"",
 	)
 
 	// Client object should be nil
@@ -61,6 +64,9 @@ func (suite *OauthTestSuite) TestCreateClient() {
 		"test_client_3",           // client ID
 		"test_secret",             // secret
 		"https://www.example.com", // redirect URI
+		"",
+		"",
+		"",
 	)
 
 	// Error should be nil
