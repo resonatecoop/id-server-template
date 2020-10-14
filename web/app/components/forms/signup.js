@@ -232,6 +232,9 @@ class Signup extends Component {
       if (!isLength(data, { max: 60 })) {
         return new Error('Username name is too long')
       }
+      if (isEmail(data)) {
+        return new Error('Username cannot be an email')
+      }
     })
   }
 
