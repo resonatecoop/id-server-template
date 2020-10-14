@@ -12,6 +12,10 @@ import (
 	"github.com/trustelem/zxcvbn"
 )
 
+var (
+	ErrEmailAsLogin = errors.New("Username cannot be an email address")
+)
+
 // FindUserByLogin looks up a user by login (wordpress)
 func (s *Service) FindWpUserByLogin(login string) (*models.WpUser, error) {
 	wpuser := new(models.WpUser)
@@ -90,23 +94,36 @@ func (s *Service) createWpUserCommon(db *gorm.DB, email, password, login, displa
 	}
 
 	wpuser := &models.WpUser{
-		Email:      email,
-		Registered: time.Now(),
-		Password:   util.StringOrNull(""),
+		Email:       email,
+		Registered:  time.Now(),
+		DisplayName: displayName,
+		Login:       login,
+		Password:    util.StringOrNull(""),
 	}
 
-	wpuser.DisplayName = displayName
+	// Check if email address is valid
+	if !util.ValidateEmail(wpuser.Email) {
+		return nil, ErrEmailInvalid
+	}
 
-	if len(login) < MinLoginLength {
+	if len(wpuser.Login) < MinLoginLength {
 		return nil, ErrLoginTooShort
 	}
 
-	if len(login) > MaxLoginLength {
+	if len(wpuser.Login) > MaxLoginLength {
 		return nil, ErrLoginTooLong
 	}
 
-	wpuser.Login = login
-	wpuser.Nicename = slug.Make(login)
+	if util.ValidateEmail(wpuser.Login) {
+		return nil, ErrEmailAsLogin
+	}
+
+	// Check the login is available
+	if s.LoginTaken(wpuser.Login) {
+		return nil, ErrLoginTaken
+	}
+
+	wpuser.Nicename = slug.Make(wpuser.Login)
 
 	if len(password) < MinPasswordLength {
 		return nil, ErrPasswordTooShort
@@ -130,16 +147,6 @@ func (s *Service) createWpUserCommon(db *gorm.DB, email, password, login, displa
 	}
 
 	wpuser.Password = util.StringOrNull(string(passwordHashWp))
-
-	// Check if email address is valid
-	if !util.ValidateEmail(wpuser.Email) {
-		return nil, ErrEmailInvalid
-	}
-
-	// Check the login is available
-	if s.LoginTaken(wpuser.Login) {
-		return nil, ErrLoginTaken
-	}
 
 	// Create the wp user
 	if err := db.Create(wpuser).Error; err != nil {
