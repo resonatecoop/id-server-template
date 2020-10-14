@@ -27,6 +27,11 @@
     "golang",
     "choo"
   ],
+  "standard": {
+    "ignore": [
+      "public/**/*.js"
+    ]
+  },
   "author": "Augustin Godiscal <auggod@resonate.is>",
   "license": "MIT",
   "bugs": {
@@ -93,6 +98,7 @@
     "jalla": "^1.0.0-33",
     "postcss-import": "^12.0.1",
     "postcss-preset-env": "^6.7.0",
+    "standard": "^14.3.4",
     "tachyons": "^4.11.1",
     "vinyl-buffer": "^1.0.1",
     "vinyl-source-stream": "^2.0.0"
