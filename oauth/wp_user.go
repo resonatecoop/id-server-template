@@ -93,34 +93,34 @@ func (s *Service) createWpUserCommon(db *gorm.DB, email, password, login, displa
 		return nil, ErrUsernameRequired
 	}
 
+	// Check if email address is valid
+	if !util.ValidateEmail(email) {
+		return nil, ErrEmailInvalid
+	}
+
+	if len(login) < MinLoginLength {
+		return nil, ErrLoginTooShort
+	}
+
+	if len(login) > MaxLoginLength {
+		return nil, ErrLoginTooLong
+	}
+
+	if util.ValidateEmail(login) {
+		return nil, ErrEmailAsLogin
+	}
+
+	// Check the login is available
+	if s.LoginTaken(login) {
+		return nil, ErrLoginTaken
+	}
+
 	wpuser := &models.WpUser{
 		Email:       email,
 		Registered:  time.Now(),
 		DisplayName: displayName,
 		Login:       login,
 		Password:    util.StringOrNull(""),
-	}
-
-	// Check if email address is valid
-	if !util.ValidateEmail(wpuser.Email) {
-		return nil, ErrEmailInvalid
-	}
-
-	if len(wpuser.Login) < MinLoginLength {
-		return nil, ErrLoginTooShort
-	}
-
-	if len(wpuser.Login) > MaxLoginLength {
-		return nil, ErrLoginTooLong
-	}
-
-	if util.ValidateEmail(wpuser.Login) {
-		return nil, ErrEmailAsLogin
-	}
-
-	// Check the login is available
-	if s.LoginTaken(wpuser.Login) {
-		return nil, ErrLoginTaken
 	}
 
 	wpuser.Nicename = slug.Make(wpuser.Login)
