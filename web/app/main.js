@@ -1,5 +1,5 @@
 const choo = require('choo')
-const app = choo()
+const app = choo({ href: false })
 const html = require('choo/html')
 const Authorize = require('./components/forms/authorize')
 const Login = require('./components/forms/login')
