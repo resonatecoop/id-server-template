@@ -119,7 +119,7 @@ func (s *Service) resendEmailConfirmationToken(w http.ResponseWriter, r *http.Re
 	email := models.NewOauthEmail(
 		user.Username,
 		"Confirm your email",
-		"signup",
+		"email-confirmation",
 	)
 	_, err = s.oauthService.SendEmailToken(
 		email,
