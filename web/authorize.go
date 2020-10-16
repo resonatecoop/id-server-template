@@ -61,6 +61,7 @@ func (s *Service) authorizeForm(w http.ResponseWriter, r *http.Request) {
 		"flash":           flash,
 		"clientID":        client.Key,
 		"applicationName": client.ApplicationName.String,
+		"profile":         profile,
 		"queryString":     getQueryString(query),
 		"token":           responseType == "token",
 		"initialState":    template.HTML(fragment),
