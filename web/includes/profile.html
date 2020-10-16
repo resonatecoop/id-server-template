@@ -16,7 +16,7 @@
         <div class="flex flex-column flex-auto ph3 pt4 mw6 ph0-l">
           {{ if .flash }}
           <div>
-            <p{{ if eq .flash.Type "Error" }} class="red"{{ end }}>{{ .flash.Message }}</p>
+            <p{{ if eq .flash.Type "Error" }} class="ma0 pa3 red" else class="ma0 pa3" {{ end }}>{{ .flash.Message }}</p>
           </div>
           {{ end }}
           <div class="ph3">
