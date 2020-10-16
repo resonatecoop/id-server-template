@@ -11,11 +11,6 @@ import (
 	"github.com/gorilla/csrf"
 )
 
-type Credentials struct {
-	Login    string
-	Password string
-}
-
 func (s *Service) loginForm(w http.ResponseWriter, r *http.Request) {
 	// Get the session service from the request context
 	sessionService, err := getSessionService(r)
@@ -61,15 +56,10 @@ func (s *Service) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	creds := &Credentials{
-		Login:    r.Form.Get("email"),
-		Password: r.Form.Get("password"),
-	}
-
 	// Authenticate the user
 	user, err := s.oauthService.AuthUser(
-		creds.Login,    // email/username
-		creds.Password, // password
+		r.Form.Get("email"),    // email/username
+		r.Form.Get("password"), // password
 	)
 
 	if err != nil {
