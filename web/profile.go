@@ -13,7 +13,7 @@ import (
 )
 
 func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
-	sessionService, client, _, wpuser, nickname, err := s.profileCommon(r)
+	sessionService, client, user, wpuser, nickname, err := s.profileCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -27,9 +27,10 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 	query.Set("login_redirect_uri", r.URL.Path)
 
 	profile := &Profile{
-		ID:          wpuser.ID,
-		Email:       wpuser.Email,
-		DisplayName: nickname,
+		ID:             wpuser.ID,
+		Email:          wpuser.Email,
+		DisplayName:    nickname,
+		EmailConfirmed: user.EmailConfirmed,
 	}
 
 	initialState, err := json.Marshal(NewInitialState(

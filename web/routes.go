@@ -255,15 +255,16 @@ func (s *Service) GetRoutes() []routes.Route {
 		},
 		{
 			Name:        "resend_email_confirmation_token",
-			Method:      "POST",
-			Pattern:     "/email-confirmation",
+			Method:      "GET",
+			Pattern:     "/resend-email-confirmation",
 			HandlerFunc: s.resendEmailConfirmationToken,
 			Middlewares: []negroni.Handler{
 				tollbooth_negroni.LimitHandler(
 					tollbooth.NewLimiter(1, nil),
 				),
 				new(parseFormMiddleware),
-				newGuestMiddleware(s),
+				newLoggedInMiddleware(s),
+				newClientMiddleware(s),
 			},
 		},
 	}

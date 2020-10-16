@@ -33,7 +33,7 @@ func (s *Service) getEmailConfirmationToken(w http.ResponseWriter, r *http.Reque
 			Type:    "Error",
 			Message: err.Error(),
 		})
-		redirectWithQueryString("/web/login", query, w, r)
+		redirectWithQueryString("/web/profile", query, w, r)
 		return
 	}
 
@@ -42,7 +42,7 @@ func (s *Service) getEmailConfirmationToken(w http.ResponseWriter, r *http.Reque
 		Message: "Thank your for confirming your email",
 	})
 
-	redirectWithQueryString("/web/login", query, w, r)
+	redirectWithQueryString("/web/profile", query, w, r)
 }
 
 func (s *Service) emailConfirm(r *http.Request) error {
@@ -82,10 +82,44 @@ func (s *Service) resendEmailConfirmationToken(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	// Get the client from the request context
+	_, err = getClient(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Get the user session
+	userSession, err := sessionService.GetUserSession()
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Fetch the user
+	user, err := s.oauthService.FindUserByUsername(
+		userSession.Username,
+	)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if user.EmailConfirmed {
+		sessionService.SetFlashMessage(&session.Flash{
+			Type:    "Info",
+			Message: "Email is already confirmed",
+		})
+		http.Redirect(w, r, r.RequestURI, http.StatusFound)
+		return
+	}
+
 	email := models.NewOauthEmail(
-		r.Form.Get("email"),
+		user.Username,
 		"Confirm your email",
-		"email-confirmation",
+		"signup",
 	)
 	_, err = s.oauthService.SendEmailToken(
 		email,
@@ -104,7 +138,7 @@ func (s *Service) resendEmailConfirmationToken(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	redirectWithQueryString("/web/login", r.URL.Query(), w, r)
+	redirectWithQueryString("/web/profile", r.URL.Query(), w, r)
 }
 
 func (s *Service) emailConfirmationCommon(r *http.Request) (

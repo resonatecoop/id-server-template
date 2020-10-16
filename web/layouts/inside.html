@@ -42,6 +42,11 @@
       </nav>
     </div>
   </header>
+
+  {{ if not .profile.EmailConfirmed }}
+  <p class="ma0 pa3 bg-gray">Please confirm your email address. <a class="link b" href="/resend-email-confirmation">Re-send confirmation email</a>.</p>
+  {{ end }}
+
   <!-- Begin page content -->
   {{ template "content" . }}
 
