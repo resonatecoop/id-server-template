@@ -207,7 +207,7 @@ app.route('/', layout((state, emit) => {
           `
         })}
         <div class="fl w-50 pa2 mw4-ns mw5-l">
-          <a href="/apps/create" class="link db aspect-ratio aspect-ratio--1x1 dim bg-gray ba bw b--mid-gray black">
+          <a href="/apps" class="link db aspect-ratio aspect-ratio--1x1 dim bg-gray ba bw b--mid-gray black">
             <div class="flex flex-column justify-center aspect-ratio--object pa2 pa3-ns pa4-l">
               <span class="f4 f5-ns f4-l lh-copy">Register a new app</span>
             </div>
@@ -220,7 +220,7 @@ app.route('/', layout((state, emit) => {
   `
 }))
 
-app.route('/apps/create', layoutNarrow((state, emit) => {
+app.route('/apps', layoutNarrow((state, emit) => {
   return html`
     <div class="flex flex-column">
       <h2 class="f3 fw1 mt3 near-black near-black--light light-gray--dark lh-title">Register a new app</h2>
