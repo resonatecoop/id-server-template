@@ -1,0 +1,11 @@
+{{ define "title"}}Create new client{{ end }}
+
+{{ define "content" }}
+<div id="app">
+  {{ if .flash }}
+  <div>
+    <p{{ if eq .flash.Type "Error" }} class="red"{{ end }}>{{ .flash.Message }}</p>
+  </div>
+  {{ end }}
+</div>
+{{ end }}

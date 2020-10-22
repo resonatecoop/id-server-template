@@ -1,9 +1,14 @@
 package web
 
 import (
+	"encoding/json"
+	"fmt"
+	"html/template"
 	"net/http"
 
 	"github.com/RichardKnop/go-oauth2-server/session"
+	"github.com/RichardKnop/go-oauth2-server/util/response"
+	"github.com/gorilla/csrf"
 )
 
 func (s *Service) loginForm(w http.ResponseWriter, r *http.Request) {
@@ -14,11 +19,25 @@ func (s *Service) loginForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Render the template
-	errMsg, _ := sessionService.GetFlashMessage()
+	w.Header().Set("X-CSRF-Token", csrf.Token(r))
+
+	initialState, _ := json.Marshal(map[string]interface{}{
+		"clients": s.cnf.Clients,
+	})
+
+	// Inject initial state into choo app
+	fragment := fmt.Sprintf(
+		`<script>window.initialState=JSON.parse('%s')</script>`,
+		string(initialState),
+	)
+
+	flash, _ := sessionService.GetFlashMessage()
+
 	renderTemplate(w, "login.html", map[string]interface{}{
-		"error":       errMsg,
-		"queryString": getQueryString(r.URL.Query()),
+		"flash":          flash,
+		"queryString":    getQueryString(r.URL.Query()),
+		"initialState":   template.HTML(fragment),
+		csrf.TemplateTag: csrf.TemplateField(r),
 	})
 }
 
@@ -39,19 +58,31 @@ func (s *Service) login(w http.ResponseWriter, r *http.Request) {
 
 	// Authenticate the user
 	user, err := s.oauthService.AuthUser(
-		r.Form.Get("email"),    // username
+		r.Form.Get("email"),    // email/username
 		r.Form.Get("password"), // password
 	)
+
 	if err != nil {
-		sessionService.SetFlashMessage(err.Error())
-		http.Redirect(w, r, r.RequestURI, http.StatusFound)
+		switch r.Header.Get("Accept") {
+		case "application/json":
+			response.Error(w, err.Error(), http.StatusBadRequest)
+		default:
+			sessionService.SetFlashMessage(&session.Flash{
+				Type:    "Error",
+				Message: err.Error(),
+			})
+			http.Redirect(w, r, r.RequestURI, http.StatusFound)
+		}
 		return
 	}
 
 	// Get the scope string
 	scope, err := s.oauthService.GetScope(r.Form.Get("scope"))
 	if err != nil {
-		sessionService.SetFlashMessage(err.Error())
+		sessionService.SetFlashMessage(&session.Flash{
+			Type:    "Error",
+			Message: err.Error(),
+		})
 		http.Redirect(w, r, r.RequestURI, http.StatusFound)
 		return
 	}
@@ -63,7 +94,10 @@ func (s *Service) login(w http.ResponseWriter, r *http.Request) {
 		scope,
 	)
 	if err != nil {
-		sessionService.SetFlashMessage(err.Error())
+		sessionService.SetFlashMessage(&session.Flash{
+			Type:    "Error",
+			Message: err.Error(),
+		})
 		http.Redirect(w, r, r.RequestURI, http.StatusFound)
 		return
 	}
@@ -76,7 +110,10 @@ func (s *Service) login(w http.ResponseWriter, r *http.Request) {
 		RefreshToken: refreshToken.Token,
 	}
 	if err := sessionService.SetUserSession(userSession); err != nil {
-		sessionService.SetFlashMessage(err.Error())
+		sessionService.SetFlashMessage(&session.Flash{
+			Type:    "Error",
+			Message: err.Error(),
+		})
 		http.Redirect(w, r, r.RequestURI, http.StatusFound)
 		return
 	}

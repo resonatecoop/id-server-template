@@ -11,27 +11,66 @@ import (
 	pass "github.com/RichardKnop/go-oauth2-server/util/password"
 	"github.com/RichardKnop/uuid"
 	"github.com/jinzhu/gorm"
+	"github.com/trustelem/zxcvbn"
 )
 
 var (
 	// MinPasswordLength defines minimum password length
-	MinPasswordLength = 6
+	MinPasswordLength = 9
+	MaxPasswordLength = 72
+	MaxLoginLength    = 50
+	MinLoginLength    = 3
+
+	// ErrLoginTooShort ...
+	ErrLoginTooShort = fmt.Errorf(
+		"Login must be at least %d characters long",
+		MinLoginLength,
+	)
+
+	// ErrLoginTooShort ...
+	ErrLoginTooLong = fmt.Errorf(
+		"Login must be at maximum %d characters long",
+		MaxLoginLength,
+	)
 
 	// ErrPasswordTooShort ...
 	ErrPasswordTooShort = fmt.Errorf(
 		"Password must be at least %d characters long",
 		MinPasswordLength,
 	)
+
+	// ErrPasswordTooLong ...
+	ErrPasswordTooLong = fmt.Errorf(
+		"Password must be at maximum %d characters long",
+		MaxPasswordLength,
+	)
+
+	// ErrLoginRequired ...
+	ErrLoginRequired = errors.New("Login is required")
+	// ErrDisplayNameRequired ...
+	ErrDisplayNameRequired = errors.New("Display Name is required")
+	// ErrPasswordRequired ...
+	ErrPasswordRequired = errors.New("Password is required")
+	// ErrUsernameRequired ...
+	ErrUsernameRequired = errors.New("Username/Email is required")
+	// ErrLoginTaken ...
+	ErrLoginTaken = errors.New("Login taken")
 	// ErrUserNotFound ...
 	ErrUserNotFound = errors.New("User not found")
 	// ErrInvalidUserPassword ...
 	ErrInvalidUserPassword = errors.New("Invalid user password")
+	// ErrPasswordTooWeak ...
+	ErrPasswordTooWeak = errors.New("Password is too weak")
 	// ErrCannotSetEmptyUsername ...
 	ErrCannotSetEmptyUsername = errors.New("Cannot set empty username")
 	// ErrUserPasswordNotSet ...
 	ErrUserPasswordNotSet = errors.New("User password not set")
 	// ErrUsernameTaken ...
-	ErrUsernameTaken = errors.New("Username taken")
+	ErrUsernameTaken = errors.New("Username/Email taken")
+	// ErrEmailInvalid
+	ErrEmailInvalid = errors.New("Not a valid email")
+	// ErrEmailNotFound
+	ErrEmailNotFound = errors.New("We can't find an account registered with that address or username")
 )
 
 // UserExists returns true if user exists
@@ -40,14 +79,18 @@ func (s *Service) UserExists(username string) bool {
 	return err == nil
 }
 
-// FindUserByUsername looks up a user by username
+func (s *Service) LoginTaken(login string) bool {
+	_, err := s.FindWpUserByLogin(login)
+	return err == nil
+}
+
+// FindUserByUsername looks up a user by username (email)
 func (s *Service) FindUserByUsername(username string) (*models.OauthUser, error) {
 	// Usernames are case insensitive
 	user := new(models.OauthUser)
 	notFound := s.db.Where("username = LOWER(?)", username).
 		First(user).RecordNotFound()
 
-	// Not found
 	if notFound {
 		return nil, ErrUserNotFound
 	}
@@ -101,6 +144,10 @@ func (s *Service) UpdateUsername(user *models.OauthUser, username string) error 
 	if username == "" {
 		return ErrCannotSetEmptyUsername
 	}
+	// Check the email/username is available
+	if s.UserExists(username) {
+		return ErrUsernameTaken
+	}
 
 	return s.updateUsernameCommon(s.db, user, username)
 }
@@ -110,8 +157,25 @@ func (s *Service) UpdateUsernameTx(tx *gorm.DB, user *models.OauthUser, username
 	return s.updateUsernameCommon(tx, user, username)
 }
 
+func (s *Service) ConfirmUserEmail(email string) error {
+	user, err := s.FindUserByUsername(email)
+
+	if err != nil {
+		return err
+	}
+
+	return s.db.Model(user).UpdateColumn("email_confirmed", true).Error
+}
+
 func (s *Service) createUserCommon(db *gorm.DB, roleID, username, password string) (*models.OauthUser, error) {
-	// Start with a user without a password
+	if password == "" {
+		return nil, ErrPasswordRequired
+	}
+
+	if username == "" {
+		return nil, ErrUsernameRequired
+	}
+
 	user := &models.OauthUser{
 		MyGormModel: models.MyGormModel{
 			ID:        uuid.New(),
@@ -122,19 +186,36 @@ func (s *Service) createUserCommon(db *gorm.DB, roleID, username, password strin
 		Password: util.StringOrNull(""),
 	}
 
-	// If the password is being set already, create a bcrypt hash
-	if password != "" {
-		if len(password) < MinPasswordLength {
-			return nil, ErrPasswordTooShort
-		}
-		passwordHash, err := pass.HashPassword(password)
-		if err != nil {
-			return nil, err
-		}
-		user.Password = util.StringOrNull(string(passwordHash))
+	if len(password) < MinPasswordLength {
+		return nil, ErrPasswordTooShort
 	}
 
-	// Check the username is available
+	if len(password) > MaxPasswordLength {
+		return nil, ErrPasswordTooLong
+	}
+
+	// enforce strong enough passwords
+	passwordStrength := zxcvbn.PasswordStrength(password, nil)
+
+	if passwordStrength.Score < 3 {
+		return nil, ErrPasswordTooWeak
+	}
+
+	// hash bcrypt password
+	passwordHash, err := pass.HashPassword(password)
+
+	if err != nil {
+		return nil, err
+	}
+
+	user.Password = util.StringOrNull(string(passwordHash))
+
+	// Check if email address is valid
+	if !util.ValidateEmail(user.Username) {
+		return nil, ErrEmailInvalid
+	}
+
+	// Check the email/username is available
 	if s.UserExists(user.Username) {
 		return nil, ErrUsernameTaken
 	}
@@ -143,12 +224,24 @@ func (s *Service) createUserCommon(db *gorm.DB, roleID, username, password strin
 	if err := db.Create(user).Error; err != nil {
 		return nil, err
 	}
+
 	return user, nil
 }
 
 func (s *Service) setPasswordCommon(db *gorm.DB, user *models.OauthUser, password string) error {
 	if len(password) < MinPasswordLength {
 		return ErrPasswordTooShort
+	}
+
+	if len(password) > MaxPasswordLength {
+		return ErrPasswordTooLong
+	}
+
+	// enforce strong enough passwords
+	passwordStrength := zxcvbn.PasswordStrength(password, nil)
+
+	if passwordStrength.Score < 3 {
+		return ErrPasswordTooWeak
 	}
 
 	// Create a bcrypt hash
@@ -158,15 +251,25 @@ func (s *Service) setPasswordCommon(db *gorm.DB, user *models.OauthUser, passwor
 	}
 
 	// Set the password on the user object
-	return db.Model(user).UpdateColumns(models.OauthUser{
+	err = db.Model(user).UpdateColumns(models.OauthUser{
 		Password:    util.StringOrNull(string(passwordHash)),
 		MyGormModel: models.MyGormModel{UpdatedAt: time.Now().UTC()},
 	}).Error
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *Service) updateUsernameCommon(db *gorm.DB, user *models.OauthUser, username string) error {
 	if username == "" {
 		return ErrCannotSetEmptyUsername
+	}
+	// Check the email/username is available
+	if s.UserExists(username) {
+		return ErrUsernameTaken
 	}
 	return db.Model(user).UpdateColumn("username", strings.ToLower(username)).Error
 }

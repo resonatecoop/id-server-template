@@ -295,7 +295,7 @@ func (suite *OauthTestSuite) TestBlankPassword() {
 	user, err = suite.service.CreateUser(
 		roles.User,         // role ID
 		"test@user_nopass", // username
-		"",                 // password
+		"",                 // password,
 	)
 
 	// Error should be nil

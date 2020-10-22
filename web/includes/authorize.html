@@ -1,26 +1,41 @@
 {{ define "title"}}Authorize{{ end }}
 
-{{ if .error }}
-  <div class="alert alert-danger" role="alert">{{ .error }}</div>
-{{ end }}
-
 {{ define "content" }}
-<div id="app" class="flex flex-column flex-auto">
-  <div class="flex">
-    <h1 class="f3 lh-title">Authorize</h1>
-  </div>
-  <form action="" method="post">
-    <div class="flex flex-column">
-      <p><b>{{ .clientID }}</b> would like to perform actions on your behalf.</p>
-    </div>
-    <div class="flex">
-      <div class="mr2">
-        <input type="submit" class="bg-white ba bw b--dark-gray f5 b pv3 ph5 grow" name="allow" value="Allow">
+<div id="app">
+  <main class="flex flex-auto relative">
+    <div class="flex flex-column flex-auto w-100">
+      <div class="flex flex-column flex-auto items-center justify-center min-vh-100 mh3 pt6 pb6">
+        <div class="bg-white black bg-black--dark white--dark bg-white--light black--light z-1 w-100 w-auto-l ph4 pt4 pb3">
+          <div class="flex flex-column flex-auto">
+            <svg viewBox="0 0 16 16" class="icon icon-logo icon--sm icon icon--lg fill-black fill-white--dark fill-black--light"><use xlink:href="#icon-logo"></use></svg>
+            <div class="flex flex-column">
+              <h2 class="f3 fw1 mt3 near-black near-black--light light-gray--dark lh-title">Authorize</h2>
+              {{ if .flash }}
+              <div>
+                <p{{ if eq .flash.Type "Error" }} class="red"{{ end }}>{{ .flash.Message }}</p>
+              </div>
+              {{ end }}
+              <div class="flex flex-column flex-auto" id="ncid-f21a" data-nanocomponent="ncid-f21a">
+                <form action="" method="POST" class="flex flex-column flex-auto ma0 pa0">
+                  {{ .csrfField }}
+                  <div class="flex flex-column">
+                    <p>To continue to the <b>{{ .applicationName }}</b>, please confirm the action.</p>
+                  </div>
+                  <div class="flex">
+                    <div class="mr2">
+                      <input type="submit" name="continue" value="Continue" class="bg-white black ba bw b--dark-gray f5 b pv3 ph3 grow" />
+                    </div>
+                    <div>
+                      <input type="submit" name="cancel" value="Cancel" class="bg-transparent white bn f5 b pv3 ph3 grow" />
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div>
-        <input type="submit" class="bg-white ba bw b--dark-gray f5 b pv3 ph5 grow" name="deny" value="Deny">
-      </div>
     </div>
-  </form>
+  </main>
 </div>
 {{ end }}

@@ -9,6 +9,7 @@ coverage*
 htpasswd/
 nginx-conf/
 dhparam/
+docker-compose-*.yml
 
 *.sh
 # Logs

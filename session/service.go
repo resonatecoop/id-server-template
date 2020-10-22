@@ -9,6 +9,21 @@ import (
 	"github.com/gorilla/sessions"
 )
 
+type Level string
+
+const (
+	LogLevelUnspecified Level = "Unspecified"
+	LogLevelTrace             = "Trace"
+	LogLevelInfo              = "Info"
+	LogLevelWarning           = "Warning"
+	LogLevelError             = "Error"
+)
+
+type Flash struct {
+	Type    Level  `json:"type"`
+	Message string `json:"message"`
+}
+
 // Service wraps session functionality
 type Service struct {
 	sessionStore   sessions.Store
@@ -36,6 +51,7 @@ var (
 )
 
 func init() {
+	gob.Register(new(Flash))
 	// Register a new datatype for storage in sessions
 	gob.Register(new(UserSession))
 }
@@ -49,6 +65,7 @@ func NewService(cnf *config.Config, sessionStore sessions.Store) *Service {
 		sessionOptions: &sessions.Options{
 			Path:     cnf.Session.Path,
 			MaxAge:   cnf.Session.MaxAge,
+			Secure:   cnf.Session.Secure,
 			HttpOnly: cnf.Session.HTTPOnly,
 		},
 	}
@@ -113,14 +130,14 @@ func (s *Service) ClearUserSession() error {
 
 // SetFlashMessage sets a flash message,
 // useful for displaying an error after 302 redirection
-func (s *Service) SetFlashMessage(msg string) error {
+func (s *Service) SetFlashMessage(flash *Flash) error {
 	// Make sure StartSession has been called
 	if s.session == nil {
 		return ErrSessonNotStarted
 	}
 
 	// Add the flash message
-	s.session.AddFlash(msg)
+	s.session.AddFlash(flash)
 	return s.session.Save(s.r, s.w)
 }
 
@@ -135,7 +152,7 @@ func (s *Service) GetFlashMessage() (interface{}, error) {
 	if flashes := s.session.Flashes(); len(flashes) > 0 {
 		// We need to save the session, otherwise the flash message won't be removed
 		s.session.Save(s.r, s.w)
-		return flashes[0], nil
+		return flashes[0].(*Flash), nil
 	}
 
 	// No flash messages in the stack

@@ -5,7 +5,6 @@ use strict;
 use DBI;
 use Digest::SHA qw(sha256);
 use Switch;
-#use Data::Dumper;
 use Scalar::Util qw(reftype);
 use UUID::Tiny ':std';
 use Dotenv -load;
@@ -33,7 +32,6 @@ $dbh_wp->do(qq{SET NAMES 'utf8';});
 my $sth=$dbh_wp->prepare('select user_email, user_pass, ID from rsntr_users');
 $sth->execute or die "can't get users: $DBI::errstr";
 my $wp_users=$sth->fetchall_arrayref;
-$dbh_wp->disconnect();
 
 my $dbh_oauth=DBI->connect("dbi:Pg:dbname=$ENV{PSQL_DB_NAME};host=$ENV{PSQL_DB_HOST}",
 	$ENV{PSQL_DB_USER},
@@ -43,8 +41,6 @@ my $dbh_oauth=DBI->connect("dbi:Pg:dbname=$ENV{PSQL_DB_NAME};host=$ENV{PSQL_DB_H
 my $sth=$dbh_oauth->prepare('select * from oauth_users');
 $sth->execute or die "can't get users: $DBI::errstr";
 my $oauth_users_by_email=$sth->fetchall_hashref('username');
-
-#print Dumper($oauth_users_by_email);
 
 my %seen;
 
@@ -76,4 +72,39 @@ foreach my $row (@$wp_users)
 		$sth->execute(create_uuid_as_string(UUID_V4),'user',$user_email,$user_pass); # or die "can't migrate wp_user: $user_email: $DBI::errstr";
 	}
 }
+
+my $sth=$dbh_wp->prepare('select LOWER(user_email) as user_email from rsntr_users');
+$sth->execute or die "can't get users: $DBI::errstr";
+my $wp_users_by_email=$sth->fetchall_hashref('user_email');
+
+my %seen2;
+
+foreach my $user (keys %$oauth_users_by_email) {
+  my $username = $oauth_users_by_email->{$user}->{'username'};
+  my $user_id = $oauth_users_by_email->{$user}->{'id'};
+
+  next if $username eq '';
+  $username=lc($username);
+
+  if($seen2{$username} > 0)
+  {
+    print STDERR "WARNING: already seen username: $username: $seen2{$username}\n";
+    $seen2{$username}+=1;
+    next;
+  }
+
+  $seen2{$username}=1;
+
+  if(!$wp_users_by_email->{$username}) {
+    print STDERR "should delete: $username\n";
+    my $sth=$dbh_oauth->prepare('delete from oauth_refresh_tokens where user_id = ?');
+    $sth->execute($user_id);
+    my $sth=$dbh_oauth->prepare('delete from oauth_access_tokens where user_id = ?');
+    $sth->execute($user_id);
+    my $sth=$dbh_oauth->prepare('delete from oauth_users where username = ?');
+    $sth->execute($username);
+  }
+}
+
+$dbh_wp->disconnect();
 $dbh_oauth->disconnect();

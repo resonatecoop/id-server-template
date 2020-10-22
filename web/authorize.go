@@ -1,40 +1,76 @@
 package web
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"html/template"
 	"net/http"
 	"net/url"
 	"strconv"
 
 	"github.com/RichardKnop/go-oauth2-server/models"
 	"github.com/RichardKnop/go-oauth2-server/session"
+	"github.com/gorilla/csrf"
 )
 
 // ErrIncorrectResponseType a form value for response_type was not set to token or code
 var ErrIncorrectResponseType = errors.New("Response type not one of token or code")
 
 func (s *Service) authorizeForm(w http.ResponseWriter, r *http.Request) {
-	sessionService, client, _, responseType, _, err := s.authorizeCommon(r)
+	sessionService, client, user, wpuser, nickname, responseType, _, err := s.authorizeCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
+	csrfToken := csrf.Token(r)
+
+	w.Header().Set("X-CSRF-Token", csrfToken)
+
 	// Render the template
-	errMsg, _ := sessionService.GetFlashMessage()
+	flash, _ := sessionService.GetFlashMessage()
 	query := r.URL.Query()
 	query.Set("login_redirect_uri", r.URL.Path)
+
+	profile := &Profile{
+		ID:             wpuser.ID,
+		Email:          wpuser.Email,
+		DisplayName:    nickname,
+		EmailConfirmed: user.EmailConfirmed,
+	}
+
+	initialState, err := json.Marshal(NewInitialState(
+		s.cnf,
+		client,
+		profile,
+	))
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Inject initial state into choo app
+	fragment := fmt.Sprintf(
+		`<script>window.initialState=JSON.parse('%s')</script>`,
+		string(initialState),
+	)
+
 	renderTemplate(w, "authorize.html", map[string]interface{}{
-		"error":       errMsg,
-		"clientID":    client.Key,
-		"queryString": getQueryString(query),
-		"token":       responseType == "token",
+		"flash":           flash,
+		"clientID":        client.Key,
+		"applicationName": client.ApplicationName.String,
+		"profile":         profile,
+		"queryString":     getQueryString(query),
+		"token":           responseType == "token",
+		"initialState":    template.HTML(fragment),
+		csrf.TemplateTag:  csrf.TemplateField(r),
 	})
 }
 
 func (s *Service) authorize(w http.ResponseWriter, r *http.Request) {
-	_, client, user, responseType, redirectURI, err := s.authorizeCommon(r)
+	_, client, user, _, _, responseType, redirectURI, err := s.authorizeCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -44,7 +80,7 @@ func (s *Service) authorize(w http.ResponseWriter, r *http.Request) {
 	state := r.Form.Get("state")
 
 	// Has the resource owner or authorization server denied the request?
-	authorized := len(r.Form.Get("allow")) > 0
+	authorized := len(r.Form.Get("continue")) > 0
 	if !authorized {
 		errorRedirect(w, r, redirectURI, "access_denied", state, responseType)
 		return
@@ -120,23 +156,32 @@ func (s *Service) authorize(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Service) authorizeCommon(r *http.Request) (session.ServiceInterface, *models.OauthClient, *models.OauthUser, string, *url.URL, error) {
+func (s *Service) authorizeCommon(r *http.Request) (
+	session.ServiceInterface,
+	*models.OauthClient,
+	*models.OauthUser,
+	*models.WpUser,
+	string,
+	string,
+	*url.URL,
+	error,
+) {
 	// Get the session service from the request context
 	sessionService, err := getSessionService(r)
 	if err != nil {
-		return nil, nil, nil, "", nil, err
+		return nil, nil, nil, nil, "", "", nil, err
 	}
 
 	// Get the client from the request context
 	client, err := getClient(r)
 	if err != nil {
-		return nil, nil, nil, "", nil, err
+		return nil, nil, nil, nil, "", "", nil, err
 	}
 
 	// Get the user session
 	userSession, err := sessionService.GetUserSession()
 	if err != nil {
-		return nil, nil, nil, "", nil, err
+		return nil, nil, nil, nil, "", "", nil, err
 	}
 
 	// Fetch the user
@@ -144,13 +189,32 @@ func (s *Service) authorizeCommon(r *http.Request) (session.ServiceInterface, *m
 		userSession.Username,
 	)
 	if err != nil {
-		return nil, nil, nil, "", nil, err
+		return nil, nil, nil, nil, "", "", nil, err
 	}
 
+	// Fetch the user
+	wpuser, err := s.oauthService.FindWpUserByEmail(
+		userSession.Username,
+	)
+	if err != nil {
+		return nil, nil, nil, nil, "", "", nil, err
+	}
+
+	nickname, err := s.oauthService.FindNicknameByWpUserID(wpuser.ID)
+	if err != nil {
+		return nil, nil, nil, nil, "", "", nil, err
+	}
+
+	// Set default response type
+	responseType := "code"
+
 	// Check the response_type is either "code" or "token"
-	responseType := r.Form.Get("response_type")
+	if r.Form.Get("response_type") != "" {
+		responseType = r.Form.Get("response_type")
+	}
+
 	if responseType != "code" && responseType != "token" {
-		return nil, nil, nil, "", nil, ErrIncorrectResponseType
+		return nil, nil, nil, nil, "", "", nil, ErrIncorrectResponseType
 	}
 
 	// Fallback to the client redirect URI if not in query string
@@ -162,8 +226,8 @@ func (s *Service) authorizeCommon(r *http.Request) (session.ServiceInterface, *m
 	// // Parse the redirect URL
 	parsedRedirectURI, err := url.ParseRequestURI(redirectURI)
 	if err != nil {
-		return nil, nil, nil, "", nil, err
+		return nil, nil, nil, nil, "", "", nil, err
 	}
 
-	return sessionService, client, user, responseType, parsedRedirectURI, nil
+	return sessionService, client, user, wpuser, nickname, responseType, parsedRedirectURI, nil
 }

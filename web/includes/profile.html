@@ -1,0 +1,143 @@
+{{ define "title"}}Profile{{ end }}
+
+{{ define "content" }}
+<div id="app">
+  <div class="flex pb6">
+    <div class="flex flex-column w-100 mh3 mh0-ns">
+      <section id="profile" class="flex flex-column flex-row-l">
+        <div class="fl w-50 w-third-l pa3 mb4">
+          <div style="top: 3rem;" class="sticky aspect-ratio aspect-ratio--1x1 bg-dark-gray bg-dark-gray--dark">
+            <figure class="ma0">
+              <img src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg' width%3D'400' height%3D'400' viewBox%3D'0 0 400 400'%2F%3E" width="400" height="400" class="aspect-ratio--object z-1" />
+              <figcaption style="top: 100%;" class="absolute bottom-0 truncate w-100 h2">{{ .profile.DisplayName }}</figcaption>
+            </figure>
+          </div>
+        </div>
+        <div class="flex flex-column flex-auto ph3 pt4 mw6 ph0-l">
+          {{ if .flash }}
+          <div>
+            <p{{ if eq .flash.Type "Error" }} class="ma0 pa3 red" else class="ma0 pa3" {{ end }}>{{ .flash.Message }}</p>
+          </div>
+          {{ end }}
+          <div class="ph3">
+            <div class="flex flex-column flex-auto pb6">
+              <form action="" method="POST">
+                {{ .csrfField }}
+                <fieldset id="account_informations" class="ma0 pa0 bn flex flex-column w-100">
+                  <legend class="f3 mb3">Account information</legend>
+                  <div class="mb3">
+                    <div class="flex flex-column flex-column-reverse">
+                      <input
+                        value="{{ .profile.Email }}"
+                        autocomplete="false"
+                        id="email"
+                        type="text"
+                        name="email"
+                        placeholder=""
+                        required="required"
+                        class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid"
+                      />
+                      <label for="email" class="f4 db mv2">
+                        <div class="flex items-center"><span>Email</span></div>
+                      </label>
+                    </div>
+                    <p class="lh-copy f5 red"></p>
+                  </div>
+                  <div class="mb3">
+                    <div class="flex flex-column flex-column-reverse">
+                      <input
+                        value="{{ .profile.DisplayName }}"
+                        autocomplete="false"
+                        id="nickname"
+                        type="text"
+                        name="nickname"
+                        placeholder=""
+                        required="required"
+                        class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid"
+                      />
+                      <label for="nickname" class="f4 db mv2">
+                        <div class="flex items-center"><span>Profile name</span></div>
+                      </label>
+                    </div>
+                    <p class="lh-copy f5 red"></p>
+                  </div>
+                </fieldset>
+                <button type="submit" disabled="disabled" class="bg-white ba bw b--dark-gray f5 b pv3 ph5 flex-shrink-0 f5 o-50">Update</button>
+              </form>
+            </div>
+          </div>
+          <div class="ph3">
+            <div class="flex flex-column flex-auto pb6">
+              <form action="/password{{ .queryString }}" method="POST">
+                {{ .csrfField }}
+                <fieldset id="change_password" class="ma0 pa0 bn flex flex-column w-100">
+                  <legend class="f3 mb3">Change password</legend>
+                  <div class="mb3">
+                    <div class="flex flex-column flex-column-reverse">
+                      <input
+                        value=""
+                        autocomplete="false"
+                        id="password"
+                        type="password"
+                        name="password"
+                        placeholder=""
+                        required="required"
+                        class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid"
+                      />
+                      <label for="password" class="f4 db mv2">
+                        <div class="flex items-center"><span>Current password</span></div>
+                      </label>
+                    </div>
+                    <p class="lh-copy f5 red"></p>
+                  </div>
+                  <div class="mb3">
+                    <div class="flex flex-column flex-column-reverse">
+                      <input
+                        value=""
+                        autocomplete="false"
+                        id="password_new"
+                        type="password"
+                        name="password_new"
+                        placeholder=""
+                        required="required"
+                        class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid"
+                      />
+                      <label for="password_new" class="f4 db mv2">
+                        <div class="flex items-center"><span>New password</span></div>
+                      </label>
+                    </div>
+                    <p class="lh-copy f5 red"></p>
+                  </div>
+                  <div class="mb3">
+                    <div class="flex flex-column flex-column-reverse">
+                      <input
+                        value=""
+                        autocomplete="false"
+                        id="password_confirm"
+                        type="password"
+                        name="password_confirm"
+                        placeholder=""
+                        required="required"
+                        class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid"
+                      />
+                      <label for="password_confirm" class="f4 db mv2">
+                        <div class="flex items-center"><span>Password verification</span></div>
+                      </label>
+                    </div>
+                    <p class="lh-copy f5 red"></p>
+                  </div>
+                </fieldset>
+                <button type="submit" disabled="disabled" class="bg-white ba bw b--dark-gray f5 b pv3 ph5 flex-shrink-0 f5 o-50">Update</button>
+              </form>
+            </div>
+          </div>
+          <div class="flex w-100 items-center ph3">
+            <button type="button" class="bg-white ba bw b--dark-gray f5 b pv3 ph3 w-100 mw5 grow flex-shrink-0 f5 grow">Delete account</button>
+            <div class="ml3"><p class="lh-copy f5 dark-gray">This will delete your account and all associated profiles.</p></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+{{ end }}
