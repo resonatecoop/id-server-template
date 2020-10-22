@@ -15,15 +15,21 @@ require (
 	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect
 	github.com/denisenkom/go-mssqldb v0.0.0-20190204142019-df6d76eb9289 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
+	github.com/didip/tollbooth v4.0.2+incompatible
+	github.com/didip/tollbooth_negroni v0.0.0-20170928042109-a4e3efc33255
+	github.com/dlclark/regexp2 v1.4.0 // indirect
 	github.com/erikstmartin/go-testdb v0.0.0-20160219214506-8d10e4a1bae5 // indirect
+	github.com/form3tech-oss/jwt-go v3.2.2+incompatible
 	github.com/go-sql-driver/mysql v1.4.1 // indirect
 	github.com/gofrs/uuid v3.3.0+incompatible // indirect
 	github.com/golang/groupcache v0.0.0-20190129154638-5b532d6fd5ef // indirect
 	github.com/google/uuid v1.1.1 // indirect
 	github.com/gorilla/context v1.1.1
+	github.com/gorilla/csrf v1.7.0
 	github.com/gorilla/mux v1.7.0
 	github.com/gorilla/sessions v1.1.3
 	github.com/gorilla/websocket v1.4.1 // indirect
+	github.com/gosimple/slug v1.9.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.1.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.7.0 // indirect
@@ -36,22 +42,27 @@ require (
 	github.com/jinzhu/inflection v0.0.0-20180308033659-04140366298a // indirect
 	github.com/jinzhu/now v1.0.0 // indirect
 	github.com/jonboulle/clockwork v0.1.0 // indirect
-	github.com/json-iterator/go v1.1.8 // indirect
 	github.com/lib/pq v1.0.0
+	github.com/mailgun/mailgun-go/v4 v4.3.0
 	github.com/mattn/go-sqlite3 v1.10.0
 	github.com/miekg/dns v1.1.4 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/oxtoacart/bpool v0.0.0-20150712133111-4e1c5567d7c2
+	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/phyber/negroni-gzip v0.0.0-20180113114010-ef6356a5d029
 	github.com/prometheus/client_golang v0.9.2 // indirect
 	github.com/prometheus/client_model v0.0.0-20190129233127-fd36f4220a90 // indirect
 	github.com/prometheus/common v0.2.0 // indirect
 	github.com/prometheus/procfs v0.0.0-20190219184716-e4d4a2206da0 // indirect
+	github.com/rs/xid v1.2.1
 	github.com/soheilhy/cmux v0.1.4 // indirect
 	github.com/stretchr/testify v1.4.0
+	github.com/test-go/testify v1.1.4 // indirect
+	github.com/thanhpk/randstr v1.0.4
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5 // indirect
+	github.com/trustelem/zxcvbn v1.0.1
 	github.com/unrolled/secure v1.0.0
 	github.com/urfave/cli v0.0.0-20180106191048-75104e932ac2
 	github.com/urfave/negroni v1.0.0
