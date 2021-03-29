@@ -13,7 +13,6 @@ This service implements [OAuth 2.0 specification](https://tools.ietf.org/html/rf
 [![codecov for RichardKnop/go-oauth2-server](https://codecov.io/gh/RichardKnop/go-oauth2-server/branch/master/graph/badge.svg)](https://codecov.io/gh/RichardKnop/go-oauth2-server)
 
 [![Sourcegraph for RichardKnop/go-oauth2-server](https://sourcegraph.com/github.com/RichardKnop/go-oauth2-server/-/badge.svg)](https://sourcegraph.com/github.com/RichardKnop/go-oauth2-server?badge)
-[![Donate Bitcoin](https://img.shields.io/badge/donate-bitcoin-orange.svg)](https://richardknop.github.io/donate/)
 
 ---
 
@@ -682,9 +681,3 @@ During `docker-compose up` process all configuration and fixtures will be loaded
 ```sh
 curl --compressed -v localhost:8080/v1/health
 ```
-
-## Supporting the project
-
-Donate BTC to my wallet if you find this project useful: `12iFVjQ5n3Qdmiai4Mp9EG93NSvDipyRKV`
-
-![Donate BTC][5]
