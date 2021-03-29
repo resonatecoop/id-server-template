@@ -18,6 +18,8 @@ var (
 	ErrClientIDTaken = errors.New("Client ID taken")
 )
 
+var apps []models.OauthClient
+
 // ClientExists returns true if client exists
 func (s *Service) ClientExists(clientID string) bool {
 	_, err := s.FindClientByClientID(clientID)
@@ -37,6 +39,21 @@ func (s *Service) FindClientByClientID(clientID string) (*models.OauthClient, er
 	}
 
 	return client, nil
+}
+
+func (s *Service) FindClientsByUserId(oauthUser *models.OauthUser) ([]models.OauthClient, error) {
+	notFound := s.db.
+		Where("user_id = ?", oauthUser.ID).
+		Select("created_at,updated_at,key,user_id,application_hostname,application_url,application_name").
+		Find(&apps).
+		RecordNotFound()
+
+	// Not found
+	if notFound {
+		return nil, ErrClientNotFound
+	}
+
+	return apps, nil
 }
 
 // FindClientByRedirectURI looks up a client by redirect URI

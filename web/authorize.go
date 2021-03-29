@@ -43,6 +43,7 @@ func (s *Service) authorizeForm(w http.ResponseWriter, r *http.Request) {
 	initialState, err := json.Marshal(NewInitialState(
 		s.cnf,
 		client,
+		[]models.OauthClient{},
 		profile,
 	))
 

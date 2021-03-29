@@ -28,6 +28,13 @@ func (s *Service) clientForm(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	query.Set("login_redirect_uri", r.URL.Path)
 
+	apps, err := s.oauthService.FindClientsByUserId(user)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
 	profile := &Profile{
 		ID:             wpuser.ID,
 		Email:          wpuser.Email,
@@ -38,6 +45,7 @@ func (s *Service) clientForm(w http.ResponseWriter, r *http.Request) {
 	initialState, err := json.Marshal(NewInitialState(
 		s.cnf,
 		client,
+		apps,
 		profile,
 	))
 
@@ -55,6 +63,7 @@ func (s *Service) clientForm(w http.ResponseWriter, r *http.Request) {
 	err = renderTemplate(w, "client.html", map[string]interface{}{
 		"flash":           flash,
 		"clientID":        client.Key,
+		"apps":            apps,
 		"applicationName": client.ApplicationName.String,
 		"profile":         profile,
 		"queryString":     getQueryString(query),

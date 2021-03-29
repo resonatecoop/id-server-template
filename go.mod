@@ -71,6 +71,7 @@ require (
 	go.uber.org/zap v1.12.0 // indirect
 	golang.org/x/crypto v0.0.0-20190510104115-cbcb75029529
 	golang.org/x/net v0.0.0-20190620200207-3b0461eec859
+	gopkg.in/guregu/null.v3 v3.5.0
 	gopkg.in/tylerb/graceful.v1 v1.2.15
 	sigs.k8s.io/yaml v1.1.0 // indirect
 )

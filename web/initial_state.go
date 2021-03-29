@@ -12,20 +12,25 @@ type Profile struct {
 	EmailConfirmed bool   `json:"emailConfirmed"`
 }
 
+type Apps []models.OauthClient
+
 type InitialState struct {
 	ApplicationName string                `json:"applicationName"`
 	ClientID        string                `json:"clientID"`
 	Clients         []config.ClientConfig `json:"clients"`
+	Apps            []models.OauthClient  `json:"apps,omitempty"`
 	Profile         *Profile              `json:"profile"`
 }
 
 func NewInitialState(
 	cnf *config.Config,
 	client *models.OauthClient,
+	apps Apps,
 	profile *Profile,
 ) *InitialState {
 	return &InitialState{
 		ApplicationName: client.ApplicationName.String,
+		Apps:            apps,
 		ClientID:        client.Key,
 		Clients:         cnf.Clients,
 		Profile:         profile,

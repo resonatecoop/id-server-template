@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"gopkg.in/guregu/null.v3"
 	"strings"
 	"time"
 
@@ -14,13 +15,13 @@ import (
 // OauthClient ...
 type OauthClient struct {
 	MyGormModel
-	Key                 string         `sql:"type:varchar(254);unique;not null"`
-	Secret              string         `sql:"type:varchar(60);not null"`
-	UserID              sql.NullString `sql:"index"`
-	RedirectURI         sql.NullString `sql:"type:varchar(200)"`
-	ApplicationName     sql.NullString `sql:"type:varchar(200)"`
-	ApplicationHostname sql.NullString `sql:"type:varchar(200)"`
-	ApplicationURL      sql.NullString `sql:"type:varchar(200)"`
+	Key                 string      `json:"key,omitempty" sql:"type:varchar(254);unique;not null"`
+	Secret              string      `json:"secret,omitempty" sql:"type:varchar(60);not null"`
+	UserID              null.String `json:"userId,omitempty,string" sql:"index"`
+	RedirectURI         null.String `json:"redirectUri,omitempty,string" sql:"type:varchar(200)"`
+	ApplicationName     null.String `json:"applicationName,omitempty,string" sql:"type:varchar(200)"`
+	ApplicationHostname null.String `json:"applicationHostname,omitempty,string" sql:"type:varchar(200)"`
+	ApplicationURL      null.String `json:"applicationUrl,omitempty,string" sql:"type:varchar(200)"`
 }
 
 // TableName specifies table name
@@ -142,13 +143,13 @@ func NewOauthClient(
 		},
 		Key:                 key,
 		Secret:              secret,
-		RedirectURI:         util.StringOrNull(redirectURI),
-		ApplicationName:     util.StringOrNull(applicationName),
-		ApplicationHostname: util.StringOrNull(strings.ToLower(applicationHostname)),
-		ApplicationURL:      util.StringOrNull(strings.ToLower(applicationURL)),
+		RedirectURI:         null.StringFrom(redirectURI),
+		ApplicationName:     null.StringFrom(applicationName),
+		ApplicationHostname: null.StringFrom(strings.ToLower(applicationHostname)),
+		ApplicationURL:      null.StringFrom(strings.ToLower(applicationURL)),
 	}
 	if user != nil {
-		oauthClient.UserID = util.StringOrNull(string(user.ID))
+		oauthClient.UserID = null.StringFrom(string(user.ID))
 	}
 	return oauthClient
 }
