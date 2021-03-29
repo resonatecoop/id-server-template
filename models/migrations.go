@@ -21,6 +21,14 @@ var (
 			Name:     "email_tokens",
 			Function: migrate0003,
 		},
+		{
+			Name:     "run_auto_migrate_clients_user_id",
+			Function: migrate0004,
+		},
+		{
+			Name:     "oauth_clients_foreign_key_user",
+			Function: migrate0005,
+		},
 	}
 )
 
@@ -138,6 +146,27 @@ func migrate0003(db *gorm.DB, name string) error {
 	// Create tables
 	if err := db.CreateTable(new(EmailTokenModel)).Error; err != nil {
 		return fmt.Errorf("Error creating oauth_email_tokens table: %s", err)
+	}
+	return nil
+}
+
+func migrate0004(db *gorm.DB, name string) error {
+	// Auto migrate clients table
+	// Added user_id columns
+	if err := db.AutoMigrate(&OauthClient{}).Error; err != nil {
+		return fmt.Errorf("Error while auto migrating oauth client table: %s", err)
+	}
+	return nil
+}
+
+func migrate0005(db *gorm.DB, name string) error {
+	err := db.Model(new(OauthClient)).AddForeignKey(
+		"user_id", "oauth_users(id)",
+		"RESTRICT", "RESTRICT",
+	).Error
+	if err != nil {
+		return fmt.Errorf("Error creating foreign key on "+
+			"oauth_clients.user_id for oauth_users(id): %s", err)
 	}
 	return nil
 }

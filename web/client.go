@@ -68,7 +68,7 @@ func (s *Service) clientForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) client(w http.ResponseWriter, r *http.Request) {
-	sessionService, _, _, _, _, err := s.clientCommon(r)
+	sessionService, _, oauthUser, _, _, err := s.clientCommon(r)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -83,6 +83,7 @@ func (s *Service) client(w http.ResponseWriter, r *http.Request) {
 
 	// Create a new client
 	client, err := s.oauthService.CreateClient(
+		oauthUser,
 		guid.String(), // client id
 		secret,        // client secret
 		r.Form.Get("redirect_uri"),

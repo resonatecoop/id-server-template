@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"strings"
 	"time"
 
 	"github.com/RichardKnop/go-oauth2-server/util"
@@ -15,6 +16,7 @@ type OauthClient struct {
 	MyGormModel
 	Key                 string         `sql:"type:varchar(254);unique;not null"`
 	Secret              string         `sql:"type:varchar(60);not null"`
+	UserID              sql.NullString `sql:"index"`
 	RedirectURI         sql.NullString `sql:"type:varchar(200)"`
 	ApplicationName     sql.NullString `sql:"type:varchar(200)"`
 	ApplicationHostname sql.NullString `sql:"type:varchar(200)"`
@@ -121,6 +123,34 @@ func (ac *OauthAuthorizationCode) TableName() string {
 // TableName specifies table name
 func (ac *EmailTokenModel) TableName() string {
 	return "oauth_email_tokens"
+}
+
+// NewOauthClient creates new OauthClient instance
+func NewOauthClient(
+	user *OauthUser,
+	key string,
+	secret string,
+	redirectURI string,
+	applicationName string,
+	applicationHostname string,
+	applicationURL string,
+) *OauthClient {
+	oauthClient := &OauthClient{
+		MyGormModel: MyGormModel{
+			ID:        uuid.New(),
+			CreatedAt: time.Now().UTC(),
+		},
+		Key:                 key,
+		Secret:              secret,
+		RedirectURI:         util.StringOrNull(redirectURI),
+		ApplicationName:     util.StringOrNull(applicationName),
+		ApplicationHostname: util.StringOrNull(strings.ToLower(applicationHostname)),
+		ApplicationURL:      util.StringOrNull(strings.ToLower(applicationURL)),
+	}
+	if user != nil {
+		oauthClient.UserID = util.StringOrNull(string(user.ID))
+	}
+	return oauthClient
 }
 
 // NewEmailToken creates new OauthEmailToken instance
