@@ -3,12 +3,9 @@ package oauth
 import (
 	"errors"
 	"strings"
-	"time"
 
 	"github.com/RichardKnop/go-oauth2-server/models"
-	"github.com/RichardKnop/go-oauth2-server/util"
 	"github.com/RichardKnop/go-oauth2-server/util/password"
-	"github.com/RichardKnop/uuid"
 	"github.com/jinzhu/gorm"
 )
 
@@ -57,13 +54,13 @@ func (s *Service) FindClientByApplicationURL(applicationURL string) (*models.Oau
 }
 
 // CreateClient saves a new client to database
-func (s *Service) CreateClient(clientID, secret, redirectURI, applicationName, applicationHostname, applicationURL string) (*models.OauthClient, error) {
-	return s.createClientCommon(s.db, clientID, secret, redirectURI, applicationName, applicationHostname, applicationURL)
+func (s *Service) CreateClient(oauthUser *models.OauthUser, clientID, secret, redirectURI, applicationName, applicationHostname, applicationURL string) (*models.OauthClient, error) {
+	return s.createClientCommon(s.db, oauthUser, clientID, secret, redirectURI, applicationName, applicationHostname, applicationURL)
 }
 
 // CreateClientTx saves a new client to database using injected db object
-func (s *Service) CreateClientTx(tx *gorm.DB, clientID, secret, redirectURI, applicationName, applicationHostname, applicationURL string) (*models.OauthClient, error) {
-	return s.createClientCommon(tx, clientID, secret, redirectURI, applicationName, applicationHostname, applicationURL)
+func (s *Service) CreateClientTx(tx *gorm.DB, oauthUser *models.OauthUser, clientID, secret, redirectURI, applicationName, applicationHostname, applicationURL string) (*models.OauthClient, error) {
+	return s.createClientCommon(tx, oauthUser, clientID, secret, redirectURI, applicationName, applicationHostname, applicationURL)
 }
 
 // AuthClient authenticates client
@@ -82,7 +79,7 @@ func (s *Service) AuthClient(clientID, secret string) (*models.OauthClient, erro
 	return client, nil
 }
 
-func (s *Service) createClientCommon(db *gorm.DB, clientID, secret, redirectURI, applicationName, applicationHostname, applicationURL string) (*models.OauthClient, error) {
+func (s *Service) createClientCommon(db *gorm.DB, oauthUser *models.OauthUser, clientID, secret, redirectURI, applicationName, applicationHostname, applicationURL string) (*models.OauthClient, error) {
 	// Check client ID
 	if s.ClientExists(clientID) {
 		return nil, ErrClientIDTaken
@@ -94,18 +91,16 @@ func (s *Service) createClientCommon(db *gorm.DB, clientID, secret, redirectURI,
 		return nil, err
 	}
 
-	client := &models.OauthClient{
-		MyGormModel: models.MyGormModel{
-			ID:        uuid.New(),
-			CreatedAt: time.Now().UTC(),
-		},
-		Key:                 strings.ToLower(clientID),
-		Secret:              string(secretHash),
-		RedirectURI:         util.StringOrNull(redirectURI),
-		ApplicationName:     util.StringOrNull(applicationName),
-		ApplicationHostname: util.StringOrNull(strings.ToLower(applicationHostname)),
-		ApplicationURL:      util.StringOrNull(strings.ToLower(applicationURL)),
-	}
+	client := models.NewOauthClient(
+		oauthUser,
+		strings.ToLower(clientID),
+		string(secretHash),
+		redirectURI,
+		applicationName,
+		applicationHostname,
+		applicationURL,
+	)
+
 	if err := db.Create(client).Error; err != nil {
 		return nil, err
 	}

@@ -21,8 +21,8 @@ type ServiceInterface interface {
 	ClientExists(clientID string) bool
 	FindClientByClientID(clientID string) (*models.OauthClient, error)
 	FindClientByApplicationURL(applicationURL string) (*models.OauthClient, error)
-	CreateClient(clientID, secret, redirectURI, applicationName, applicationHostname, applicationURL string) (*models.OauthClient, error)
-	CreateClientTx(tx *gorm.DB, clientID, secret, redirectURI, applicationName, applicationHostname, applicationURL string) (*models.OauthClient, error)
+	CreateClient(oauthUser *models.OauthUser, clientID, secret, redirectURI, applicationName, applicationHostname, applicationURL string) (*models.OauthClient, error)
+	CreateClientTx(tx *gorm.DB, oauthUser *models.OauthUser, clientID, secret, redirectURI, applicationName, applicationHostname, applicationURL string) (*models.OauthClient, error)
 	AuthClient(clientID, secret string) (*models.OauthClient, error)
 	GetValidEmailToken(token string) (*models.EmailTokenModel, string, error)
 	ClearExpiredEmailTokens() error
