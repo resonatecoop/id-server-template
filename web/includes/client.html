@@ -1,4 +1,4 @@
-{{ define "title"}}Create new client{{ end }}
+{{ define "title"}}Register a new app{{ end }}
 
 {{ define "content" }}
 <div id="app">
@@ -7,5 +7,73 @@
     <p{{ if eq .flash.Type "Error" }} class="red"{{ end }}>{{ .flash.Message }}</p>
   </div>
   {{ end }}
+
+  <main class="flex flex-auto relative">
+    <div class="flex flex-column flex-auto w-100">
+      <div class="flex flex-column flex-auto items-center justify-center min-vh-100 mh3 pt6 pb6">
+        <div class="bg-white black bg-black--dark white--dark bg-white--light black--light z-1 w-100 w-auto-l ph4 pt4 pb3">
+          <div class="flex flex-column flex-auto">
+            <form id="apps" action="" class="flex flex-column flex-auto ma0 pa0">
+              <h2 class="lh-title fw1">Your apps</h2>
+              
+              {{ range .apps }}
+                <fieldset class="ma0 pa0 bn">
+                  <legend>{{.ApplicationName.String}}</legend>
+                  <input name="apps[{{.Key}}][key]" readonly disabled value={{.Key}}>
+                  <input name="apps[{{.Key}}][name]" readonly disabled value={{.ApplicationName.String}}>
+                  <input name="apps[{{.Key}}][url]" readonly disabled value={{.ApplicationURL.String}}>
+                  <input name="apps[{{.Key}}][hostname]" readonly disabled value={{.ApplicationHostname.String}}>
+                </fieldset>
+              {{ end }}
+            </form>
+
+            <form id="app_new" action="" method="POST" class="flex flex-column flex-auto ma0 pa0">
+              <h2 class="lh-title fw1">Register a new app</h2>
+
+              <div>
+                <div class="flex flex-column mb3">
+                  <div class="relative">
+                    <input
+                      name="name"
+                      type="text"
+                      value=""
+                      placeholder="Application Name"
+                      class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid"
+                      
+                    />
+                  </div>
+                </div>
+
+                <div class="flex flex-column mb3">
+                  <div class="relative">
+                    <input
+                      name="url"
+                      type="text"
+                      value=""
+                      placeholder="Application URL"
+                      class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid"
+                      
+                    />
+                  </div>
+                </div>
+
+                <div class="flex flex-column mb3">
+                  <div class="relative">
+                    <input
+                      name="hostname"
+                      type="text"
+                      value=""
+                      placeholder="Application Hostname"
+                      class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid"
+                      
+                    />
+                  </div>
+                </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
 </div>
 {{ end }}

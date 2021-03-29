@@ -36,6 +36,7 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 	initialState, err := json.Marshal(NewInitialState(
 		s.cnf,
 		client,
+		[]models.OauthClient{},
 		profile,
 	))
 
