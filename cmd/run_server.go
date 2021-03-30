@@ -11,12 +11,13 @@ import (
 	"github.com/unrolled/secure"
 	"github.com/urfave/negroni"
 	"gopkg.in/tylerb/graceful.v1"
+	"github.com/RichardKnop/go-oauth2-server/log"
 )
 
 // RunServer runs the app
 func RunServer(configBackend string) error {
 	cnf, db, db2, err := initConfigDB(true, true, configBackend)
-
+	log.INFO.Printf("initConfigDB: %v %v %v %v", cnf, db, db2, err)
 	if err != nil {
 		return err
 	}
@@ -25,6 +26,7 @@ func RunServer(configBackend string) error {
 
 	// start the services
 	if err := services.Init(cnf, db, db2); err != nil {
+		log.INFO.Printf("Start services %v", err)
 		return err
 	}
 	defer services.Close()
@@ -35,7 +37,7 @@ func RunServer(configBackend string) error {
 		BrowserXssFilter:   true,
 		IsDevelopment:      cnf.IsDevelopment,
 	})
-
+	log.INFO.Print("Starting app")
 	// Start a classic negroni app
 	app := negroni.New()
 	app.Use(negroni.NewRecovery())
@@ -66,7 +68,7 @@ func RunServer(configBackend string) error {
 
 	// Set the router
 	app.UseHandler(router)
-
+	log.INFO.Printf("Starting server %v", cnf.Port)
 	// Run the server on port 8080 by default, gracefully stop on SIGTERM signal
 	graceful.Run(cnf.Port, 5*time.Second, app)
 
