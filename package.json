@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/resonatecoop/go-oauth2-server.git"
+    "url": "git+https://github.com/resonatecoop/id.git"
   },
   "browserify": {
     "transform": [
@@ -35,7 +35,7 @@
   "author": "Augustin Godiscal <auggod@resonate.is>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/resonatecoop/go-oauth2-server/issues"
+    "url": "https://github.com/resonatecoop/id/issues"
   },
   "postcss": {
     "plugins": {
@@ -103,5 +103,5 @@
     "vinyl-buffer": "^1.0.1",
     "vinyl-source-stream": "^2.0.0"
   },
-  "homepage": "https://github.com/resonatecoop/go-oauth2-server#readme"
+  "homepage": "https://github.com/resonatecoop/id#readme"
 }
