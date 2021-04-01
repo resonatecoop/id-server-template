@@ -213,10 +213,21 @@ func (s *Service) GetRoutes() []routes.Route {
 			},
 		},
 		{
-			Name:        "client",
+			Name:        "client_delete_form",
+			Method:      "GET",
+			Pattern:     "/apps/{id}",
+			HandlerFunc: s.clientDeleteForm,
+			Middlewares: []negroni.Handler{
+				new(parseFormMiddleware),
+				newLoggedInMiddleware(s),
+				newClientMiddleware(s),
+			},
+		},
+		{
+			Name:        "client_delete",
 			Method:      "POST",
-			Pattern:     "/apps",
-			HandlerFunc: s.client,
+			Pattern:     "/apps/{id}",
+			HandlerFunc: s.clientDelete,
 			Middlewares: []negroni.Handler{
 				tollbooth_negroni.LimitHandler(
 					tollbooth.NewLimiter(1, nil),
@@ -227,10 +238,10 @@ func (s *Service) GetRoutes() []routes.Route {
 			},
 		},
 		{
-			Name:        "client_delete",
-			Method:      "DELETE",
+			Name:        "client",
+			Method:      "POST",
 			Pattern:     "/apps",
-			HandlerFunc: s.clientDelete,
+			HandlerFunc: s.client,
 			Middlewares: []negroni.Handler{
 				tollbooth_negroni.LimitHandler(
 					tollbooth.NewLimiter(1, nil),

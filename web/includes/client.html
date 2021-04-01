@@ -2,74 +2,131 @@
 
 {{ define "content" }}
 <div id="app">
-  {{ if .flash }}
-  <div>
-    <p{{ if eq .flash.Type "Error" }} class="red"{{ end }}>{{ .flash.Message }}</p>
-  </div>
-  {{ end }}
-
   <main class="flex flex-auto relative">
     <div class="flex flex-column flex-auto w-100">
       <div class="flex flex-column flex-auto items-center justify-center min-vh-100 mh3 pt6 pb6">
-        <div class="bg-white black bg-black--dark white--dark bg-white--light black--light z-1 w-100 w-auto-l ph4 pt4 pb3">
-          <div class="flex flex-column flex-auto">
-            <form id="apps" action="" class="flex flex-column flex-auto ma0 pa0">
-              <h2 class="lh-title fw1">Your apps</h2>
+        <div class="bg-white black bg-black--dark white--dark bg-white--light black--light z-1 w-100 ph4 pt4 pb3">
+          <div class="flex flex-column flex-row-l flex-auto">
+            <div class="flex flex-auto flex-column ph3">
+              <h2 class="lh-title f3 fw1">Your apps</h2>
               
               {{ range .apps }}
-                <fieldset class="ma0 pa0 bn">
-                  <legend>{{.ApplicationName.String}}</legend>
-                  <input name="apps[{{.Key}}][key]" readonly disabled value={{.Key}}>
-                  <input name="apps[{{.Key}}][name]" readonly disabled value={{.ApplicationName.String}}>
-                  <input name="apps[{{.Key}}][url]" readonly disabled value={{.ApplicationURL.String}}>
-                  <input name="apps[{{.Key}}][hostname]" readonly disabled value={{.ApplicationHostname.String}}>
-                </fieldset>
+                <div class="flex flex-column ba bw b--dark-gray mb4 ph3 pt4">
+                  <fieldset class="ma0 pa0 ph3 bn">
+                    <legend class="lh-copy mt3 f4 fw1 mb3">{{.ApplicationName.String}}</legend>
+                    <div class="flex flex-column">
+                      <label class="db" for="apps[{{.Key}}][ID]">Client ID</label>
+                      <div class="mb3 flex">
+                        <input name="apps[{{.Key}}][ID]" readonly disabled value={{.ID}} class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid">
+                      </div>
+                      <label class="db" for="apps[{{.Key}}][key]">Client Key</label>
+                      <div class="mb3 flex">
+                        <input name="apps[{{.Key}}][key]" readonly disabled value={{.Key}} class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid">
+                      </div>
+                      <label class="db" for="apps[{{.Key}}][name]">Application Name</label>
+                      <div class="mb3 flex">
+                        <input name="apps[{{.Key}}][name]" readonly disabled value={{.ApplicationName.String}} class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid">
+                      </div>
+                      <label class="db" for="apps[{{.Key}}][redirect_uri]">Redirect URI</label>
+                      <div class="mb3 flex">
+                        <input name="apps[{{.Key}}][redirect_uri]" readonly disabled value={{.RedirectURI.String}} class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid">
+                      </div>
+                      <label class="db" for="apps[{{.Key}}][url]">Application URL</label>
+                      <div class="mb3 flex">
+                        <input name="apps[{{.Key}}][url]" readonly disabled value={{.ApplicationURL.String}} class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid">
+                      </div>
+                      <label class="db" for="apps[{{.Key}}][hostname]">Application Hostname</label>
+                      <div class="mb3 flex">
+                        <input name="apps[{{.Key}}][hostname]" readonly disabled value={{.ApplicationHostname.String}} class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid">
+                      </div>
+                      <div class="mb3 flex justify-end">
+                        <a href="/apps/{{.Key}}" class="link underline">Delete this app</a>
+                      </div>
+                    </div>
+                  </fieldset>
+                </div>
               {{ end }}
-            </form>
-
-            <form id="app_new" action="" method="POST" class="flex flex-column flex-auto ma0 pa0">
-              <h2 class="lh-title fw1">Register a new app</h2>
-
-              <div>
-                <div class="flex flex-column mb3">
-                  <div class="relative">
-                    <input
-                      name="name"
-                      type="text"
-                      value=""
-                      placeholder="Application Name"
-                      class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid"
-                      
-                    />
-                  </div>
+            </div>
+            <div class="flex flex-auto flex-column ph3">
+              {{ if .flash }}
+                <div class="measure">
+                  <p{{ if eq .flash.Type "Error" }} class="red"{{ end }}>{{ .flash.Message }}</p>
                 </div>
+              {{ end }}
+              <div class="sticky top-0">
+                <form id="app-new" action="" method="POST" class="flex flex-column flex-auto ma0 pa0">
+                  {{ .csrfField }}
+                  
+                  <h2 class="lh-title f3 fw1">Register a new app</h2>
 
-                <div class="flex flex-column mb3">
-                  <div class="relative">
-                    <input
-                      name="url"
-                      type="text"
-                      value=""
-                      placeholder="Application URL"
-                      class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid"
-                      
-                    />
-                  </div>
-                </div>
+                  <div>
+                    <div class="flex flex-column mb3">
+                      <div class="relative">
+                        <input
+                          name="application_name"
+                          type="text"
+                          value=""
+                          required="required"
+                          placeholder="Application Name"
+                          class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid"
+                          
+                        />
+                      </div>
+                    </div>
 
-                <div class="flex flex-column mb3">
-                  <div class="relative">
-                    <input
-                      name="hostname"
-                      type="text"
-                      value=""
-                      placeholder="Application Hostname"
-                      class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid"
-                      
-                    />
-                  </div>
-                </div>
-            </form>
+                    <div class="flex flex-column mb3">
+                      <div class="relative">
+                        <input
+                          name="redirect_uri"
+                          type="text"
+                          value=""
+                          required="required"
+                          placeholder="Redirect URI"
+                          class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid"
+                          
+                        />
+                      </div>
+                    </div>
+
+                    <div class="flex flex-column mb3">
+                      <div class="relative">
+                        <input
+                          name="application_url"
+                          type="text"
+                          value=""
+                          required="required"
+                          placeholder="Application URL"
+                          class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid"
+                          
+                        />
+                      </div>
+                    </div>
+
+                    <div class="flex flex-column mb3">
+                      <div class="relative">
+                        <input
+                          name="application_hostname"
+                          type="text"
+                          value=""
+                          required="required"
+                          placeholder="Application Hostname"
+                          class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid"
+                          
+                        />
+                      </div>
+                    </div>
+
+                    <div class="flex mt3">
+                      <div class="flex mr3">
+                        <p class="f5 lh-copy">Have a question? <a href="https://resonate.coop/contact" class="link b">Get in touch</a>.</p>
+                      </div>
+                      <div class="flex flex-auto justify-end pr1">
+                        <button type="submit" class="bg-white dib grow ba bw b--near-black b pv2 ph4 flex-shrink-0 f5">Save</button>
+                      </div>
+                    </div>
+                </form>
+              </div>
+            </div>
           </div>
         </div>
       </div>
