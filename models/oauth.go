@@ -22,6 +22,7 @@ type OauthClient struct {
 	ApplicationName     null.String `json:"applicationName,omitempty,string" sql:"type:varchar(200)"`
 	ApplicationHostname null.String `json:"applicationHostname,omitempty,string" sql:"type:varchar(200)"`
 	ApplicationURL      null.String `json:"applicationUrl,omitempty,string" sql:"type:varchar(200)"`
+	Active              bool        `json:"active" sql:"default:false;not null"`
 }
 
 // TableName specifies table name
@@ -135,6 +136,7 @@ func NewOauthClient(
 	applicationName string,
 	applicationHostname string,
 	applicationURL string,
+	active bool,
 ) *OauthClient {
 	oauthClient := &OauthClient{
 		MyGormModel: MyGormModel{
@@ -142,6 +144,7 @@ func NewOauthClient(
 			CreatedAt: time.Now().UTC(),
 		},
 		Key:                 key,
+		Active:              active,
 		Secret:              secret,
 		RedirectURI:         null.StringFrom(redirectURI),
 		ApplicationName:     null.StringFrom(applicationName),
