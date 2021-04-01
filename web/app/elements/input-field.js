@@ -62,13 +62,13 @@ function inputField (inputComponent, form = {}) {
 
     function renderHelp (helpText) {
       if (helpText) {
-        return html`<p class="lh-copy f5">${helpText}</p>`
+        return html`<p class="lh-copy">${helpText}</p>`
       }
     }
 
     function renderErrors (inputName) {
       return html`
-        <p class="lh-copy f5 red">
+        <p class="lh-copy red">
           ${errors[inputName] && !pristine[inputName] ? errors[inputName].message : ''}
         </p>
       `

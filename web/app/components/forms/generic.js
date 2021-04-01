@@ -63,7 +63,7 @@ class Form extends Component {
           </div>
           ${typeof help === 'function' ? help(values[name]) : help}
           ${errors[name] && !pristine[name] ? html`
-            <span class="message f5 pb2">${errors[name].message}</span>
+            <span class="message red pb2">${errors[name].message}</span>
           ` : ''}
         </div>
       `

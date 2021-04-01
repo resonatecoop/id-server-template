@@ -8,6 +8,7 @@ const PasswordReset = require('./components/forms/passwordReset')
 const PasswordResetUpdatePassword = require('./components/forms/passwordResetUpdatePassword')
 const UpdateProfileForm = require('./components/forms/profile')
 const UpdatePasswordForm = require('./components/forms/passwordUpdate')
+const AppForm = require('./components/forms/app')
 const Notifications = require('./components/notifications')
 const imagePlaceholder = require('./lib/image-placeholder')
 const Dialog = require('@resonate/dialog-component')
@@ -33,6 +34,7 @@ if (isBrowser) {
 app.use(require('choo-meta')())
 
 app.use((state, emitter) => {
+  state.apps = state.apps || []
   state.clients = state.clients || [
     {
       connectUrl: 'https://upload.resonate.is/api/user/connect/resonate',
@@ -220,10 +222,72 @@ app.route('/', layout((state, emit) => {
   `
 }))
 
-app.route('/apps', layoutNarrow((state, emit) => {
+app.route('/apps', layout((state, emit) => {
+  return html`
+    <div class="flex flex-column flex-auto w-100">
+      <div class="flex flex-column flex-auto items-center justify-center min-vh-100 mh3 pt6 pb6">
+        <div class="bg-white black bg-black--dark white--dark bg-white--light black--light z-1 w-100 ph4 pt4 pb3">
+          <div class="flex flex-column flex-row-l flex-auto">
+            <div class="flex flex-auto flex-column ph3">
+              <h2 class="lh-title f3 fw1">Your apps</h2>
+
+              ${state.apps.map(app => {
+                const { ID, key, applicationName: name, applicationUrl: url, applicationHostname: hostname, redirectUri } = app
+
+                return html`
+                  <div class="flex flex-column ba bw b--dark-gray mb4 ph3 pt4">
+                    <fieldset class="ma0 pa0 ph3 bn">
+                      <legend class="lh-copy mt3 f4 fw1 mb3">${name}</legend>
+                      <div class="flex flex-column">
+                        <label class="db" for="apps[${key}][ID]">Client ID</label>
+                        <div class="mb3 flex">
+                          <input name="apps[${key}][ID]" readonly disabled value=${ID} class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid">
+                        </div>
+                        <label class="db" for="apps[${key}][key]">Client Key</label>
+                        <div class="mb3 flex">
+                          <input name="apps[${key}][key]" readonly disabled value=${key} class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid">
+                        </div>
+                        <label class="db" for="apps[${key}][name]">Application Name</label>
+                        <div class="mb3 flex">
+                          <input name="apps[${key}][name]" readonly disabled value=${name} class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid">
+                        </div>
+                        <label class="db" for="apps[${key}][redirect_uri]">Redirect URI</label>
+                        <div class="mb3 flex">
+                          <input name="apps[${key}][redirect_uri]" readonly disabled value=${redirectUri} class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid">
+                        </div>
+                        <label class="db" for="apps[${key}][url]">Application URL</label>
+                        <div class="mb3 flex">
+                          <input name="apps[${key}][url]" readonly disabled value=${url} class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid">
+                        </div>
+                        <label class="db" for="apps[${key}][hostname]">Application Hostname</label>
+                        <div class="mb3 flex">
+                          <input name="apps[${key}][hostname]" readonly disabled value=${hostname} class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid">
+                        </div>
+                        <div class="mb3 flex justify-end">
+                          <a href="/apps/${key}" class="link underline">Delete this app</a>
+                        </div>
+                      </div>
+                    </fieldset>
+                  </div>
+                `
+              })}
+            </div>
+            <div class="flex flex-auto flex-column ph3">
+              <div class="sticky top-0">
+                <h2 class="lh-title f3 fw1">Register a new app</h2>
+                ${state.cache(AppForm, 'app-form').render()}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `
+}))
+
+app.route('/apps/:id', layout((state, emit) => {
   return html`
     <div class="flex flex-column">
-      <h2 class="f3 fw1 mt3 near-black near-black--light light-gray--dark lh-title">Register a new app</h2>
     </div>
   `
 }))
