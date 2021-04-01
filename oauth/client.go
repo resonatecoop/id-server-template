@@ -116,6 +116,7 @@ func (s *Service) createClientCommon(db *gorm.DB, oauthUser *models.OauthUser, c
 		applicationName,
 		applicationHostname,
 		applicationURL,
+		false, // active
 	)
 
 	if err := db.Create(client).Error; err != nil {

@@ -29,6 +29,10 @@ var (
 			Name:     "oauth_clients_foreign_key_user",
 			Function: migrate0005,
 		},
+		{
+			Name:     "run_auto_migrate_clients_active",
+			Function: migrate0006,
+		},
 	}
 )
 
@@ -167,6 +171,15 @@ func migrate0005(db *gorm.DB, name string) error {
 	if err != nil {
 		return fmt.Errorf("Error creating foreign key on "+
 			"oauth_clients.user_id for oauth_users(id): %s", err)
+	}
+	return nil
+}
+
+func migrate0006(db *gorm.DB, name string) error {
+	// Auto migrate clients table
+	// Added active column
+	if err := db.AutoMigrate(&OauthClient{}).Error; err != nil {
+		return fmt.Errorf("Error while auto migrating oauth client table: %s", err)
 	}
 	return nil
 }
