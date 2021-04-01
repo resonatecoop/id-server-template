@@ -16,6 +16,8 @@ var (
 	ErrInvalidClientSecret = errors.New("Invalid client secret")
 	// ErrClientIDTaken ...
 	ErrClientIDTaken = errors.New("Client ID taken")
+	// ErrApplicationHostnameTaken ...
+	ErrApplicationHostnameTaken = errors.New("Application hostname is taken")
 )
 
 var apps []models.OauthClient
@@ -24,6 +26,26 @@ var apps []models.OauthClient
 func (s *Service) ClientExists(clientID string) bool {
 	_, err := s.FindClientByClientID(clientID)
 	return err == nil
+}
+
+func (s *Service) HostnameTaken(hostname string) bool {
+	_, err := s.FindClientByHostname(hostname)
+	return err == nil
+}
+
+// FindClientByClientID looks up a client by client ID
+func (s *Service) FindClientByHostname(applicationHostname string) (*models.OauthClient, error) {
+	// Client IDs are case insensitive
+	client := new(models.OauthClient)
+	notFound := s.db.Where("application_hostname = LOWER(?)", applicationHostname).
+		First(client).RecordNotFound()
+
+	// Not found
+	if notFound {
+		return nil, ErrClientNotFound
+	}
+
+	return client, nil
 }
 
 // FindClientByClientID looks up a client by client ID
@@ -41,10 +63,22 @@ func (s *Service) FindClientByClientID(clientID string) (*models.OauthClient, er
 	return client, nil
 }
 
+// DeleteClient
+func (s *Service) DeleteClient(clientID string, user *models.OauthUser) error {
+	client, err := s.FindClientByClientID(clientID)
+
+	if err != nil {
+		return err
+	}
+
+	return s.db.Unscoped().Where("user_id = ?", user.ID).Delete(client).Error
+}
+
 func (s *Service) FindClientsByUserId(oauthUser *models.OauthUser) ([]models.OauthClient, error) {
 	notFound := s.db.
 		Where("user_id = ?", oauthUser.ID).
-		Select("created_at,updated_at,key,user_id,application_hostname,application_url,application_name").
+		Select("ID,created_at,updated_at,key,user_id,redirect_uri,application_hostname,application_url,application_name,active").
+		Order("created_at desc").
 		Find(&apps).
 		RecordNotFound()
 
@@ -100,6 +134,12 @@ func (s *Service) createClientCommon(db *gorm.DB, oauthUser *models.OauthUser, c
 	// Check client ID
 	if s.ClientExists(clientID) {
 		return nil, ErrClientIDTaken
+	}
+
+	// Check the application hostname
+	// may have to allow this
+	if s.HostnameTaken(applicationHostname) {
+		return nil, ErrApplicationHostnameTaken
 	}
 
 	// Hash password

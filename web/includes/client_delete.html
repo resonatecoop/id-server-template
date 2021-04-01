@@ -1,0 +1,36 @@
+{{ define "title"}}Your app{{ end }}
+
+{{ define "content" }}
+<div id="app">
+  <main class="flex flex-auto relative">
+    <div class="flex flex-column flex-auto w-100">
+      <div class="flex flex-column flex-auto items-center justify-center min-vh-100 mh3 pt6 pb6">
+        <div class="bg-white black bg-black--dark white--dark bg-white--light black--light z-1 w-100 ph4 pt4 pb3">
+          <div class="flex flex-column flex-row-l flex-auto">
+            <div class="flex flex-auto flex-column ph3">
+              <h2 class="lh-title f3 fw1">Delete app</h2>
+              <form id="delete-{{.app.Key}}" action="" method="POST" class="ma0 pa0">
+                {{ .csrfField }}
+                <div class="flex flex-column">
+                  <input type="hidden" value={{.app.Key}} name="client_id">
+                  <input type="hidden" name="_method" value="DELETE" />
+                  <label for="application_name">Please confirm the application name (security measure)</label>
+                  <div class="mb3">
+                    <input type="text" id="application_name" required="required" placeholder={{.app.ApplicationName.String}} name="application_name" value="" class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid" />
+                  </div>
+                  <label for="delete-client">Permanently delete {{.app.ApplicationName.String}} app</label>
+                  <div class="mb3">
+                    <button id="delete-client" type="submit" class="bg-red white dib grow ba bw b--near-black b pv2 ph4 flex-shrink-0 f5">
+                      Delete app
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+{{ end }}

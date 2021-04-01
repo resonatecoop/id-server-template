@@ -43,7 +43,7 @@ func (suite *OauthTestSuite) TestCreateClient() {
 
 	// We try to insert a non uniqie client
 	client, err = suite.service.CreateClient(
-		&models.OauthUser{},
+		nil,                       // oauth user
 		"test_client_1",           // client ID
 		"test_secret",             // secret
 		"https://www.example.com", // redirect URI
@@ -62,6 +62,7 @@ func (suite *OauthTestSuite) TestCreateClient() {
 
 	// We try to insert a unique client
 	client, err = suite.service.CreateClient(
+		nil,                       // oauth user
 		"test_client_3",           // client ID
 		"test_secret",             // secret
 		"https://www.example.com", // redirect URI

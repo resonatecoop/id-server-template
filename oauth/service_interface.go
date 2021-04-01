@@ -19,6 +19,7 @@ type ServiceInterface interface {
 	GetRoutes() []routes.Route
 	RegisterRoutes(router *mux.Router, prefix string)
 	ClientExists(clientID string) bool
+	DeleteClient(clientID string, oauthUser *models.OauthUser) error
 	FindClientByClientID(clientID string) (*models.OauthClient, error)
 	FindClientsByUserId(oauthUser *models.OauthUser) ([]models.OauthClient, error)
 	FindClientByApplicationURL(applicationURL string) (*models.OauthClient, error)

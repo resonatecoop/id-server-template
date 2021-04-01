@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"strings"
 
 	"github.com/RichardKnop/go-oauth2-server/models"
 	"github.com/RichardKnop/go-oauth2-server/session"
 	"github.com/RichardKnop/go-oauth2-server/util/response"
 	"github.com/gorilla/csrf"
+	"github.com/gorilla/mux"
 	"github.com/rs/xid"
 	"github.com/thanhpk/randstr"
 )
@@ -72,6 +74,49 @@ func (s *Service) clientForm(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (s *Service) clientDeleteForm(w http.ResponseWriter, r *http.Request) {
+	sessionService, client, user, wpuser, nickname, err := s.clientCommon(r)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("X-CSRF-Token", csrf.Token(r))
+
+	// Render the template
+	flash, _ := sessionService.GetFlashMessage()
+	query := r.URL.Query()
+	query.Set("login_redirect_uri", r.URL.Path)
+
+	params := mux.Vars(r)
+
+	key := params["id"]
+
+	app, err := s.oauthService.FindClientByClientID(key)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	profile := &Profile{
+		ID:             wpuser.ID,
+		Email:          wpuser.Email,
+		DisplayName:    nickname,
+		EmailConfirmed: user.EmailConfirmed,
+	}
+
+	renderTemplate(w, "client_delete.html", map[string]interface{}{
+		"flash":          flash,
+		"clientID":       client.Key,
+		"app":            app,
+		"profile":        profile,
+		"queryString":    getQueryString(query),
+		csrf.TemplateTag: csrf.TemplateField(r),
+	})
+}
+
 func (s *Service) client(w http.ResponseWriter, r *http.Request) {
 	sessionService, _, oauthUser, _, _, err := s.clientCommon(r)
 
@@ -127,15 +172,18 @@ func (s *Service) client(w http.ResponseWriter, r *http.Request) {
 		}, http.StatusCreated)
 	default:
 		sessionService.SetFlashMessage(&session.Flash{
-			Type:    "Info",
-			Message: "New client created",
+			Type: "Info",
+			Message: fmt.Sprintf(
+				`New client created. Your secret is "%s". Make sure to store it in a safe place.`,
+				secret,
+			),
 		})
 		redirectWithQueryString("/web/apps", r.URL.Query(), w, r)
 	}
 }
 
 func (s *Service) clientDelete(w http.ResponseWriter, r *http.Request) {
-	_, _, _, _, _, err := s.clientCommon(r)
+	sessionService, _, oauthUser, _, _, err := s.clientCommon(r)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -144,7 +192,43 @@ func (s *Service) clientDelete(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("X-CSRF-Token", csrf.Token(r))
 
-	// TODO
+	if strings.ToLower(r.Form.Get("_method")) == "delete" || r.Method == http.MethodDelete {
+		clientId := r.Form.Get("client_id")
+		applicationName := r.Form.Get("application_name")
+
+		client, err := s.oauthService.FindClientByClientID(clientId)
+
+		if client.ApplicationName.String != applicationName {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		err = s.oauthService.DeleteClient(client.Key, oauthUser)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		switch r.Header.Get("Accept") {
+		case "application/json":
+			response.WriteJSON(w, map[string]interface{}{
+				"message": "Client deleted",
+				"status":  http.StatusFound,
+			}, http.StatusCreated)
+		default:
+			sessionService.SetFlashMessage(&session.Flash{
+				Type:    "Info",
+				Message: "Client deleted",
+			})
+			redirectWithQueryString("/web/apps", r.URL.Query(), w, r)
+		}
+
+		return
+	}
+
+	http.Error(w, err.Error(), http.StatusBadRequest)
+	return
 }
 
 func (s *Service) clientCommon(r *http.Request) (

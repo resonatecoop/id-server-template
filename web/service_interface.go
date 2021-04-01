@@ -35,6 +35,7 @@ type ServiceInterface interface {
 	clientForm(w http.ResponseWriter, r *http.Request)
 	client(w http.ResponseWriter, r *http.Request)
 	clientDelete(w http.ResponseWriter, r *http.Request)
+	clientDeleteForm(w http.ResponseWriter, r *http.Request)
 	loginForm(w http.ResponseWriter, r *http.Request)
 	login(w http.ResponseWriter, r *http.Request)
 	logout(w http.ResponseWriter, r *http.Request)
