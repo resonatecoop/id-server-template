@@ -8,6 +8,8 @@ services:
       - "etcd-data:/default.etcd"
     environment:
       - ETCDCTL_API=3
+    networks:
+     - etcd-network
 
   etcd_config:
     build:
@@ -20,35 +22,39 @@ services:
       - ETCDCTL_ENDPOINTS=etcd:2379
     depends_on:
       - etcd
-    links:
-      - etcd
+    networks:
+      - etcd-network
 
   postgres:
     image: "postgres"
     volumes:
       - "db-data:/var/lib/postgresql/data/pgdata"
+    env_file: .env
     environment:
       PGDATA: "/var/lib/postgresql/data/pgdata"
-      POSTGRES_USER: "go_oauth2_server"
-      POSTGRES_PASSWORD: ""
-      POSTGRES_DB: "go_oauth2_server"
+      POSTGRES_USER: $POSTGRES_USER
+      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+      POSTGRES_DB: $POSTGRES_DB
+    networks:
+     - postgres-network
+    ports:
+     - "5432:5432"
 
   app:
     container_name: go_oauth2_server
     image: go-oauth2-server:latest
     networks:
-      - login-network
+      - app-network
+      - postgres-network
+      - etcd-network
     depends_on:
       - etcd_config
-      - postgres
-    links:
-      - etcd
       - postgres
     build:
       context: .
       dockerfile: ./Dockerfile
     ports:
-      - "8080:8080"
+      - "8080"
     environment:
       ETCD_ENDPOINTS: "http://etcd:2379"
     command: [runserver]
@@ -70,11 +76,9 @@ services:
     image: "perl"
     build: migrate-wp-users/.
     depends_on:
-      - etcd_config
       - postgres
-    links:
-      - etcd
-      - postgres
+    networks:
+      - postgres-network
     command: [ "perl", "./migrate_wp_user_to_oauth.pl" ]
     volumes:
       - "dot_ssh:/root/.ssh"
@@ -82,22 +86,6 @@ services:
     environment:
       - SSH_AUTH_SOCK=/.ssh-agent/socket
       - ETCD_ENDPOINTS="http://etcd:2379"
-
-  app_testdata:
-    container_name: go_oauth2_server_testdata
-    image: go-oauth2-server:latest
-    build:
-      context: .
-      dockerfile: ./Dockerfile
-    environment:
-      ETCD_ENDPOINTS: "http://etcd:2379"
-    depends_on:
-      - etcd_config
-      - postgres
-    links:
-      - etcd
-      - postgres
-    command: ["loaddata", "oauth/fixtures/test_clients.yml"]
 
   webserver:
     image: nginx:mainline-alpine
@@ -115,7 +103,7 @@ services:
     depends_on:
       - app
     networks:
-      - login-network
+      - app-network
 
   certbot:
     image: certbot/certbot
@@ -126,10 +114,14 @@ services:
       - web-root:/var/www/html
     depends_on:
       - webserver
-    command: certonly --webroot --webroot-path=/var/www/html --email auggod@resonate.is --agree-tos --no-eff-email --force-renewal -d login.resonate.ninja
+    command: certonly --webroot --webroot-path=/var/www/html --email auggod@resonate.is --agree-tos --no-eff-email --force-renewal -d id.resonate.coop
 
 networks:
-  login-network:
+  app-network:
+    driver: bridge
+  postgres-network:
+    driver: bridge
+  etcd-network:
     driver: bridge
 
 volumes:
