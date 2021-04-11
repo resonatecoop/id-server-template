@@ -52,7 +52,7 @@ func (s *Service) clientForm(w http.ResponseWriter, r *http.Request) {
 		string(initialState),
 	)
 
-	renderTemplate(w, "client.html", map[string]interface{}{
+	err = renderTemplate(w, "client.html", map[string]interface{}{
 		"flash":           flash,
 		"clientID":        client.Key,
 		"applicationName": client.ApplicationName.String,
@@ -61,6 +61,10 @@ func (s *Service) clientForm(w http.ResponseWriter, r *http.Request) {
 		"initialState":    template.HTML(fragment),
 		csrf.TemplateTag:  csrf.TemplateField(r),
 	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (s *Service) client(w http.ResponseWriter, r *http.Request) {
@@ -92,10 +96,14 @@ func (s *Service) client(w http.ResponseWriter, r *http.Request) {
 		case "application/json":
 			response.Error(w, err.Error(), http.StatusBadRequest)
 		default:
-			sessionService.SetFlashMessage(&session.Flash{
+			err = sessionService.SetFlashMessage(&session.Flash{
 				Type:    "Error",
 				Message: err.Error(),
 			})
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 			http.Redirect(w, r, r.RequestURI, http.StatusFound)
 		}
 		return
@@ -116,10 +124,14 @@ func (s *Service) client(w http.ResponseWriter, r *http.Request) {
 			"status": http.StatusCreated,
 		}, http.StatusCreated)
 	default:
-		sessionService.SetFlashMessage(&session.Flash{
+		err = sessionService.SetFlashMessage(&session.Flash{
 			Type:    "Info",
 			Message: "New client created",
 		})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		redirectWithQueryString("/web/apps", r.URL.Query(), w, r)
 	}
 }

@@ -22,9 +22,13 @@ func (s *Service) homeForm(w http.ResponseWriter, r *http.Request) {
 		string(initialState),
 	)
 
-	renderTemplate(w, "home.html", map[string]interface{}{
+	err := renderTemplate(w, "home.html", map[string]interface{}{
 		"clients":        s.cnf.Clients,
 		"initialState":   template.HTML(fragment),
 		csrf.TemplateTag: csrf.TemplateField(r),
 	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
