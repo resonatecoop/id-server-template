@@ -151,7 +151,10 @@ func (s *Service) GetFlashMessage() (interface{}, error) {
 	// Get the last flash message from the stack
 	if flashes := s.session.Flashes(); len(flashes) > 0 {
 		// We need to save the session, otherwise the flash message won't be removed
-		s.session.Save(s.r, s.w)
+		err := s.session.Save(s.r, s.w)
+		if err != nil {
+			return nil, err
+		}
 		return flashes[0].(*Flash), nil
 	}
 

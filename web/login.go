@@ -33,12 +33,16 @@ func (s *Service) loginForm(w http.ResponseWriter, r *http.Request) {
 
 	flash, _ := sessionService.GetFlashMessage()
 
-	renderTemplate(w, "login.html", map[string]interface{}{
+	err = renderTemplate(w, "login.html", map[string]interface{}{
 		"flash":          flash,
 		"queryString":    getQueryString(r.URL.Query()),
 		"initialState":   template.HTML(fragment),
 		csrf.TemplateTag: csrf.TemplateField(r),
 	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (s *Service) login(w http.ResponseWriter, r *http.Request) {
@@ -67,10 +71,14 @@ func (s *Service) login(w http.ResponseWriter, r *http.Request) {
 		case "application/json":
 			response.Error(w, err.Error(), http.StatusBadRequest)
 		default:
-			sessionService.SetFlashMessage(&session.Flash{
+			err = sessionService.SetFlashMessage(&session.Flash{
 				Type:    "Error",
 				Message: err.Error(),
 			})
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 			http.Redirect(w, r, r.RequestURI, http.StatusFound)
 		}
 		return
@@ -79,10 +87,14 @@ func (s *Service) login(w http.ResponseWriter, r *http.Request) {
 	// Get the scope string
 	scope, err := s.oauthService.GetScope(r.Form.Get("scope"))
 	if err != nil {
-		sessionService.SetFlashMessage(&session.Flash{
+		err = sessionService.SetFlashMessage(&session.Flash{
 			Type:    "Error",
 			Message: err.Error(),
 		})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		http.Redirect(w, r, r.RequestURI, http.StatusFound)
 		return
 	}
@@ -94,10 +106,14 @@ func (s *Service) login(w http.ResponseWriter, r *http.Request) {
 		scope,
 	)
 	if err != nil {
-		sessionService.SetFlashMessage(&session.Flash{
+		err = sessionService.SetFlashMessage(&session.Flash{
 			Type:    "Error",
 			Message: err.Error(),
 		})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		http.Redirect(w, r, r.RequestURI, http.StatusFound)
 		return
 	}
@@ -110,10 +126,14 @@ func (s *Service) login(w http.ResponseWriter, r *http.Request) {
 		RefreshToken: refreshToken.Token,
 	}
 	if err := sessionService.SetUserSession(userSession); err != nil {
-		sessionService.SetFlashMessage(&session.Flash{
+		err = sessionService.SetFlashMessage(&session.Flash{
 			Type:    "Error",
 			Message: err.Error(),
 		})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		http.Redirect(w, r, r.RequestURI, http.StatusFound)
 		return
 	}

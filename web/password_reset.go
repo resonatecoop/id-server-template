@@ -42,10 +42,14 @@ func (s *Service) passwordResetForm(w http.ResponseWriter, r *http.Request) {
 		)
 		// TODO renew if close to expiration time ?
 		if err != nil {
-			sessionService.SetFlashMessage(&session.Flash{
+			err = sessionService.SetFlashMessage(&session.Flash{
 				Type:    "Error",
 				Message: err.Error(),
 			})
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 			query := r.URL.Query()
 			query.Del("token")
 			redirectWithQueryString("/web/password-reset", query, w, r)
@@ -56,13 +60,17 @@ func (s *Service) passwordResetForm(w http.ResponseWriter, r *http.Request) {
 
 	flash, _ := sessionService.GetFlashMessage()
 
-	renderTemplate(w, layoutTemplate, map[string]interface{}{
+	err = renderTemplate(w, layoutTemplate, map[string]interface{}{
 		"token":          token,
 		"flash":          flash,
 		"clients":        s.cnf.Clients,
 		"initialState":   template.HTML(fragment),
 		csrf.TemplateTag: csrf.TemplateField(r),
 	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (s *Service) passwordReset(w http.ResponseWriter, r *http.Request) {
@@ -82,10 +90,14 @@ func (s *Service) passwordReset(w http.ResponseWriter, r *http.Request) {
 				response.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
-			sessionService.SetFlashMessage(&session.Flash{
+			err = sessionService.SetFlashMessage(&session.Flash{
 				Type:    "Error",
 				Message: err.Error(),
 			})
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 			http.Redirect(w, r, r.RequestURI, http.StatusFound)
 			return
 		}
@@ -99,10 +111,14 @@ func (s *Service) passwordReset(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		sessionService.SetFlashMessage(&session.Flash{
+		err = sessionService.SetFlashMessage(&session.Flash{
 			Type:    "Info",
 			Message: message,
 		})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		redirectWithQueryString("/web/login", r.URL.Query(), w, r)
 		return
 	}
@@ -135,10 +151,14 @@ func (s *Service) passwordReset(w http.ResponseWriter, r *http.Request) {
 			response.Error(w, err.Error(), status)
 			return
 		}
-		sessionService.SetFlashMessage(&session.Flash{
+		err = sessionService.SetFlashMessage(&session.Flash{
 			Type:    "Error",
 			Message: err.Error(),
 		})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		http.Redirect(w, r, r.RequestURI, http.StatusFound)
 		return
 	}
@@ -153,10 +173,14 @@ func (s *Service) passwordReset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sessionService.SetFlashMessage(&session.Flash{
+	err = sessionService.SetFlashMessage(&session.Flash{
 		Type:    "Info",
 		Message: message,
 	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	http.Redirect(w, r, r.RequestURI, http.StatusFound)
 	return
 }
