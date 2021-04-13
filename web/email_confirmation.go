@@ -29,18 +29,26 @@ func (s *Service) getEmailConfirmationToken(w http.ResponseWriter, r *http.Reque
 	query.Del("token")
 
 	if err != nil {
-		sessionService.SetFlashMessage(&session.Flash{
+		err = sessionService.SetFlashMessage(&session.Flash{
 			Type:    "Error",
 			Message: err.Error(),
 		})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		redirectWithQueryString("/web/profile", query, w, r)
 		return
 	}
 
-	sessionService.SetFlashMessage(&session.Flash{
+	err = sessionService.SetFlashMessage(&session.Flash{
 		Type:    "Info",
 		Message: "Thank your for confirming your email",
 	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	redirectWithQueryString("/web/profile", query, w, r)
 }
@@ -108,10 +116,14 @@ func (s *Service) resendEmailConfirmationToken(w http.ResponseWriter, r *http.Re
 	}
 
 	if user.EmailConfirmed {
-		sessionService.SetFlashMessage(&session.Flash{
+		err = sessionService.SetFlashMessage(&session.Flash{
 			Type:    "Info",
 			Message: "Email is already confirmed",
 		})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		http.Redirect(w, r, r.RequestURI, http.StatusFound)
 		return
 	}
@@ -130,10 +142,14 @@ func (s *Service) resendEmailConfirmationToken(w http.ResponseWriter, r *http.Re
 	)
 
 	if err != nil {
-		sessionService.SetFlashMessage(&session.Flash{
+		err = sessionService.SetFlashMessage(&session.Flash{
 			Type:    "Error",
 			Message: err.Error(),
 		})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		http.Redirect(w, r, r.RequestURI, http.StatusFound)
 		return
 	}

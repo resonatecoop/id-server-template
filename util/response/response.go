@@ -12,7 +12,11 @@ var realm = "go_oauth2_server"
 func WriteJSON(w http.ResponseWriter, v interface{}, code int) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(v)
+	err := json.NewEncoder(w).Encode(v)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 // NoContent writes a 204 no content response
@@ -25,7 +29,11 @@ func NoContent(w http.ResponseWriter) {
 func Error(w http.ResponseWriter, err string, code int) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(map[string]string{"error": err})
+	enc_err := json.NewEncoder(w).Encode(map[string]string{"error": err})
+	if enc_err != nil {
+		http.Error(w, enc_err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 // UnauthorizedError has to contain WWW-Authenticate header

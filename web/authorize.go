@@ -57,7 +57,7 @@ func (s *Service) authorizeForm(w http.ResponseWriter, r *http.Request) {
 		string(initialState),
 	)
 
-	renderTemplate(w, "authorize.html", map[string]interface{}{
+	err = renderTemplate(w, "authorize.html", map[string]interface{}{
 		"flash":           flash,
 		"clientID":        client.Key,
 		"applicationName": client.ApplicationName.String,
@@ -67,6 +67,10 @@ func (s *Service) authorizeForm(w http.ResponseWriter, r *http.Request) {
 		"initialState":    template.HTML(fragment),
 		csrf.TemplateTag:  csrf.TemplateField(r),
 	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (s *Service) authorize(w http.ResponseWriter, r *http.Request) {

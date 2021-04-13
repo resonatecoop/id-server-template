@@ -61,7 +61,10 @@ func CreateTestDatabasePostgres(dbHost, dbUser, dbName string, migrationFunction
 // database and rebuild it, returning a pointer to it
 func rebuildDatabase(dbPath string) (*gorm.DB, error) {
 	// Delete the current database if it exists
-	os.Remove(dbPath)
+	err := os.Remove(dbPath)
+	if err != nil {
+		return nil, err
+	}
 
 	// Init a new in-memory test database connection
 	inMemoryDB, err := gorm.Open("sqlite3", dbPath)

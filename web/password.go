@@ -32,10 +32,14 @@ func (s *Service) passwordUpdate(w http.ResponseWriter, r *http.Request) {
 			response.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		sessionService.SetFlashMessage(&session.Flash{
+		err = sessionService.SetFlashMessage(&session.Flash{
 			Type:    "Error",
 			Message: err.Error(),
 		})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		http.Redirect(w, r, r.RequestURI, http.StatusBadRequest)
 		return
 	}
@@ -56,10 +60,14 @@ func (s *Service) passwordUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sessionService.SetFlashMessage(&session.Flash{
+	err = sessionService.SetFlashMessage(&session.Flash{
 		Type:    "Info",
 		Message: message,
 	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	http.Redirect(w, r, r.RequestURI, http.StatusAccepted)
 }
 
