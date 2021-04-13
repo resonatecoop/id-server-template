@@ -37,12 +37,16 @@ func (s *Service) joinForm(w http.ResponseWriter, r *http.Request) {
 
 	// Render the template
 	flash, _ := sessionService.GetFlashMessage()
-	renderTemplate(w, "join.html", map[string]interface{}{
+	err = renderTemplate(w, "join.html", map[string]interface{}{
 		"flash":          flash,
 		"initialState":   template.HTML(fragment),
 		"queryString":    getQueryString(r.URL.Query()),
 		csrf.TemplateTag: csrf.TemplateField(r),
 	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (s *Service) join(w http.ResponseWriter, r *http.Request) {
@@ -61,10 +65,14 @@ func (s *Service) join(w http.ResponseWriter, r *http.Request) {
 		case "application/json":
 			response.Error(w, err.Error(), http.StatusBadRequest)
 		default:
-			sessionService.SetFlashMessage(&session.Flash{
+			err = sessionService.SetFlashMessage(&session.Flash{
 				Type:    "Error",
 				Message: err.Error(),
 			})
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 			http.Redirect(w, r, r.RequestURI, http.StatusFound)
 		}
 		return
@@ -81,10 +89,14 @@ func (s *Service) join(w http.ResponseWriter, r *http.Request) {
 		}
 		response.WriteJSON(w, obj, http.StatusCreated)
 	} else {
-		sessionService.SetFlashMessage(&session.Flash{
+		err = sessionService.SetFlashMessage(&session.Flash{
 			Type:    "Error",
 			Message: err.Error(),
 		})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		redirectWithQueryString("/web/login", r.URL.Query(), w, r)
 	}
 

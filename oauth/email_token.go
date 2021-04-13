@@ -159,8 +159,14 @@ func (s *Service) sendEmailTokenCommon(
 	subject := email.Subject
 	message := mg.NewMessage(sender, subject, body, recipient)
 	message.SetTemplate(email.Template) // set mailgun template
-	message.AddTemplateVariable("email", email.Recipient)
-	message.AddTemplateVariable("emailTokenLink", emailTokenLink)
+	err = message.AddTemplateVariable("email", email.Recipient)
+	if err != nil {
+		return nil, err
+	}
+	err = message.AddTemplateVariable("emailTokenLink", emailTokenLink)
+	if err != nil {
+		return nil, err
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()

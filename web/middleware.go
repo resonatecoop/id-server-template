@@ -102,7 +102,11 @@ func (m *loggedInMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, n
 	}
 
 	// Update the user session
-	sessionService.SetUserSession(userSession)
+	err = sessionService.SetUserSession(userSession)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	next(w, r)
 }
