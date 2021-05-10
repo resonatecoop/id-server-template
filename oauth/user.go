@@ -144,6 +144,9 @@ func (s *Service) UpdateUsername(user *models.OauthUser, username string) error 
 	if username == "" {
 		return ErrCannotSetEmptyUsername
 	}
+	if user.Username == username {
+		return ErrUsernameTaken
+	}
 	// Check the email/username is available
 	if s.UserExists(username) {
 		return ErrUsernameTaken
