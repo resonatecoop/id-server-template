@@ -46,6 +46,7 @@ type ServiceInterface interface {
 	SetWpPasswordTx(tx *gorm.DB, wpuser *models.WpUser, password string) error
 	UpdateUsername(user *models.OauthUser, username string) error
 	UpdateUsernameTx(db *gorm.DB, user *models.OauthUser, username string) error
+	UpdateWpUserNickname(wpuser *models.WpUser, nickname string) error
 	AuthUser(username, thePassword string) (*models.OauthUser, error)
 	GetScope(requestedScope string) (string, error)
 	GetDefaultScope() string

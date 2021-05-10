@@ -76,6 +76,13 @@ func (s *Service) FindWpUserByEmail(email string) (*models.WpUser, error) {
 	return wpuser, nil
 }
 
+func (s *Service) UpdateWpUserNickname(user *models.WpUser, nickname string) error {
+	return s.db2.Table("rsntr_usermeta").
+		Where("user_id = ? AND meta_key = ?", user.ID, "nickname").
+		UpdateColumn("meta_value", util.StringOrNull(string(nickname))).
+		Error
+}
+
 func (s *Service) createWpUserCommon(db *gorm.DB, email, password, login, displayName string) (*models.WpUser, error) {
 	if displayName == "" {
 		return nil, ErrDisplayNameRequired
