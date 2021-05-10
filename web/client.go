@@ -107,12 +107,26 @@ func (s *Service) clientDeleteForm(w http.ResponseWriter, r *http.Request) {
 		EmailConfirmed: user.EmailConfirmed,
 	}
 
+	initialState, err := json.Marshal(NewInitialState(
+		s.cnf,
+		client,
+		[]models.OauthClient{},
+		profile,
+	))
+
+	// Inject initial state into choo app
+	fragment := fmt.Sprintf(
+		`<script>window.initialState=JSON.parse('%s')</script>`,
+		string(initialState),
+	)
+
 	renderTemplate(w, "client_delete.html", map[string]interface{}{
 		"flash":          flash,
 		"clientID":       client.Key,
 		"app":            app,
 		"profile":        profile,
 		"queryString":    getQueryString(query),
+		"initialState":   template.HTML(fragment),
 		csrf.TemplateTag: csrf.TemplateField(r),
 	})
 }
@@ -192,42 +206,84 @@ func (s *Service) clientDelete(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("X-CSRF-Token", csrf.Token(r))
 
-	if strings.ToLower(r.Form.Get("_method")) == "delete" || r.Method == http.MethodDelete {
-		clientId := r.Form.Get("client_id")
-		applicationName := r.Form.Get("application_name")
-
-		client, err := s.oauthService.FindClientByClientID(clientId)
-
-		if client.ApplicationName.String != applicationName {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		err = s.oauthService.DeleteClient(client.Key, oauthUser)
-
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		switch r.Header.Get("Accept") {
-		case "application/json":
-			response.WriteJSON(w, map[string]interface{}{
-				"message": "Client deleted",
-				"status":  http.StatusFound,
-			}, http.StatusCreated)
-		default:
-			sessionService.SetFlashMessage(&session.Flash{
-				Type:    "Info",
-				Message: "Client deleted",
-			})
-			redirectWithQueryString("/web/apps", r.URL.Query(), w, r)
-		}
-
+	if !(strings.ToLower(r.Form.Get("_method")) == "delete" || r.Method == http.MethodDelete) {
+		http.Error(w, err.Error(), http.StatusMethodNotAllowed)
 		return
 	}
 
-	http.Error(w, err.Error(), http.StatusBadRequest)
+	clientId := r.Form.Get("client_id")
+	applicationName := r.Form.Get("application_name")
+
+	client, err := s.oauthService.FindClientByClientID(clientId)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	if client.ApplicationName.String != applicationName {
+		switch r.Header.Get("Accept") {
+		case "application/json":
+			response.WriteJSON(w, map[string]interface{}{
+				"message": "Application name is incorrect",
+				"status":  http.StatusBadRequest,
+			}, http.StatusBadRequest)
+			return
+		default:
+			err = sessionService.SetFlashMessage(&session.Flash{
+				Type:    "Error",
+				Message: "Application name is incorrect",
+			})
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			redirectWithQueryString("/web/apps", r.URL.Query(), w, r)
+			return
+		}
+	}
+
+	err = s.oauthService.DeleteClient(client.Key, oauthUser)
+
+	if err != nil {
+		switch r.Header.Get("Accept") {
+		case "application/json":
+			response.WriteJSON(w, map[string]interface{}{
+				"message": err.Error(),
+				"status":  http.StatusBadRequest,
+			}, http.StatusBadRequest)
+			return
+		default:
+			err = sessionService.SetFlashMessage(&session.Flash{
+				Type:    "Error",
+				Message: err.Error(),
+			})
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			redirectWithQueryString("/web/apps", r.URL.Query(), w, r)
+			return
+		}
+	}
+
+	switch r.Header.Get("Accept") {
+	case "application/json":
+		response.WriteJSON(w, map[string]interface{}{
+			"message": "Client deleted",
+			"status":  http.StatusFound,
+		}, http.StatusCreated)
+	default:
+		err = sessionService.SetFlashMessage(&session.Flash{
+			Type:    "Info",
+			Message: "Client deleted",
+		})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		redirectWithQueryString("/web/apps", r.URL.Query(), w, r)
+	}
 	return
 }
 
