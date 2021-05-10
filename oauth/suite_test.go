@@ -41,7 +41,7 @@ type OauthTestSuite struct {
 	suite.Suite
 	cnf     *config.Config
 	db      *gorm.DB
-	db2      *gorm.DB
+	db2     *gorm.DB
 	service *oauth.Service
 	clients []*models.OauthClient
 	users   []*models.OauthUser
