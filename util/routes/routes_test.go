@@ -84,38 +84,3 @@ func TestAddRoutes(t *testing.T) {
 	router.ServeHTTP(w, r)
 	assert.Equal(t, "hello world 1", w.Body.String())
 }
-
-func TestRecoveryMiddlewareHandlesPanic(t *testing.T) {
-	var (
-		router = mux.NewRouter()
-		app    = negroni.Classic()
-		r      *http.Request
-		err    error
-		match  *mux.RouteMatch
-	)
-
-	// Add a test GET route without a middleware
-	routes.AddRoutes([]routes.Route{
-		{
-			Name:    "panic_route",
-			Method:  "GET",
-			Pattern: "/panic",
-			HandlerFunc: func(w http.ResponseWriter, r *http.Request) {
-				panic("oh no")
-			},
-		},
-	}, router.PathPrefix("/foo").Subrouter())
-
-	// Test the foobar_route
-	r, err = http.NewRequest("GET", "http://1.2.3.4/foo/panic", nil)
-	assert.NoError(t, err, "Request setup should not get an error")
-
-	// Test the route matches expected name
-	match = new(mux.RouteMatch)
-	router.Match(r, match)
-	assert.Equal(t, "panic_route", match.Route.GetName())
-
-	// Test that panic does not crash the app
-	app.UseHandler(router)
-	app.ServeHTTP(httptest.NewRecorder(), r)
-}
