@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"strings"
 
 	"github.com/RichardKnop/go-oauth2-server/models"
 	"github.com/RichardKnop/go-oauth2-server/session"
@@ -70,8 +71,8 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Service) profileUpdate(w http.ResponseWriter, r *http.Request) {
-	sessionService, _, user, _, _, err := s.profileCommon(r)
+func (s *Service) profile(w http.ResponseWriter, r *http.Request) {
+	sessionService, _, user, wpuser, _, err := s.profileCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -79,44 +80,79 @@ func (s *Service) profileUpdate(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("X-CSRF-Token", csrf.Token(r))
 
-	if s.oauthService.UpdateUsername(
-		user,
-		r.Form.Get("email"),
-	); err != nil {
-		switch r.Header.Get("Accept") {
-		case "application/json":
-			response.Error(w, err.Error(), http.StatusBadRequest)
-		default:
-			err = sessionService.SetFlashMessage(&session.Flash{
-				Type:    "Error",
-				Message: err.Error(),
-			})
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
+	method := strings.ToLower(r.Form.Get("_method"))
+
+	message := ""
+
+	if method == "delete" || r.Method == http.MethodDelete {
+		// TODO
+		message = "Profile deleted"
+		return
+	}
+
+	if method == "put" || r.Method == http.MethodPut {
+		// username is always email
+		if s.oauthService.UpdateUsername(
+			user,
+			r.Form.Get("email"),
+		); err != nil {
+			switch r.Header.Get("Accept") {
+			case "application/json":
+				response.Error(w, err.Error(), http.StatusBadRequest)
+			default:
+				err = sessionService.SetFlashMessage(&session.Flash{
+					Type:    "Error",
+					Message: err.Error(),
+				})
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+				http.Redirect(w, r, r.RequestURI, http.StatusFound)
 			}
-			http.Redirect(w, r, r.RequestURI, http.StatusFound)
+			return
 		}
+		// update wpuser nickname
+		if s.oauthService.UpdateWpUserNickname(
+			wpuser,
+			r.Form.Get("nickname"),
+		); err != nil {
+			switch r.Header.Get("Accept") {
+			case "application/json":
+				response.Error(w, err.Error(), http.StatusBadRequest)
+			default:
+				err = sessionService.SetFlashMessage(&session.Flash{
+					Type:    "Error",
+					Message: err.Error(),
+				})
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+				http.Redirect(w, r, r.RequestURI, http.StatusFound)
+			}
+			return
+		}
+		message = "Profile updated"
+	}
+
+	if r.Header.Get("Accept") == "application/json" {
+		response.WriteJSON(w, map[string]interface{}{
+			"message": message,
+			"status":  http.StatusOK,
+		}, http.StatusOK)
 		return
 	}
-}
 
-/**
- * Soft delete profiles by setting deleted_at to current date
- * Deletion will automatically happen after x days
- */
-
-func (s *Service) profileDelete(w http.ResponseWriter, r *http.Request) {
-	_, _, _, _, _, err := s.profileCommon(r)
-
+	err = sessionService.SetFlashMessage(&session.Flash{
+		Type:    "Info",
+		Message: message,
+	})
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	w.Header().Set("X-CSRF-Token", csrf.Token(r))
-
-	// TODO
+	http.Redirect(w, r, r.RequestURI, http.StatusFound)
 }
 
 func (s *Service) profileCommon(r *http.Request) (
