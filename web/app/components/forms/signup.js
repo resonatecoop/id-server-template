@@ -117,7 +117,7 @@ class Signup extends Component {
             {
               type: 'text',
               name: 'display_name',
-              placeholder: 'Name',
+              placeholder: 'Display name',
               help: html`<p class="ma0 mt1 lh-copy f7">Your artist name, nickname or label name</p>`
             }
           ],
