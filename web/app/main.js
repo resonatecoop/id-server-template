@@ -6,6 +6,7 @@ const Login = require('./components/forms/login')
 const Signup = require('./components/forms/signup')
 const PasswordReset = require('./components/forms/passwordReset')
 const PasswordResetUpdatePassword = require('./components/forms/passwordResetUpdatePassword')
+const AppDeleteForm = require('./components/forms/appDelete')
 const UpdateProfileForm = require('./components/forms/profile')
 const UpdatePasswordForm = require('./components/forms/passwordUpdate')
 const AppForm = require('./components/forms/app')
@@ -275,7 +276,7 @@ app.route('/apps', layout((state, emit) => {
             <div class="flex flex-auto flex-column ph3">
               <div class="sticky top-0">
                 <h2 class="lh-title f3 fw1">Register a new app</h2>
-                ${state.cache(AppForm, 'app-form').render()}
+                ${state.cache(AppForm, 'app').render()}
               </div>
             </div>
           </div>
@@ -287,7 +288,16 @@ app.route('/apps', layout((state, emit) => {
 
 app.route('/apps/:id', layout((state, emit) => {
   return html`
-    <div class="flex flex-column">
+    <div class="flex flex-column flex-auto w-100">
+      <div class="flex flex-column flex-auto items-center justify-center min-vh-100 mh3 pt6 pb6">
+        <div class="bg-white black bg-black--dark white--dark bg-white--light black--light z-1 w-100 ph4 pt4 pb3">
+          <div class="flex flex-column flex-row-l flex-auto">
+            ${state.cache(AppDeleteForm, 'app-delete').render({
+              key: state.params.id
+            })}
+          </div>
+        </div>
+      </div>
     </div>
   `
 }))

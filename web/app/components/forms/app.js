@@ -73,7 +73,7 @@ class App extends Component {
     return html`
       <div class="flex flex-column flex-auto">
         ${message}
-        ${this.state.cache(Form, 'password-form').render({
+        ${this.state.cache(Form, 'app-form').render({
           id: 'app-new',
           method: 'POST',
           action: '',

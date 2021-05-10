@@ -96,7 +96,8 @@ class Form extends Component {
     const submitButton = (props = {}) => {
       const attrs = Object.assign({
         disabled: false,
-        class: `bg-white dib ba bw b--near-black b pv2 ph4 flex-shrink-0 f5 ${props.disabled ? 'o-50' : 'grow'}`,
+        class: `bg-white dib bn b pv2 ph4 flex-shrink-0 f5 ${props.disabled ? 'o-50' : 'grow'}`,
+        style: 'outline:solid 1px var(--near-black);outline-offset:-1px',
         type: 'submit'
       }, props)
 

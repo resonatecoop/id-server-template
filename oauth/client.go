@@ -33,7 +33,7 @@ func (s *Service) HostnameTaken(hostname string) bool {
 	return err == nil
 }
 
-// FindClientByClientID looks up a client by client ID
+// FindClientByHostname looks up a client by application hostname
 func (s *Service) FindClientByHostname(applicationHostname string) (*models.OauthClient, error) {
 	// Client IDs are case insensitive
 	client := new(models.OauthClient)
