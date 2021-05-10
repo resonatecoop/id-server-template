@@ -6,12 +6,6 @@
     <div class="flex flex-column w-100 mh3 mh0-ns">
       <section id="profile" class="flex flex-column flex-row-l">
         <div class="fl w-50 w-third-l pa3 mb4">
-          <div style="top: 3rem;" class="sticky aspect-ratio aspect-ratio--1x1 bg-dark-gray bg-dark-gray--dark">
-            <figure class="ma0">
-              <img src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg' width%3D'400' height%3D'400' viewBox%3D'0 0 400 400'%2F%3E" width="400" height="400" class="aspect-ratio--object z-1" />
-              <figcaption style="top: 100%;" class="absolute bottom-0 truncate w-100 h2">{{ .profile.DisplayName }}</figcaption>
-            </figure>
-          </div>
         </div>
         <div class="flex flex-column flex-auto ph3 pt4 mw6 ph0-l">
           {{ if .flash }}
@@ -62,7 +56,8 @@
                     <p class="lh-copy f5 red"></p>
                   </div>
                 </fieldset>
-                <button type="submit" disabled="disabled" class="bg-white ba bw b--dark-gray f5 b pv3 ph5 flex-shrink-0 f5 o-50">Update</button>
+                <input type="hidden" name="_method" value="PUT" />
+                <button type="submit" class="bg-white ba bw b--dark-gray f5 b pv3 ph5 flex-shrink-0 f5 grow">Update</button>
               </form>
             </div>
           </div>
@@ -127,13 +122,25 @@
                     <p class="lh-copy f5 red"></p>
                   </div>
                 </fieldset>
-                <button type="submit" disabled="disabled" class="bg-white ba bw b--dark-gray f5 b pv3 ph5 flex-shrink-0 f5 o-50">Update</button>
+                <button type="submit" class="bg-white ba bw b--dark-gray f5 b pv3 ph5 flex-shrink-0 f5 grow">Update</button>
               </form>
             </div>
           </div>
           <div class="flex w-100 items-center ph3">
-            <button type="button" class="bg-white ba bw b--dark-gray f5 b pv3 ph3 w-100 mw5 grow flex-shrink-0 f5 grow">Delete account</button>
-            <div class="ml3"><p class="lh-copy f5 dark-gray">This will delete your account and all associated profiles.</p></div>
+            <form id="delete-profile" action="" method="POST" class="ma0 pa0">
+              {{ .csrfField }}
+              <input type="hidden" name="_method" value="DELETE" />
+              <label for="password_delete" class="f4 db mv2">
+                <div class="flex items-center"><span>Current password</span></div>
+              </label>
+              <div class="mb3">
+                <input type="password" id="password_delete" autocomplete="on" required="required" placeholder="" name="password" value="" class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid" />
+              </div>
+              <button type="submit" class="bg-white ba bw b--dark-gray f5 b pv3 ph3 w-100 mw5 grow flex-shrink-0 f5 grow">
+                Delete account
+              </button>
+              <div class="ml3"><p class="lh-copy f5 dark-gray">This will delete your account and all associated profiles.</p></div>
+            </form>
           </div>
         </div>
       </section>
