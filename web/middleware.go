@@ -44,19 +44,6 @@ func (m *guestMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next
 
 	context.Set(r, sessionServiceKey, sessionService)
 
-	// Try to get a user session
-	_, err := sessionService.GetUserSession()
-	if err == nil {
-		query := r.URL.Query()
-		query.Set("login_redirect_uri", r.URL.Path)
-		sessionService.SetFlashMessage(&session.Flash{
-			Type:    "Info",
-			Message: "You are already logged in",
-		})
-		redirectWithQueryString("/web/profile", query, w, r)
-		return
-	}
-
 	next(w, r)
 }
 
