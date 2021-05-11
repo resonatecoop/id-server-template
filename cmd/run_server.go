@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/RichardKnop/go-oauth2-server/log"
 	"github.com/RichardKnop/go-oauth2-server/services"
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
@@ -11,7 +12,6 @@ import (
 	"github.com/unrolled/secure"
 	"github.com/urfave/negroni"
 	"gopkg.in/tylerb/graceful.v1"
-	"github.com/RichardKnop/go-oauth2-server/log"
 )
 
 // RunServer runs the app
