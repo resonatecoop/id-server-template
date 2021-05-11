@@ -147,3 +147,10 @@ go-oauth2-server runserver
 ## Deploy
 
 (How to deploy to staging and production using [docker](docs/docker.md))
+
+## Develop
+
+Add a git hook for proper formatting
+```
+./add_gofmt_hook.sh
+```
