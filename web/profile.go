@@ -14,7 +14,7 @@ import (
 )
 
 func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
-	sessionService, client, user, wpuser, nickname, err := s.profileCommon(r)
+	sessionService, client, user, wpuser, nickname, country, err := s.profileCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -31,6 +31,7 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 		ID:             wpuser.ID,
 		Email:          wpuser.Email,
 		DisplayName:    nickname,
+		Country:        country,
 		EmailConfirmed: user.EmailConfirmed,
 	}
 
@@ -72,7 +73,7 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) profile(w http.ResponseWriter, r *http.Request) {
-	sessionService, _, user, wpuser, _, err := s.profileCommon(r)
+	sessionService, _, user, wpuser, _, _, err := s.profileCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -90,49 +91,83 @@ func (s *Service) profile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO create one function for all usermeta update
+	// all fields are optional for update
 	if method == "put" || r.Method == http.MethodPut {
 		// username is always email
-		if s.oauthService.UpdateUsername(
-			user,
-			r.Form.Get("email"),
-		); err != nil {
-			switch r.Header.Get("Accept") {
-			case "application/json":
-				response.Error(w, err.Error(), http.StatusBadRequest)
-			default:
-				err = sessionService.SetFlashMessage(&session.Flash{
-					Type:    "Error",
-					Message: err.Error(),
-				})
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
+		if r.Form.Get("email") != "" {
+			if s.oauthService.UpdateUsername(
+				user,
+				r.Form.Get("email"),
+			); err != nil {
+				switch r.Header.Get("Accept") {
+				case "application/json":
+					response.Error(w, err.Error(), http.StatusBadRequest)
+				default:
+					err = sessionService.SetFlashMessage(&session.Flash{
+						Type:    "Error",
+						Message: err.Error(),
+					})
+					if err != nil {
+						http.Error(w, err.Error(), http.StatusInternalServerError)
+						return
+					}
+					http.Redirect(w, r, r.RequestURI, http.StatusFound)
 				}
-				http.Redirect(w, r, r.RequestURI, http.StatusFound)
+				return
 			}
-			return
 		}
-		// update wpuser nickname
-		if s.oauthService.UpdateWpUserNickname(
-			wpuser,
-			r.Form.Get("nickname"),
-		); err != nil {
-			switch r.Header.Get("Accept") {
-			case "application/json":
-				response.Error(w, err.Error(), http.StatusBadRequest)
-			default:
-				err = sessionService.SetFlashMessage(&session.Flash{
-					Type:    "Error",
-					Message: err.Error(),
-				})
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
+
+		if r.Form.Get("nickname") != "" {
+			// update wpuser nickname
+			if s.oauthService.UpdateWpUserMetaValue(
+				wpuser.ID,
+				"nickname",
+				r.Form.Get("nickname"),
+			); err != nil {
+				switch r.Header.Get("Accept") {
+				case "application/json":
+					response.Error(w, err.Error(), http.StatusBadRequest)
+				default:
+					err = sessionService.SetFlashMessage(&session.Flash{
+						Type:    "Error",
+						Message: err.Error(),
+					})
+					if err != nil {
+						http.Error(w, err.Error(), http.StatusInternalServerError)
+						return
+					}
+					http.Redirect(w, r, r.RequestURI, http.StatusFound)
 				}
-				http.Redirect(w, r, r.RequestURI, http.StatusFound)
+				return
 			}
-			return
 		}
+
+		if r.Form.Get("country") != "" {
+			// update wpuser country
+			if s.oauthService.UpdateWpUserMetaValue(
+				wpuser.ID,
+				"country",
+				r.Form.Get("country"),
+			); err != nil {
+				switch r.Header.Get("Accept") {
+				case "application/json":
+					response.Error(w, err.Error(), http.StatusBadRequest)
+				default:
+					err = sessionService.SetFlashMessage(&session.Flash{
+						Type:    "Error",
+						Message: err.Error(),
+					})
+					if err != nil {
+						http.Error(w, err.Error(), http.StatusInternalServerError)
+						return
+					}
+					http.Redirect(w, r, r.RequestURI, http.StatusFound)
+				}
+				return
+			}
+		}
+
 		message = "Profile updated"
 	}
 
@@ -161,24 +196,25 @@ func (s *Service) profileCommon(r *http.Request) (
 	*models.OauthUser,
 	*models.WpUser,
 	string,
+	string,
 	error,
 ) {
 	// Get the session service from the request context
 	sessionService, err := getSessionService(r)
 	if err != nil {
-		return nil, nil, nil, nil, "", err
+		return nil, nil, nil, nil, "", "", err
 	}
 
 	// Get the client from the request context
 	client, err := getClient(r)
 	if err != nil {
-		return nil, nil, nil, nil, "", err
+		return nil, nil, nil, nil, "", "", err
 	}
 
 	// Get the user session
 	userSession, err := sessionService.GetUserSession()
 	if err != nil {
-		return nil, nil, nil, nil, "", err
+		return nil, nil, nil, nil, "", "", err
 	}
 
 	// Fetch the user
@@ -186,7 +222,7 @@ func (s *Service) profileCommon(r *http.Request) (
 		userSession.Username,
 	)
 	if err != nil {
-		return nil, nil, nil, nil, "", err
+		return nil, nil, nil, nil, "", "", err
 	}
 
 	// Fetch the wp user
@@ -194,13 +230,18 @@ func (s *Service) profileCommon(r *http.Request) (
 		userSession.Username,
 	)
 	if err != nil {
-		return nil, nil, nil, nil, "", err
+		return nil, nil, nil, nil, "", "", err
 	}
 
-	nickname, err := s.oauthService.FindNicknameByWpUserID(wpuser.ID)
+	nickname, err := s.oauthService.FindWpUserMetaValue(wpuser.ID, "nickname")
 	if err != nil {
-		return nil, nil, nil, nil, "", err
+		return nil, nil, nil, nil, "", "", err
 	}
 
-	return sessionService, client, user, wpuser, nickname, nil
+	country, err := s.oauthService.FindWpUserMetaValue(wpuser.ID, "country")
+	if err != nil {
+		return nil, nil, nil, nil, "", "", err
+	}
+
+	return sessionService, client, user, wpuser, nickname, country, nil
 }
