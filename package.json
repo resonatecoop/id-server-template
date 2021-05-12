@@ -90,7 +90,7 @@
     "browserify": "^16.2.3",
     "cssnano": "^4.1.8",
     "del": "^3.0.0",
-    "gulp": "^4.0.0",
+    "gulp": "^4.0.2",
     "gulp-hash": "^4.2.2",
     "gulp-hash-references": "^3.0.1",
     "gulp-postcss": "^8.0.0",
