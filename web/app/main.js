@@ -9,6 +9,7 @@ const PasswordResetUpdatePassword = require('./components/forms/passwordResetUpd
 const UpdateProfileForm = require('./components/forms/profile')
 const UpdatePasswordForm = require('./components/forms/passwordUpdate')
 const Notifications = require('./components/notifications')
+const CountrySelect = require('./components/select-country-list')
 const Dialog = require('@resonate/dialog-component')
 const Button = require('@resonate/button-component')
 const { isBrowser } = require('browser-or-node')
@@ -273,6 +274,9 @@ app.route('/profile', layout((state, emit) => {
                   <a class="link" href="#account-info" onclick=${navigateToAnchor}>Account</a>
                 </li>
                 <li class="mb2">
+                  <a class="link" href="#change-country" onclick=${navigateToAnchor}>Location</a>
+                </li>
+                <li class="mb2">
                   <a class="link" href="#change-password" onclick=${navigateToAnchor}>Change password</a>
                 </li>
                 <li>
@@ -286,6 +290,16 @@ app.route('/profile', layout((state, emit) => {
               <a id="account-info" class="absolute" style="top:-120px"></a>
               ${state.cache(UpdateProfileForm, 'update-profile').render({
                 data: state.profile || {}
+              })}
+            </div>
+
+            <div class="ph2">
+              <h3 class="f3 fw1 lh-title relative mb3">
+                Location
+                <a id="change-country" class="absolute" style="top:-120px"></a>
+              </h3>
+              ${state.cache(CountrySelect, 'update-country').render({
+                country: 'BE'
               })}
             </div>
 
