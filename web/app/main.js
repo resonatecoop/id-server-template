@@ -299,7 +299,7 @@ app.route('/profile', layout((state, emit) => {
                 <a id="change-country" class="absolute" style="top:-120px"></a>
               </h3>
               ${state.cache(CountrySelect, 'update-country').render({
-                country: 'BE'
+                country: state.profile.country
               })}
             </div>
 

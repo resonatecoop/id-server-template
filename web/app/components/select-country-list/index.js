@@ -1,6 +1,8 @@
+/* global fetch */
+
 const html = require('choo/html')
 const Component = require('choo/component')
-const { getData, getCode } = require('country-list')
+const { getData, getName, getCode } = require('country-list')
 const countryList = getData() // get country list data
 
 class SelectCountryList extends Component {
@@ -31,7 +33,7 @@ class SelectCountryList extends Component {
         <select id="country" class="ba bw b--gray bg-white black" onchange=${this.onchange} name="country">
           ${this.local.options.map(({ value, label, disabled = false }) => {
             return html`
-              <option value=${value} disabled=${disabled} selected=${this.local.country === value}>
+              <option value=${value} disabled=${disabled} selected=${getCode(this.local.country) === value}>
                 ${label}
               </option>
             `
@@ -41,11 +43,32 @@ class SelectCountryList extends Component {
     `
   }
 
-  onchange (e) {
+  async onchange (e) {
     const value = e.target.value
-    this.local.country = value
-    this.local.code = getCode(value)
-    // TODO send request to update country
+
+    this.local.country = getName(value)
+
+    try {
+      let response = await fetch('')
+
+      const csrfToken = response.headers.get('X-CSRF-Token')
+
+      response = await fetch('', {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json',
+          'X-CSRF-Token': csrfToken
+        },
+        body: new URLSearchParams({
+          country: this.local.country
+        })
+      })
+
+      this.state.profile.country = this.local.country
+    } catch (err) {
+      console.log(err)
+    }
   }
 
   update (props) {
