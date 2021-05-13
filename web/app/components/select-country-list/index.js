@@ -28,9 +28,10 @@ class SelectCountryList extends Component {
     this.local.country = props.country
 
     return html`
-      <div class="flex flex-column ml2 mb3">
+      <div class="flex flex-column">
         <label for="country" class="f6 b db mr2">Select a country</label>
-        <select id="country" class="ba bw b--gray bg-white black" onchange=${this.onchange} name="country">
+        <select id="country" class="ba bw b--gray bg-white black pa2" onchange=${this.onchange} name="country">
+          <option value="" selected=${!this.local.country} disabled>…</option>
           ${this.local.options.map(({ value, label, disabled = false }) => {
             return html`
               <option value=${value} disabled=${disabled} selected=${getCode(this.local.country) === value}>

@@ -293,13 +293,13 @@ app.route('/profile', layout((state, emit) => {
               })}
             </div>
 
-            <div class="ph2">
+            <div class="ph3">
               <h3 class="f3 fw1 lh-title relative mb3">
                 Location
                 <a id="change-country" class="absolute" style="top:-120px"></a>
               </h3>
               ${state.cache(CountrySelect, 'update-country').render({
-                country: state.profile.country
+                country: state.profile.country || ''
               })}
             </div>
 
