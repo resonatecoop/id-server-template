@@ -145,9 +145,8 @@ func (s *Service) profile(w http.ResponseWriter, r *http.Request) {
 
 		if r.Form.Get("country") != "" {
 			// update wpuser country
-			if s.oauthService.UpdateWpUserMetaValue(
-				wpuser.ID,
-				"country",
+			if s.oauthService.UpdateWpUserCountry(
+				wpuser,
 				r.Form.Get("country"),
 			); err != nil {
 				switch r.Header.Get("Accept") {
