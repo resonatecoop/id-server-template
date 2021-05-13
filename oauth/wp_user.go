@@ -2,6 +2,7 @@ package oauth
 
 import (
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/RichardKnop/go-oauth2-server/models"
@@ -9,11 +10,13 @@ import (
 	pass "github.com/RichardKnop/go-oauth2-server/util/password"
 	"github.com/gosimple/slug"
 	"github.com/jinzhu/gorm"
+	"github.com/pariz/gountries"
 	"github.com/trustelem/zxcvbn"
 )
 
 var (
-	ErrEmailAsLogin = errors.New("Username cannot be an email address")
+	ErrEmailAsLogin    = errors.New("Username cannot be an email address")
+	ErrCountryNotFound = errors.New("Country cannot be found")
 )
 
 // FindUserByLogin looks up a user by login (wordpress)
@@ -80,6 +83,21 @@ func (s *Service) UpdateWpUserNickname(user *models.WpUser, nickname string) err
 	return s.db2.Table("rsntr_usermeta").
 		Where("user_id = ? AND meta_key = ?", user.ID, "nickname").
 		UpdateColumn("meta_value", util.StringOrNull(string(nickname))).
+		Error
+}
+
+func (s *Service) UpdateWpUserCountry(user *models.WpUser, country string) error {
+	// validate country name
+	query := gountries.New()
+	_, err := query.FindCountryByName(strings.ToLower(country))
+
+	if err != nil {
+		return ErrCountryNotFound
+	}
+
+	return s.db2.Table("rsntr_usermeta").
+		Where("user_id = ? AND meta_key = ?", user.ID, "country").
+		UpdateColumn("meta_value", util.StringOrNull(string(country))).
 		Error
 }
 
