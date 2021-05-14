@@ -2,7 +2,7 @@
 
 const html = require('choo/html')
 const Component = require('choo/component')
-const { getData, getName, getCode } = require('country-list')
+const { getData, getCountry: getName, getCode } = require('iso-3166-1-alpha-2') // migrating from gravityforms, we need to use alpha-2
 const countryList = getData() // get country list data
 
 class SelectCountryList extends Component {
