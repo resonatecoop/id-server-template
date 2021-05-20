@@ -150,6 +150,20 @@ func (s *Service) GetRoutes() []routes.Route {
 		},
 		{
 			Name:        "password",
+			Method:      "POST",
+			Pattern:     "/password",
+			HandlerFunc: s.passwordUpdate,
+			Middlewares: []negroni.Handler{
+				tollbooth_negroni.LimitHandler(
+					tollbooth.NewLimiter(1, nil),
+				),
+				new(parseFormMiddleware),
+				newLoggedInMiddleware(s),
+				newClientMiddleware(s),
+			},
+		},
+		{
+			Name:        "password_update",
 			Method:      "PUT",
 			Pattern:     "/password",
 			HandlerFunc: s.passwordUpdate,
