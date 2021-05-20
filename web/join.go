@@ -125,7 +125,7 @@ func (s *Service) createUserAndWpUser(r *http.Request) (
 	wpuser, err := s.oauthService.CreateWpUser(
 		r.Form.Get("email"),        // username
 		r.Form.Get("password"),     // password
-		r.Form.Get("login"),        // wp login
+		"",                         // wp login blank
 		r.Form.Get("display_name"), // wp display name
 	)
 
