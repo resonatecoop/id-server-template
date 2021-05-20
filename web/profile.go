@@ -11,6 +11,7 @@ import (
 	"github.com/RichardKnop/go-oauth2-server/session"
 	"github.com/RichardKnop/go-oauth2-server/util/response"
 	"github.com/gorilla/csrf"
+	"github.com/pariz/gountries"
 )
 
 func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
@@ -27,11 +28,16 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	query.Set("login_redirect_uri", r.URL.Path)
 
+	q := gountries.New()
+	countries := q.FindAllCountries()
+
+	gountry, _ := q.FindCountryByName(strings.ToLower(country))
+
 	profile := &Profile{
 		ID:             wpuser.ID,
 		Email:          wpuser.Email,
 		DisplayName:    nickname,
-		Country:        country,
+		Country:        gountry.Codes.Alpha2,
 		EmailConfirmed: user.EmailConfirmed,
 	}
 
@@ -52,23 +58,19 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 		string(initialState),
 	)
 
-	switch r.Header.Get("Accept") {
-	case "application/json":
-		response.WriteJSON(w, profile, http.StatusCreated)
-	default:
-		err = renderTemplate(w, "profile.html", map[string]interface{}{
-			"flash":           flash,
-			"clientID":        client.Key,
-			"applicationName": client.ApplicationName.String,
-			"profile":         profile,
-			"queryString":     getQueryString(query),
-			"initialState":    template.HTML(fragment),
-			csrf.TemplateTag:  csrf.TemplateField(r),
-		})
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+	err = renderTemplate(w, "profile.html", map[string]interface{}{
+		"flash":           flash,
+		"clientID":        client.Key,
+		"countries":       countries,
+		"applicationName": client.ApplicationName.String,
+		"profile":         profile,
+		"queryString":     getQueryString(query),
+		"initialState":    template.HTML(fragment),
+		csrf.TemplateTag:  csrf.TemplateField(r),
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 }
 
