@@ -1,16 +1,19 @@
 package oauth
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/RichardKnop/go-oauth2-server/log"
 	"github.com/RichardKnop/go-oauth2-server/models"
 	"github.com/RichardKnop/go-oauth2-server/util"
 	pass "github.com/RichardKnop/go-oauth2-server/util/password"
 	"github.com/RichardKnop/uuid"
 	"github.com/jinzhu/gorm"
+	"github.com/mailgun/mailgun-go/v4"
 	"github.com/trustelem/zxcvbn"
 )
 
@@ -71,6 +74,8 @@ var (
 	ErrEmailInvalid = errors.New("Not a valid email")
 	// ErrEmailNotFound
 	ErrEmailNotFound = errors.New("We can't find an account registered with that address or username")
+	// ErrAccountDeletionFailed
+	ErrAccountDeletionFailed = errors.New("Account could not be deleted. Please reach to us now")
 )
 
 // UserExists returns true if user exists
@@ -229,6 +234,66 @@ func (s *Service) createUserCommon(db *gorm.DB, roleID, username, password strin
 	}
 
 	return user, nil
+}
+
+// Delete user will soft delete  user
+func (s *Service) DeleteUser(user *models.OauthUser, password string) error {
+	return s.deleteUserCommon(s.db, user, password)
+}
+
+// DeleteUserTx deletes a user in a transaction
+func (s *Service) DeleteUserTx(tx *gorm.DB, user *models.OauthUser, password string) error {
+	return s.deleteUserCommon(tx, user, password)
+}
+
+func (s *Service) deleteUserCommon(db *gorm.DB, user *models.OauthUser, password string) error {
+	// Check that the password is set
+	/*
+		if !user.Password.Valid {
+			return ErrUserPasswordNotSet
+		}
+
+		// Verify the password
+		if pass.VerifyPassword(user.Password.String, password) != nil {
+			return ErrInvalidUserPassword
+		}
+	*/
+
+	// will set deleted_at to current time
+	if db.Delete(&user).Error != nil {
+		return ErrAccountDeletionFailed
+	}
+
+	// Inform user account is scheduled for deletion
+	mg := mailgun.NewMailgun(s.cnf.Mailgun.Domain, s.cnf.Mailgun.Key)
+	sender := s.cnf.Mailgun.Sender
+	body := ""
+	email := models.NewOauthEmail(
+		user.Username,
+		"Account deleted",
+		"account-deleted",
+	)
+	subject := email.Subject
+	recipient := email.Recipient
+	message := mg.NewMessage(sender, subject, body, recipient)
+	message.SetTemplate(email.Template) // set mailgun template
+	err := message.AddTemplateVariable("email", recipient)
+
+	if err != nil {
+		log.ERROR.Print(err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	// Send the message with a 10 second timeout
+	_, _, err = mg.Send(ctx, message)
+
+	if err != nil {
+		log.ERROR.Print(err)
+	}
+
+	return nil
 }
 
 func (s *Service) setPasswordCommon(db *gorm.DB, user *models.OauthUser, password string) error {

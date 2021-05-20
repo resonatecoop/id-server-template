@@ -34,6 +34,8 @@ type ServiceInterface interface {
 	FindUserByUsername(username string) (*models.OauthUser, error)
 	CreateUser(roleID, username, password string) (*models.OauthUser, error)
 	CreateUserTx(tx *gorm.DB, roleID, username, password string) (*models.OauthUser, error)
+	DeleteUser(user *models.OauthUser, password string) error
+	DeleteUserTx(tx *gorm.DB, user *models.OauthUser, password string) error
 	CreateWpUser(email, password, login, displayName string) (*models.WpUser, error)
 	CreateWpUserTx(tx *gorm.DB, username, password, login, displayName string) (*models.WpUser, error)
 	FindWpUserByLogin(login string) (*models.WpUser, error)
