@@ -109,8 +109,9 @@ func (s *Service) createWpUserCommon(db *gorm.DB, email, password, login, displa
 		return nil, ErrDisplayNameRequired
 	}
 
+	// fallback for empty login details
 	if login == "" {
-		return nil, ErrLoginRequired
+		login = email
 	}
 
 	if password == "" {
@@ -134,9 +135,9 @@ func (s *Service) createWpUserCommon(db *gorm.DB, email, password, login, displa
 		return nil, ErrLoginTooLong
 	}
 
-	if util.ValidateEmail(login) {
-		return nil, ErrEmailAsLogin
-	}
+	//if util.ValidateEmail(login) {
+	//	return nil, ErrEmailAsLogin
+	//}
 
 	// Check the login is available
 	if s.LoginTaken(login) {
