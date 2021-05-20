@@ -86,19 +86,22 @@ func (s *Service) UpdateWpUserNickname(user *models.WpUser, nickname string) err
 		Error
 }
 
+// Update wp user country (resolve from common name and official name, fallback to alpha code otherwise)
 func (s *Service) UpdateWpUserCountry(user *models.WpUser, country string) error {
 	// validate country name
 	query := gountries.New()
 	_, err := query.FindCountryByName(strings.ToLower(country))
 
 	if err != nil {
-		return ErrCountryNotFound
+		// fallback to code
+		result, err := query.FindCountryByAlpha(strings.ToLower(country))
+		if err != nil {
+			return ErrCountryNotFound
+		}
+		country = result.Name.Common
 	}
 
-	return s.db2.Table("rsntr_usermeta").
-		Where("user_id = ? AND meta_key = ?", user.ID, "country").
-		UpdateColumn("meta_value", util.StringOrNull(string(country))).
-		Error
+	return s.UpdateWpUserMetaValue(user.ID, "country", country)
 }
 
 func (s *Service) createWpUserCommon(db *gorm.DB, email, password, login, displayName string) (*models.WpUser, error) {

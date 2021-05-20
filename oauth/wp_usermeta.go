@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	"github.com/RichardKnop/go-oauth2-server/models"
-	"github.com/RichardKnop/go-oauth2-server/util"
 )
 
 // FindUserMetaValue finds user meta value by meta_key and user_id
@@ -21,10 +20,18 @@ func (s *Service) FindWpUserMetaValue(userId uint64, key string) (string, error)
 	return wpusermeta.MetaValue, nil
 }
 
-// UpdateUserMetaValue sets user meta value
+// UpdateUserMetaValue update or create wp user meta value
 func (s *Service) UpdateWpUserMetaValue(userId uint64, key string, value string) error {
-	return s.db2.Table("rsntr_usermeta").
+	wpusermeta := &models.WpUserMeta{
+		MetaKey:   key,
+		MetaValue: value,
+		UserId:    userId,
+	}
+
+	if s.db2.Model(&wpusermeta).
 		Where("user_id = ? AND meta_key = ?", userId, key).
-		UpdateColumn("meta_value", util.StringOrNull(string(value))).
-		Error
+		Updates(&wpusermeta).RowsAffected == 0 {
+		return s.db2.Create(wpusermeta).Error
+	}
+	return nil
 }
