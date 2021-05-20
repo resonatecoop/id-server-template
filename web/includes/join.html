@@ -76,12 +76,21 @@
                             id="display_name"
                             type="text"
                             name="display_name"
-                            placeholder="Name"
+                            placeholder="Display Name"
                             required="required"
                             class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid"
                           />
                         </div>
                         <p class="ma0 mt1 lh-copy f7">Your artist name, nickname or label name</p>
+                      </div>
+                      <div class="flex flex-column mb3">
+                        <label for="country" class="f6 b db mr2">Select a country</label>
+                        <select id="country" name="country" class="bn bg-black white bg-white--dark black--dark bg-black--light white--light pa3">
+                          <option value="" selected="selected" disabled="disabled">…</option>
+                          {{ range .countries }}
+                          <option value="{{.Codes.Alpha3}}">{{.Name.Common}}</option>
+                          {{end}}
+                        </select>
                       </div>
                     </div>
                     <div class="flex mt3">
