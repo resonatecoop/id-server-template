@@ -85,16 +85,33 @@ func (s *Service) profile(w http.ResponseWriter, r *http.Request) {
 
 	method := strings.ToLower(r.Form.Get("_method"))
 
-	message := ""
+	message := "Profile not updated"
 
 	if method == "delete" || r.Method == http.MethodDelete {
-		// TODO
-		message = "Profile deleted"
-		return
+		if s.oauthService.DeleteUser(
+			user,
+			r.Form.Get("password"),
+		); err != nil {
+			switch r.Header.Get("Accept") {
+			case "application/json":
+				response.Error(w, err.Error(), http.StatusBadRequest)
+			default:
+				err = sessionService.SetFlashMessage(&session.Flash{
+					Type:    "Error",
+					Message: err.Error(),
+				})
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+				http.Redirect(w, r, r.RequestURI, http.StatusFound)
+			}
+			return
+		}
+
+		message = "Account is now scheduled for deletion"
 	}
 
-	// TODO create one function for all usermeta update
-	// all fields are optional for update
 	if method == "put" || r.Method == http.MethodPut {
 		// username is always email
 		if r.Form.Get("email") != "" {
