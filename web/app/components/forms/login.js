@@ -138,11 +138,7 @@ class Login extends Component {
           const isRedirected = response.redirected
 
           if (isRedirected) {
-            const { pathname } = new URL(response.url)
-
-            if (pathname === '/authorize') {
-              window.location.href = response.url
-            }
+            window.location.href = response.url
           }
 
           this.local.machine.state.loader === 'on' && this.local.machine.emit('loader:toggle')

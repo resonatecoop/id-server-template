@@ -42,6 +42,7 @@ class UpdatePasswordForm extends Component {
     })
 
     this.local.data = {}
+    this.local.error = {}
 
     this.local.machine.on('form:reset', () => {
       this.validator = validateFormdata()
@@ -61,6 +62,8 @@ class UpdatePasswordForm extends Component {
     })
 
     this.local.machine.on('request:resolve', () => {
+      this.emit('notify', { type: 'success', message: 'Password changed!' })
+
       clearTimeout(this.loaderTimeout)
     })
 
@@ -74,25 +77,18 @@ class UpdatePasswordForm extends Component {
 
         const csrfToken = response.headers.get('X-CSRF-Token')
 
-        response = await fetch('', {
-          method: 'POST',
-          credentials: 'include',
+        response = await fetch('/password', {
+          method: 'PUT',
           headers: {
             Accept: 'application/json',
             'X-CSRF-Token': csrfToken
           },
           body: new URLSearchParams({
             password: this.local.data.password,
-            password_new: this.local.password_new,
+            password_new: this.local.data.password_new,
             password_confirm: this.local.data.password_confirm
           })
         })
-
-        const isRedirected = response.redirected
-
-        if (isRedirected) {
-          window.location.href = response.url
-        }
 
         this.local.machine.state.loader === 'on' && this.local.machine.emit('loader:toggle')
 
@@ -105,15 +101,11 @@ class UpdatePasswordForm extends Component {
           return this.local.machine.emit('request:error')
         }
 
-        if (status === 201) {
-          this.emit(this.state.events.PUSHSTATE, '/login')
-        }
-
-        this.machine.emit('request:resolve')
+        this.local.machine.emit('request:resolve')
       } catch (err) {
+        console.log(err)
         this.local.error.message = err.message
         this.local.machine.emit('request:reject')
-        this.emit('error', err)
       }
     })
 
@@ -176,8 +168,7 @@ class UpdatePasswordForm extends Component {
             values: {},
             errors: {}
           },
-          submit: (e) => {
-            e.preventDefault()
+          submit: () => {
             this.local.machine.emit('form:submit')
           },
           fields: [
@@ -222,7 +213,7 @@ class UpdatePasswordForm extends Component {
 
     this.validator.field('password', { required: !!this.local.token }, (data) => {
       if (isEmpty(data)) return new Error('Current password is required')
-      if (new RegExp(/[À-ÖØ-öø-ÿ]/).test(data)) return new Error('Current password may contain unsupported characters. You should ask for a password reset.')
+      if (/[À-ÖØ-öø-ÿ]/.test(data)) return new Error('Current password may contain unsupported characters. You should ask for a password reset.')
     })
     this.validator.field('password_new', (data) => {
       if (isEmpty(data)) return new Error('New password is required')

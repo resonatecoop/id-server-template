@@ -1,3 +1,5 @@
+/* global fetch */
+
 const html = require('choo/html')
 const Component = require('choo/component')
 const Form = require('./generic')
@@ -64,6 +66,31 @@ class ProfileForm extends Component {
       try {
         this.local.machine.emit('request:start')
 
+        let response = await fetch('')
+
+        const csrfToken = response.headers.get('X-CSRF-Token')
+
+        response = await fetch('/password', {
+          method: 'PUT',
+          headers: {
+            Accept: 'application/json',
+            'X-CSRF-Token': csrfToken
+          },
+          body: new URLSearchParams({
+            email: this.local.data.email,
+            nickname: this.local.data.displayName
+          })
+        })
+
+        const status = response.status
+        const contentType = response.headers.get('content-type')
+
+        if (status >= 400 && contentType && contentType.indexOf('application/json') !== -1) {
+          const { error } = await response.json()
+          this.local.error.message = error
+          return this.local.machine.emit('request:error')
+        }
+
         this.local.machine.emit('request:resolve')
       } catch (err) {
         this.local.machine.emit('request:reject')
@@ -119,12 +146,12 @@ class ProfileForm extends Component {
     }
 
     return html`
-      <div class="flex flex-column flex-auto pb6">
+      <div class="flex flex-column flex-auto">
         ${this.state.cache(Form, 'update-profile-form').render({
           id: 'profile-form',
           method: 'POST',
           action: '',
-          buttonText: 'Update',
+          buttonText: 'Update my profile',
           validate: (props) => {
             this.local.data[props.name] = props.value
             this.validator.validate(props.name, props.value)
@@ -138,8 +165,7 @@ class ProfileForm extends Component {
             values: {},
             errors: {}
           },
-          submit: (e) => {
-            e.preventDefault()
+          submit: (data) => {
             this.local.machine.emit('form:submit')
           },
           fields: [
@@ -165,7 +191,7 @@ class ProfileForm extends Component {
       if (!isEmail(data)) return new Error('Email is invalid')
     })
     this.validator.field('displayName', (data) => {
-      if (isEmpty(data)) return new Error('Name is required')
+      if (isEmpty(data)) return new Error('Display name is required')
     })
   }
 

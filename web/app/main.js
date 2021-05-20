@@ -1,3 +1,5 @@
+/* global fetch */
+
 const choo = require('choo')
 const app = choo({ href: false })
 const html = require('choo/html')
@@ -8,7 +10,6 @@ const PasswordReset = require('./components/forms/passwordReset')
 const PasswordResetUpdatePassword = require('./components/forms/passwordResetUpdatePassword')
 const UpdateProfileForm = require('./components/forms/profile')
 const UpdatePasswordForm = require('./components/forms/passwordUpdate')
-const Notifications = require('./components/notifications')
 const CountrySelect = require('./components/select-country-list')
 const Dialog = require('@resonate/dialog-component')
 const Button = require('@resonate/button-component')
@@ -80,49 +81,7 @@ app.use((state, emitter) => {
   }
 })
 
-app.use((state, emitter) => {
-  state.messages = state.messages || []
-
-  emitter.on(state.events.DOMCONTENTLOADED, _ => {
-    emitter.on('notification:denied', () => {
-      emitter.emit('notify', {
-        type: 'warning',
-        timeout: 6000,
-        message: 'Notifications are blocked, you should modify your browser site settings'
-      })
-    })
-
-    emitter.on('notification:granted', () => {
-      emitter.emit('notify', {
-        type: 'success',
-        message: 'Notifications are enabled'
-      })
-    })
-
-    emitter.on('notify', (props) => {
-      const { message } = props
-
-      if (!state.notification.permission) {
-        const dialog = document.querySelector('dialog')
-        const name = dialog ? 'notifications' : 'notifications-dialog'
-        const notifications = state.cache(Notifications, name)
-        const host = props.host || (dialog || document.body)
-
-        if (notifications.element) {
-          notifications.add(props)
-        } else {
-          const el = notifications.render({
-            size: dialog ? 'small' : 'default'
-          })
-          host.insertBefore(el, host.firstChild)
-          notifications.add(props)
-        }
-      } else {
-        emitter.emit('notification:new', message)
-      }
-    })
-  })
-})
+app.use(require('./plugins/notifications')())
 
 const layout = (view) => {
   return (state, emit) => {
@@ -211,13 +170,6 @@ app.route('/', layout((state, emit) => {
             </div>
           `
         })}
-        <div class="fl w-50 pa2 mw4-ns mw5-l">
-          <a href="/apps" class="link db aspect-ratio aspect-ratio--1x1 dim bg-gray ba bw b--mid-gray black">
-            <div class="flex flex-column justify-center aspect-ratio--object pa2 pa3-ns pa4-l">
-              <span class="f4 f5-ns f4-l lh-copy">Register a new app</span>
-            </div>
-          </a>
-        </div>
       </article>
 
       <p class="ml3 lh-copy measure f4 f5-ns f4-l">Not a member yet? <a class="link b" href="/join">Join now!</a></p>
@@ -241,9 +193,12 @@ app.route('/password-reset', layoutNarrow((state, emit) => {
     <div class="flex flex-column">
       <h2 class="f3 fw1 mt3 near-black near-black--light light-gray--dark lh-title">Reset your password</h2>
 
-      ${state.query.token ? passwordResetUpdatePassword.render({
-        token: state.query.token
-      }) : passwordReset.render()}
+      ${state.query.token
+        ? passwordResetUpdatePassword.render({
+          token: state.query.token
+        })
+        : passwordReset.render()
+      }
     </div>
   `
 }))
@@ -286,32 +241,56 @@ app.route('/profile', layout((state, emit) => {
             </nav>
           </div>
           <div class="flex flex-column flex-auto ph3 pt4 pt0-l mw6 ph0-l">
-            <div class="ph3">
+            <section class="ph3 pb6">
               <a id="account-info" class="absolute" style="top:-120px"></a>
               ${state.cache(UpdateProfileForm, 'update-profile').render({
                 data: state.profile || {}
               })}
-            </div>
+            </section>
 
-            <div class="ph3">
-              <h3 class="f3 fw1 lh-title relative mb3">
+            <section class="ph3 pb6">
+              <h3 class="f3 fw1 lh-title relative mb4">
                 Location
                 <a id="change-country" class="absolute" style="top:-120px"></a>
               </h3>
               ${state.cache(CountrySelect, 'update-country').render({
-                country: state.profile.country || ''
-              })}
-            </div>
+                country: state.profile.country || '',
+                onchange: async (props) => {
+                  const { country, code } = props
 
-            <div class="ph3">
-              <h3 class="f3 fw1 lh-title relative mb3">
+                  let response = await fetch('')
+
+                  const csrfToken = response.headers.get('X-CSRF-Token')
+
+                  response = await fetch('', {
+                    method: 'PUT',
+                    headers: {
+                      Accept: 'application/json',
+                      'X-CSRF-Token': csrfToken
+                    },
+                    body: new URLSearchParams({
+                      country: code
+                    })
+                  })
+
+                  if (response.status >= 400) {
+                    throw new Error('Something went wrong')
+                  }
+
+                  state.profile.country = country
+                }
+              })}
+            </section>
+
+            <section class="ph3">
+              <h3 class="f3 fw1 lh-title relative mb4">
                 Change password
                 <a id="change-password" class="absolute" style="top:-120px"></a>
               </h3>
               ${state.cache(UpdatePasswordForm, 'update-password-form').render()}
-            </div>
+            </section>
 
-            <div class="flex w-100 items-center ph3">
+            <section class="flex w-100 items-center ph3">
               ${deleteButton.render({
                 type: 'button',
                 prefix: 'bg-white ba bw b--dark-gray f5 b pv3 ph3 w-100 mw5 grow',
@@ -323,15 +302,53 @@ app.route('/profile', layout((state, emit) => {
                     title: 'Delete account',
                     prefix: 'dialog-default dialog--sm',
                     onClose: async (e) => {
-                      if (e.target.returnValue === 'Delete account') {
+                      const { returnValue } = e.target
+
+                      dialog.destroy()
+
+                      if (returnValue === 'Delete account') {
                         try {
                           // do something
+                          let response = await fetch('')
+
+                          const csrfToken = response.headers.get('X-CSRF-Token')
+
+                          response = await fetch('', {
+                            method: 'DELETE',
+                            headers: {
+                              Accept: 'application/json',
+                              'X-CSRF-Token': csrfToken
+                            }
+                          })
+
+                          if (response.status >= 400) {
+                            throw new Error('Something went wrong')
+                          }
+
+                          emit('notify', {
+                            timeout: 10000,
+                            type: 'info',
+                            message: 'Your account has been scheduled for deletion in 24 hours. You will receive one last email to confirm or cancel the deletion.'
+                          })
+
+                          response = await fetch('/logout')
+
+                          const isRedirected = response.redirected
+
+                          if (isRedirected) {
+                            emit('notify', {
+                              timeout: 3000,
+                              type: 'info',
+                              message: 'Redirecting you to the login page.'
+                            })
+                            setTimeout(() => {
+                              window.location.href = response.url
+                            }, 3000)
+                          }
                         } catch (err) {
                           emit('error', err)
                         }
                       }
-
-                      dialog.destroy()
                     },
                     content: html`
                       <div class="flex flex-column">
@@ -362,10 +379,10 @@ app.route('/profile', layout((state, emit) => {
               <div class="ml3">
                 <a id="delete-account"></a>
                 <p class="lh-copy f5 dark-gray">
-                  This will delete your account and all associated profiles.
+                  Request your account to be deleted.
                 </p>
               </div>
-            </div>
+            </section>
           </div>
         </div>
       </section>
