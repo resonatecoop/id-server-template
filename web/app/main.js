@@ -41,9 +41,9 @@ app.use(require('choo-meta')())
 app.use((state, emitter) => {
   state.clients = state.clients || [
     {
-      connectUrl: 'https://upload.resonate.is/api/user/connect/resonate',
-      name: 'Upload Tool',
-      description: 'for creators'
+      connectUrl: 'https://dash.resonate.coop/api/user/connect/resonate',
+      name: 'Artist Dashboard',
+      description: 'dash.resonate.coop'
     }
   ]
   state.profile = state.profile || {
