@@ -77,7 +77,7 @@ class PasswordResetUpdatePassword extends Component {
     return html`
       <div class="flex flex-column flex-auto">
         ${message}
-        ${this.state.cache(Form, 'password-form').render({
+        ${this.state.cache(Form, 'password-reset-update-form').render({
           id: 'password-reset-update-password',
           method: 'POST',
           action: '',
@@ -98,6 +98,7 @@ class PasswordResetUpdatePassword extends Component {
           fields: [
             {
               type: 'password',
+              id: 'password_new',
               name: 'password_new',
               placeholder: 'New password',
               help: (value) => {
@@ -108,6 +109,7 @@ class PasswordResetUpdatePassword extends Component {
             },
             {
               type: 'password',
+              id: 'password_confirm',
               name: 'password_confirm',
               placeholder: 'Password confirmation'
             }

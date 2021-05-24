@@ -150,6 +150,20 @@ func (s *Service) GetRoutes() []routes.Route {
 		},
 		{
 			Name:        "password",
+			Method:      "POST",
+			Pattern:     "/password",
+			HandlerFunc: s.passwordUpdate,
+			Middlewares: []negroni.Handler{
+				tollbooth_negroni.LimitHandler(
+					tollbooth.NewLimiter(1, nil),
+				),
+				new(parseFormMiddleware),
+				newLoggedInMiddleware(s),
+				newClientMiddleware(s),
+			},
+		},
+		{
+			Name:        "password_update",
 			Method:      "PUT",
 			Pattern:     "/password",
 			HandlerFunc: s.passwordUpdate,
@@ -174,10 +188,10 @@ func (s *Service) GetRoutes() []routes.Route {
 			},
 		},
 		{
-			Name:        "profile_update",
-			Method:      "PUT",
+			Name:        "profile",
+			Method:      "POST",
 			Pattern:     "/profile",
-			HandlerFunc: s.profileUpdate,
+			HandlerFunc: s.profile,
 			Middlewares: []negroni.Handler{
 				tollbooth_negroni.LimitHandler(
 					tollbooth.NewLimiter(1, nil),
@@ -191,7 +205,35 @@ func (s *Service) GetRoutes() []routes.Route {
 			Name:        "profile_delete",
 			Method:      "DELETE",
 			Pattern:     "/profile",
-			HandlerFunc: s.profileDelete,
+			HandlerFunc: s.profile,
+			Middlewares: []negroni.Handler{
+				tollbooth_negroni.LimitHandler(
+					tollbooth.NewLimiter(1, nil),
+				),
+				new(parseFormMiddleware),
+				newLoggedInMiddleware(s),
+				newClientMiddleware(s),
+			},
+		},
+		{
+			Name:        "profile_update",
+			Method:      "PUT",
+			Pattern:     "/profile",
+			HandlerFunc: s.profile,
+			Middlewares: []negroni.Handler{
+				tollbooth_negroni.LimitHandler(
+					tollbooth.NewLimiter(1, nil),
+				),
+				new(parseFormMiddleware),
+				newLoggedInMiddleware(s),
+				newClientMiddleware(s),
+			},
+		},
+		{
+			Name:        "profile_delete",
+			Method:      "POST",
+			Pattern:     "/profile/delete",
+			HandlerFunc: s.profile,
 			Middlewares: []negroni.Handler{
 				tollbooth_negroni.LimitHandler(
 					tollbooth.NewLimiter(1, nil),

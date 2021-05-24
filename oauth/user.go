@@ -1,16 +1,19 @@
 package oauth
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/RichardKnop/go-oauth2-server/log"
 	"github.com/RichardKnop/go-oauth2-server/models"
 	"github.com/RichardKnop/go-oauth2-server/util"
 	pass "github.com/RichardKnop/go-oauth2-server/util/password"
 	"github.com/RichardKnop/uuid"
 	"github.com/jinzhu/gorm"
+	"github.com/mailgun/mailgun-go/v4"
 	"github.com/trustelem/zxcvbn"
 )
 
@@ -52,7 +55,7 @@ var (
 	// ErrPasswordRequired ...
 	ErrPasswordRequired = errors.New("Password is required")
 	// ErrUsernameRequired ...
-	ErrUsernameRequired = errors.New("Username/Email is required")
+	ErrUsernameRequired = errors.New("Email is required")
 	// ErrLoginTaken ...
 	ErrLoginTaken = errors.New("Login taken")
 	// ErrUserNotFound ...
@@ -66,11 +69,13 @@ var (
 	// ErrUserPasswordNotSet ...
 	ErrUserPasswordNotSet = errors.New("User password not set")
 	// ErrUsernameTaken ...
-	ErrUsernameTaken = errors.New("Username/Email taken")
+	ErrUsernameTaken = errors.New("Email is not available")
 	// ErrEmailInvalid
 	ErrEmailInvalid = errors.New("Not a valid email")
 	// ErrEmailNotFound
 	ErrEmailNotFound = errors.New("We can't find an account registered with that address or username")
+	// ErrAccountDeletionFailed
+	ErrAccountDeletionFailed = errors.New("Account could not be deleted. Please reach to us now")
 )
 
 // UserExists returns true if user exists
@@ -143,6 +148,9 @@ func (s *Service) AuthUser(username, password string) (*models.OauthUser, error)
 func (s *Service) UpdateUsername(user *models.OauthUser, username string) error {
 	if username == "" {
 		return ErrCannotSetEmptyUsername
+	}
+	if user.Username == username {
+		return ErrUsernameTaken
 	}
 	// Check the email/username is available
 	if s.UserExists(username) {
@@ -228,6 +236,66 @@ func (s *Service) createUserCommon(db *gorm.DB, roleID, username, password strin
 	return user, nil
 }
 
+// Delete user will soft delete  user
+func (s *Service) DeleteUser(user *models.OauthUser, password string) error {
+	return s.deleteUserCommon(s.db, user, password)
+}
+
+// DeleteUserTx deletes a user in a transaction
+func (s *Service) DeleteUserTx(tx *gorm.DB, user *models.OauthUser, password string) error {
+	return s.deleteUserCommon(tx, user, password)
+}
+
+func (s *Service) deleteUserCommon(db *gorm.DB, user *models.OauthUser, password string) error {
+	// Check that the password is set
+	/*
+		if !user.Password.Valid {
+			return ErrUserPasswordNotSet
+		}
+
+		// Verify the password
+		if pass.VerifyPassword(user.Password.String, password) != nil {
+			return ErrInvalidUserPassword
+		}
+	*/
+
+	// will set deleted_at to current time
+	if db.Delete(&user).Error != nil {
+		return ErrAccountDeletionFailed
+	}
+
+	// Inform user account is scheduled for deletion
+	mg := mailgun.NewMailgun(s.cnf.Mailgun.Domain, s.cnf.Mailgun.Key)
+	sender := s.cnf.Mailgun.Sender
+	body := ""
+	email := models.NewOauthEmail(
+		user.Username,
+		"Account deleted",
+		"account-deleted",
+	)
+	subject := email.Subject
+	recipient := email.Recipient
+	message := mg.NewMessage(sender, subject, body, recipient)
+	message.SetTemplate(email.Template) // set mailgun template
+	err := message.AddTemplateVariable("email", recipient)
+
+	if err != nil {
+		log.ERROR.Print(err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	// Send the message with a 10 second timeout
+	_, _, err = mg.Send(ctx, message)
+
+	if err != nil {
+		log.ERROR.Print(err)
+	}
+
+	return nil
+}
+
 func (s *Service) setPasswordCommon(db *gorm.DB, user *models.OauthUser, password string) error {
 	if len(password) < MinPasswordLength {
 		return ErrPasswordTooShort
@@ -258,6 +326,35 @@ func (s *Service) setPasswordCommon(db *gorm.DB, user *models.OauthUser, passwor
 
 	if err != nil {
 		return err
+	}
+
+	// Inform user by email password was changed
+	mg := mailgun.NewMailgun(s.cnf.Mailgun.Domain, s.cnf.Mailgun.Key)
+	sender := s.cnf.Mailgun.Sender
+	body := ""
+	email := models.NewOauthEmail(
+		user.Username,
+		"Password changed",
+		"password-changed",
+	)
+	subject := email.Subject
+	recipient := email.Recipient
+	message := mg.NewMessage(sender, subject, body, recipient)
+	message.SetTemplate(email.Template) // set mailgun template
+	err = message.AddTemplateVariable("email", recipient)
+
+	if err != nil {
+		log.ERROR.Print(err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	// Send the message with a 10 second timeout
+	_, _, err = mg.Send(ctx, message)
+
+	if err != nil {
+		log.ERROR.Print(err)
 	}
 
 	return nil

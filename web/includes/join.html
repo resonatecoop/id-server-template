@@ -7,7 +7,9 @@
       <div class="flex flex-column flex-auto items-center justify-center min-vh-100 mh3 pt6 pb6">
         <div class="bg-white black bg-black--dark white--dark bg-white--light black--light z-1 w-100 w-auto-l ph4 pt4 pb3">
           <div class="flex flex-column flex-auto">
-            <svg viewBox="0 0 16 16" class="icon icon-logo icon--sm icon icon--lg fill-black fill-white--dark fill-black--light"><use xlink:href="#icon-logo"></use></svg>
+            <svg viewBox="0 0 16 16" class="icon icon-logo icon--sm icon icon--lg fill-black fill-white--dark fill-black--light">
+              <use xlink:href="#icon-logo"></use>
+            </svg>
             <div class="flex flex-column">
               <h2 class="f3 fw1 mt3 near-black near-black--light light-gray--dark lh-title">Join now</h2>
               {{ if .flash }}
@@ -49,6 +51,7 @@
                         </div>
                         <div class="flex flex-column" id="ncid-1794" data-nanocomponent="ncid-1794"><div class="flex"></div></div>
                       </div>
+                      <!--
                       <div class="flex flex-column mb3">
                         <div class="relative">
                           <input
@@ -64,6 +67,7 @@
                         </div>
                         <p class="ma0 mt1 lh-copy f7">Can be used to login to your profile</p>
                       </div>
+                      !-->
                       <div class="flex flex-column mb3">
                         <div class="relative">
                           <input
@@ -72,12 +76,21 @@
                             id="display_name"
                             type="text"
                             name="display_name"
-                            placeholder="Name"
+                            placeholder="Display Name"
                             required="required"
                             class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid"
                           />
                         </div>
                         <p class="ma0 mt1 lh-copy f7">Your artist name, nickname or label name</p>
+                      </div>
+                      <div class="flex flex-column mb3">
+                        <label for="country" class="f6 b db mr2">Select a country</label>
+                        <select id="country" name="country" class="bn bg-black white bg-white--dark black--dark bg-black--light white--light pa3">
+                          <option value="" selected="selected" disabled="disabled">…</option>
+                          {{ range .countries }}
+                          <option value="{{.Codes.Alpha3}}">{{.Name.Common}}</option>
+                          {{end}}
+                        </select>
                       </div>
                     </div>
                     <div class="flex mt3">

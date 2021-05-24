@@ -3,9 +3,6 @@
 const html = require('choo/html')
 const Component = require('choo/component')
 const Form = require('./generic')
-const Button = require('@resonate/button-component')
-const messages = require('./messages')
-const Dialog = require('@resonate/dialog-component')
 const logger = require('nanologger')
 const log = logger('form:updatePassword')
 
@@ -13,6 +10,8 @@ const isEmpty = require('validator/lib/isEmpty')
 const isLength = require('validator/lib/isLength')
 const validateFormdata = require('validate-formdata')
 const nanostate = require('nanostate')
+const PasswordMeter = require('../password-meter')
+const zxcvbnAsync = require('zxcvbn-async')
 
 class UpdatePasswordForm extends Component {
   constructor (id, state, emit) {
@@ -43,6 +42,7 @@ class UpdatePasswordForm extends Component {
     })
 
     this.local.data = {}
+    this.local.error = {}
 
     this.local.machine.on('form:reset', () => {
       this.validator = validateFormdata()
@@ -62,6 +62,8 @@ class UpdatePasswordForm extends Component {
     })
 
     this.local.machine.on('request:resolve', () => {
+      this.emit('notify', { type: 'success', message: 'Password changed!' })
+
       clearTimeout(this.loaderTimeout)
     })
 
@@ -71,50 +73,39 @@ class UpdatePasswordForm extends Component {
       try {
         this.local.machine.emit('request:start')
 
-        const response = await this.state.api.profile.updatePassword(this.local.data)
+        let response = await fetch('')
 
-        if (response.status === 'ok') {
-          const dialog = this.state.cache(Dialog, 'logout-dialog')
+        const csrfToken = response.headers.get('X-CSRF-Token')
 
-          const dialogEl = dialog.render({
-            title: 'Your password has been changed.',
-            prefix: 'dialog-default dialog--sm pa3',
-            onClose: e => {
-              if (e.target.returnValue === 'Log out') {
-                window.location = `https://${process.env.APP_DOMAIN}/api/user/logout`
-              }
-
-              dialog.destroy()
-            },
-            content: html`
-              <div class="flex flex-column">
-                <p class="lh-copy f5 b">Do you want to log out now?</p>
-
-                <div class="flex">
-                  <div class="flex items-center">
-                    <input class="bg-white black ba bw b--near-black f5 b pv2 ph3 ma0 grow" type="submit" value="Later">
-                  </div>
-                  <div class="flex flex-auto w-100 justify-end">
-                    <div class="flex items-center">
-                      <input class="bg-black white f5 b pv2 ph3 ma0 grow" type="submit" value="Log out">
-                    </div>
-                  </div>
-                </div>
-              </div>
-            `
+        response = await fetch('/password', {
+          method: 'PUT',
+          headers: {
+            Accept: 'application/json',
+            'X-CSRF-Token': csrfToken
+          },
+          body: new URLSearchParams({
+            password: this.local.data.password,
+            password_new: this.local.data.password_new,
+            password_confirm: this.local.data.password_confirm
           })
+        })
 
-          document.body.appendChild(dialogEl)
-        }
+        this.local.machine.state.loader === 'on' && this.local.machine.emit('loader:toggle')
 
-        if (response.status !== 'ok') {
-          this.emit('notify', { type: 'error', message: response.message })
+        const status = response.status
+        const contentType = response.headers.get('content-type')
+
+        if (status >= 400 && contentType && contentType.indexOf('application/json') !== -1) {
+          const { error } = await response.json()
+          this.local.error.message = error
+          return this.local.machine.emit('request:error')
         }
 
         this.local.machine.emit('request:resolve')
       } catch (err) {
+        console.log(err)
+        this.local.error.message = err.message
         this.local.machine.emit('request:reject')
-        this.emit('error', err)
       }
     })
 
@@ -157,137 +148,83 @@ class UpdatePasswordForm extends Component {
   }
 
   createElement (props) {
-    const submitButton = new Button('update-profile-button', this.state, this.emit)
-    const disabled = (this.local.machine.state.form === 'submitted' && this.local.form.valid) || !this.local.form.changed
-
     return html`
       <div class="flex flex-column flex-auto pb6">
-        ${messages(this.state, this.local.form)}
-
-        <form novalidate onsubmit=${(e) => {
-          e.preventDefault()
-          this.local.machine.emit('form:submit')
-        }}>
-          ${this.state.cache(Form, 'password-update-form').render({
-            id: 'password',
-            method: 'POST',
-            action: '',
-            buttonText: 'Update my password',
-            validate: (props) => {
-              this.local.data[props.name] = props.value
-              this.validator.validate(props.name, props.value)
-              this.rerender()
+        ${this.state.cache(Form, 'password-update-form').render({
+          id: 'password-update-form',
+          method: 'POST',
+          action: '',
+          buttonText: 'Update my password',
+          validate: (props) => {
+            this.local.data[props.name] = props.value
+            this.validator.validate(props.name, props.value)
+            this.rerender()
+          },
+          form: this.local.form || {
+            changed: false,
+            valid: true,
+            pristine: {},
+            required: {},
+            values: {},
+            errors: {}
+          },
+          submit: () => {
+            this.local.machine.emit('form:submit')
+          },
+          fields: [
+            {
+              type: 'password',
+              id: 'password',
+              autocomplete: 'on',
+              name: 'password',
+              placeholder: 'Current password'
             },
-            form: this.form || {
-              changed: false,
-              valid: true,
-              pristine: {},
-              required: {},
-              values: {},
-              errors: {}
-            },
-            fields: [
-              {
-                type: 'password',
-                name: 'password',
-                placeholder: 'Current password'
-              },
-              {
-                type: 'password',
-                name: 'password_new',
-                placeholder: 'New password'
-              },
-              {
-                type: 'password',
-                name: 'password_confirm',
-                placeholder: 'Password confirmation'
-              }
-            ],
-            submit: async (data) => {
-              if (this.local.machine.state === 'loading') {
-                return
-              }
-
-              const loaderTimeout = setTimeout(() => {
-                this.local.machine.emit('loader:toggle')
-              }, 1000)
-
-              try {
-                this.local.machine.emit('request:start')
-
-                let response = await fetch('')
-
-                const csrfToken = response.headers.get('X-CSRF-Token')
-
-                response = await fetch('', {
-                  method: 'POST',
-                  credentials: 'include',
-                  headers: {
-                    Accept: 'application/json',
-                    'X-CSRF-Token': csrfToken
-                  },
-                  body: new URLSearchParams({
-                    password: data.password.value,
-                    password_new: data.password_new.value,
-                    password_confirm: data.password_confirm.value
-                  })
+            {
+              type: 'password',
+              id: 'password_new',
+              autocomplete: 'on',
+              name: 'password_new',
+              placeholder: 'New password',
+              help: (value) => {
+                return this.state.cache(PasswordMeter, 'password-meter').render({
+                  password: value
                 })
-
-                const isRedirected = response.redirected
-
-                if (isRedirected) {
-                  window.location.href = response.url
-                }
-
-                this.local.machine.state.loader === 'on' && this.local.machine.emit('loader:toggle')
-
-                const status = response.status
-                const contentType = response.headers.get('content-type')
-
-                if (status >= 400 && contentType && contentType.indexOf('application/json') !== -1) {
-                  const { error } = await response.json()
-                  this.local.error.message = error
-                  return this.local.machine.emit('request:error')
-                }
-
-                if (status === 201) {
-                  this.emit(this.state.events.PUSHSTATE, '/login')
-                }
-
-                this.machine.emit('request:resolve')
-              } catch (err) {
-                this.local.error.message = err.message
-                this.local.machine.emit('request:reject')
-                this.emit('error', err)
-              } finally {
-                clearTimeout(loaderTimeout)
               }
+            },
+            {
+              type: 'password',
+              id: 'password_confirm',
+              autocomplete: 'on',
+              name: 'password_confirm',
+              placeholder: 'Password confirmation'
             }
-          })}
-
-          ${submitButton.render({
-            type: 'submit',
-            prefix: `bg-white ba bw b--dark-gray f5 b pv3 ph5 ${!disabled ? 'grow' : ''}`,
-            text: 'Update',
-            disabled: disabled,
-            style: 'none',
-            size: 'none'
-          })}
-        </form>
+          ]
+        })}
       </div>
     `
   }
 
   load () {
+    const zxcvbn = zxcvbnAsync.load({
+      sync: true,
+      libUrl: 'https://cdn.jsdelivr.net/npm/zxcvbn@4.4.2/dist/zxcvbn.js',
+      libIntegrity: 'sha256-9CxlH0BQastrZiSQ8zjdR6WVHTMSA5xKuP5QkEhPNRo='
+    })
+
     this.validator.field('password', { required: !!this.local.token }, (data) => {
       if (isEmpty(data)) return new Error('Current password is required')
-      if (new RegExp(/[À-ÖØ-öø-ÿ]/).test(data)) return new Error('Current password contain unsupported characters. You should ask for a password reset.')
+      if (/[À-ÖØ-öø-ÿ]/.test(data)) return new Error('Current password may contain unsupported characters. You should ask for a password reset.')
     })
     this.validator.field('password_new', (data) => {
       if (isEmpty(data)) return new Error('New password is required')
-      if (!isLength(data, { min: 10 })) return new Error('New password is too short')
       if (data === this.local.data.password) return new Error('Current password and new password are identical')
-      if (new RegExp(/[À-ÖØ-öø-ÿ]/).test(data)) return new Error('New password contain unsupported characters (accented chars such as À-ÖØ-öø-ÿ)')
+      const { score, feedback } = zxcvbn(data)
+      if (score < 3) {
+        return new Error(feedback.warning || (feedback.suggestions.length ? feedback.suggestions[0] : 'Password is too weak'))
+      }
+      if (!isLength(data, { max: 72 })) {
+        return new Error('Password length should not be more than 72 characters')
+      }
     })
     this.validator.field('password_confirm', (data) => {
       if (isEmpty(data)) return new Error('Password confirmation is required')
@@ -295,13 +232,7 @@ class UpdatePasswordForm extends Component {
     })
   }
 
-  unload () {
-    if (this.local.machine.state.form !== 'idle') {
-      this.local.machine.emit('form:reset')
-    }
-  }
-
-  update (props) {
+  update () {
     return false
   }
 }

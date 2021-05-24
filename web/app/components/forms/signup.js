@@ -9,6 +9,7 @@ const isEmpty = require('validator/lib/isEmpty')
 const isLength = require('validator/lib/isLength')
 const validateFormdata = require('validate-formdata')
 const PasswordMeter = require('../password-meter')
+const CountrySelect = require('../select-country-list')
 const zxcvbnAsync = require('zxcvbn-async')
 
 class Signup extends Component {
@@ -60,7 +61,7 @@ class Signup extends Component {
     }))
 
     this.validator = validateFormdata()
-    this.form = this.validator.state
+    this.local.form = this.validator.state
   }
 
   createElement (props) {
@@ -86,7 +87,7 @@ class Signup extends Component {
             this.validator.validate(props.name, props.value)
             this.rerender()
           },
-          form: this.form || {
+          form: this.local.form || {
             changed: false,
             valid: true,
             pristine: {},
@@ -108,17 +109,36 @@ class Signup extends Component {
                 })
               }
             },
+            /*
             {
               type: 'text',
               name: 'login',
               placeholder: 'Username',
               help: html`<p class="ma0 mt1 lh-copy f7">Can be used to login to your profile</p>`
             },
+            */
             {
               type: 'text',
               name: 'display_name',
-              placeholder: 'Name',
+              placeholder: 'Display name',
               help: html`<p class="ma0 mt1 lh-copy f7">Your artist name, nickname or label name</p>`
+            },
+            {
+              component: this.state.cache(CountrySelect, 'join-country-select').render({
+                validator: this.validator,
+                form: this.local.form || {
+                  changed: false,
+                  valid: true,
+                  pristine: {},
+                  required: {},
+                  values: {},
+                  errors: {}
+                },
+                required: true,
+                onchange: (e) => {
+                  // something changed
+                }
+              })
             }
           ],
           submit: async (data) => {
@@ -148,7 +168,8 @@ class Signup extends Component {
                   email: data.email.value,
                   password: data.password.value,
                   display_name: data.display_name.value,
-                  login: data.login.value
+                  // login: data.login.value,
+                  country: data.country.value
                 })
               })
 
@@ -225,6 +246,7 @@ class Signup extends Component {
         return new Error('The name can\'t be longer than 50 characters')
       }
     })
+    /*
     this.validator.field('login', (data) => {
       if (isEmpty(data)) {
         return new Error('An username is required')
@@ -236,6 +258,7 @@ class Signup extends Component {
         return new Error('Username cannot be an email')
       }
     })
+    */
   }
 
   update () {
