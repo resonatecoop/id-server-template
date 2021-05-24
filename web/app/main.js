@@ -177,14 +177,6 @@ app.route('/', layout((state, emit) => {
   `
 }))
 
-app.route('/apps', layoutNarrow((state, emit) => {
-  return html`
-    <div class="flex flex-column">
-      <h2 class="f3 fw1 mt3 near-black near-black--light light-gray--dark lh-title">Register a new app</h2>
-    </div>
-  `
-}))
-
 app.route('/password-reset', layoutNarrow((state, emit) => {
   const passwordReset = state.cache(PasswordReset, 'password-reset')
   const passwordResetUpdatePassword = state.cache(PasswordResetUpdatePassword, 'password-reset-update')
