@@ -160,11 +160,11 @@ app.route('/', layout((state, emit) => {
       <article class="mh2 mt3 cf">
         ${state.clients.map(({ connectUrl, name, description }) => {
           return html`
-            <div class="fl w-50 pa2 mw4-ns mw5-l">
+            <div class="fl w-50 w-33-l pa2">
               <a href=${connectUrl} class="link db aspect-ratio aspect-ratio--1x1 dim ba bw b--mid-gray">
                 <div class="flex flex-column justify-center aspect-ratio--object pa2 pa3-ns pa4-l">
-                  <span class="f3 f4-ns f3-l lh-title">${name}</span>
-                  <span class="f4 f5-ns f4-l lh-copy">${description}</span>
+                  <span class="f3 lh-title">${name}</span>
+                  <span class="f4 lh-copy">${description}</span>
                 </div>
               </a>
             </div>
