@@ -9,6 +9,7 @@
     "dev": "jalla ./web/app/main.js --port 8081",
     "build": "NODE_ENV=production && gulp javascript && gulp css"
   },
+  "private": true,
   "repository": {
     "type": "git",
     "url": "git+https://github.com/resonatecoop/id.git"
