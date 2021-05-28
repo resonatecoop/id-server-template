@@ -2,6 +2,7 @@ package oauth
 
 import (
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/RichardKnop/go-oauth2-server/models"
@@ -9,11 +10,13 @@ import (
 	pass "github.com/RichardKnop/go-oauth2-server/util/password"
 	"github.com/gosimple/slug"
 	"github.com/jinzhu/gorm"
+	"github.com/pariz/gountries"
 	"github.com/trustelem/zxcvbn"
 )
 
 var (
-	ErrEmailAsLogin = errors.New("Username cannot be an email address")
+	ErrEmailAsLogin    = errors.New("Username cannot be an email address")
+	ErrCountryNotFound = errors.New("Country cannot be found")
 )
 
 // FindUserByLogin looks up a user by login (wordpress)
@@ -76,13 +79,39 @@ func (s *Service) FindWpUserByEmail(email string) (*models.WpUser, error) {
 	return wpuser, nil
 }
 
+func (s *Service) UpdateWpUserNickname(user *models.WpUser, nickname string) error {
+	return s.db2.Table("rsntr_usermeta").
+		Where("user_id = ? AND meta_key = ?", user.ID, "nickname").
+		UpdateColumn("meta_value", util.StringOrNull(string(nickname))).
+		Error
+}
+
+// Update wp user country (resolve from common name and official name, fallback to alpha code otherwise)
+func (s *Service) UpdateWpUserCountry(user *models.WpUser, country string) error {
+	// validate country name
+	query := gountries.New()
+	_, err := query.FindCountryByName(strings.ToLower(country))
+
+	if err != nil {
+		// fallback to code
+		result, err := query.FindCountryByAlpha(strings.ToLower(country))
+		if err != nil {
+			return ErrCountryNotFound
+		}
+		country = result.Name.Common
+	}
+
+	return s.UpdateWpUserMetaValue(user.ID, "country", country)
+}
+
 func (s *Service) createWpUserCommon(db *gorm.DB, email, password, login, displayName string) (*models.WpUser, error) {
 	if displayName == "" {
 		return nil, ErrDisplayNameRequired
 	}
 
+	// fallback for empty login details
 	if login == "" {
-		return nil, ErrLoginRequired
+		login = email
 	}
 
 	if password == "" {
@@ -106,9 +135,9 @@ func (s *Service) createWpUserCommon(db *gorm.DB, email, password, login, displa
 		return nil, ErrLoginTooLong
 	}
 
-	if util.ValidateEmail(login) {
-		return nil, ErrEmailAsLogin
-	}
+	//if util.ValidateEmail(login) {
+	//	return nil, ErrEmailAsLogin
+	//}
 
 	// Check the login is available
 	if s.LoginTaken(login) {

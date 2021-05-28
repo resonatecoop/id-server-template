@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/RichardKnop/go-oauth2-server/models"
-	"github.com/RichardKnop/go-oauth2-server/oauth"
 	"github.com/RichardKnop/go-oauth2-server/session"
 	pass "github.com/RichardKnop/go-oauth2-server/util/password"
 	"github.com/RichardKnop/go-oauth2-server/util/response"
@@ -14,20 +13,61 @@ import (
 
 var (
 	ErrPasswordMismatch = errors.New("Password confirmation mismatch")
+	ErrInvalidPassword  = errors.New("Invalid password")
 )
 
 func (s *Service) passwordUpdate(w http.ResponseWriter, r *http.Request) {
 	sessionService, _, user, _, err := s.passwordCommon(r)
+
 	if err != nil {
+		if r.Header.Get("Accept") == "application/json" {
+			response.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// verify current password
+	if pass.VerifyPassword(user.Password.String, r.Form.Get("password")) != nil {
+		if r.Header.Get("Accept") == "application/json" {
+			response.Error(w, ErrInvalidPassword.Error(), http.StatusBadRequest)
+			return
+		}
+		err = sessionService.SetFlashMessage(&session.Flash{
+			Type:    "Error",
+			Message: "Invalid password",
+		})
+		if err != nil {
+			http.Error(w, ErrInvalidPassword.Error(), http.StatusInternalServerError)
+			return
+		}
+		redirectWithQueryString("/web/profile", r.URL.Query(), w, r)
+		return
+	}
+
+	// compare new password and password confirmation
+	if r.Form.Get("password_new") != r.Form.Get("password_confirm") {
+		if r.Header.Get("Accept") == "application/json" {
+			response.Error(w, ErrPasswordMismatch.Error(), http.StatusBadRequest)
+			return
+		}
+		err = sessionService.SetFlashMessage(&session.Flash{
+			Type:    "Error",
+			Message: ErrPasswordMismatch.Error(),
+		})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		redirectWithQueryString("/web/profile", r.URL.Query(), w, r)
 		return
 	}
 
 	w.Header().Set("X-CSRF-Token", csrf.Token(r))
 
-	err = s.oauthService.SetPassword(user, r.Form.Get("password_new"))
-
-	if err != nil {
+	// set new password
+	if s.oauthService.SetPassword(user, r.Form.Get("password_new")); err != nil {
 		if r.Header.Get("Accept") == "application/json" {
 			response.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -40,23 +80,17 @@ func (s *Service) passwordUpdate(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		http.Redirect(w, r, r.RequestURI, http.StatusBadRequest)
+		redirectWithQueryString("/web/profile", r.URL.Query(), w, r)
 		return
 	}
 
-	// Check that the password is set
-	if !user.Password.Valid {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	message := "We have sent you a password reset link to your e-mail. Please check your inbox"
+	message := "Your password has been successfully changed"
 
 	if r.Header.Get("Accept") == "application/json" {
 		response.WriteJSON(w, map[string]interface{}{
 			"message": message,
-			"status":  http.StatusAccepted,
-		}, http.StatusAccepted)
+			"status":  http.StatusOK,
+		}, http.StatusOK)
 		return
 	}
 
@@ -68,7 +102,8 @@ func (s *Service) passwordUpdate(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	http.Redirect(w, r, r.RequestURI, http.StatusAccepted)
+
+	redirectWithQueryString("/web/profile", r.URL.Query(), w, r)
 }
 
 func (s *Service) passwordCommon(r *http.Request) (
@@ -109,14 +144,6 @@ func (s *Service) passwordCommon(r *http.Request) (
 	)
 	if err != nil {
 		return nil, nil, nil, nil, err
-	}
-
-	if pass.VerifyPassword(user.Password.String, r.Form.Get("password")) != nil {
-		return nil, nil, nil, nil, oauth.ErrInvalidUserPassword
-	}
-
-	if r.Form.Get("password_new") != r.Form.Get("password_confirm") {
-		return nil, nil, nil, nil, ErrPasswordMismatch
 	}
 
 	return sessionService, client, user, wpuser, nil

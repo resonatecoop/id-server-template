@@ -1,9 +1,9 @@
 package util
 
 import (
+	"net"
 	"regexp"
 	"strings"
-	"net"
 )
 
 var (

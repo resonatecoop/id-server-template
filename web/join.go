@@ -13,6 +13,7 @@ import (
 	"github.com/RichardKnop/go-oauth2-server/util/response"
 
 	"github.com/gorilla/csrf"
+	"github.com/pariz/gountries"
 )
 
 func (s *Service) joinForm(w http.ResponseWriter, r *http.Request) {
@@ -35,10 +36,14 @@ func (s *Service) joinForm(w http.ResponseWriter, r *http.Request) {
 		string(initialState),
 	)
 
+	q := gountries.New()
+	countries := q.FindAllCountries()
+
 	// Render the template
 	flash, _ := sessionService.GetFlashMessage()
 	err = renderTemplate(w, "join.html", map[string]interface{}{
 		"flash":          flash,
+		"countries":      countries,
 		"initialState":   template.HTML(fragment),
 		"queryString":    getQueryString(r.URL.Query()),
 		csrf.TemplateTag: csrf.TemplateField(r),
@@ -76,6 +81,16 @@ func (s *Service) join(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, r.RequestURI, http.StatusFound)
 		}
 		return
+	}
+
+	if r.Form.Get("country") != "" {
+		// set wpuser country but do not throw
+		if s.oauthService.UpdateWpUserCountry(
+			wpuser,
+			r.Form.Get("country"),
+		); err != nil {
+			log.ERROR.Print(err)
+		}
 	}
 
 	message := fmt.Sprintf(
@@ -125,7 +140,7 @@ func (s *Service) createUserAndWpUser(r *http.Request) (
 	wpuser, err := s.oauthService.CreateWpUser(
 		r.Form.Get("email"),        // username
 		r.Form.Get("password"),     // password
-		r.Form.Get("login"),        // wp login
+		"",                         // wp login blank
 		r.Form.Get("display_name"), // wp display name
 	)
 

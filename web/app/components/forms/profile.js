@@ -1,9 +1,9 @@
+/* global fetch */
+
 const html = require('choo/html')
 const Component = require('choo/component')
-const input = require('@resonate/input-element')
-const Button = require('@resonate/button-component')
-const messages = require('./messages')
-const Dialog = require('@resonate/dialog-component')
+const Form = require('./generic')
+
 const isEqual = require('is-equal-shallow')
 const logger = require('nanologger')
 const log = logger('form:updateProfile')
@@ -12,7 +12,6 @@ const isEmpty = require('validator/lib/isEmpty')
 const isEmail = require('validator/lib/isEmail')
 const validateFormdata = require('validate-formdata')
 const nanostate = require('nanostate')
-const inputField = require('../../elements/input-field')
 
 class ProfileForm extends Component {
   constructor (id, state, emit) {
@@ -54,8 +53,6 @@ class ProfileForm extends Component {
     })
 
     this.local.machine.on('request:reject', () => {
-      this.emit('notify', { type: 'error', message: 'Something went wrong' })
-
       clearTimeout(this.loaderTimeout)
     })
 
@@ -69,48 +66,35 @@ class ProfileForm extends Component {
       try {
         this.local.machine.emit('request:start')
 
-        const response = await this.state.api.profile.update({
-          email: this.local.data.email,
-          nickname: this.local.data.nickname
+        let response = await fetch('')
+
+        const csrfToken = response.headers.get('X-CSRF-Token')
+
+        response = await fetch('/password', {
+          method: 'PUT',
+          headers: {
+            Accept: 'application/json',
+            'X-CSRF-Token': csrfToken
+          },
+          body: new URLSearchParams({
+            email: this.local.data.email,
+            nickname: this.local.data.displayName
+          })
         })
 
-        if (response.status === 'ok') {
-          const dialog = this.state.cache(Dialog, 'profile-updated-dialog')
+        const status = response.status
+        const contentType = response.headers.get('content-type')
 
-          const dialogEl = dialog.render({
-            title: 'Your profile has been updated.',
-            prefix: 'dialog-default dialog--sm pa3',
-            onClose: e => {
-              dialog.destroy()
-            },
-            content: html`
-              <div class="flex flex-column">
-                <p class="lh-copy f5 b">Changes should be taking effect immediatly.</p>
-
-                <div class="flex">
-                  <div class="flex items-center">
-                  </div>
-                  <div class="flex flex-auto w-100 justify-end">
-                    <div class="flex items-center">
-                      <input class="bg-black white f5 b pv2 ph3 ma0 grow" type="submit" value="Ok">
-                    </div>
-                  </div>
-                </div>
-              </div>
-            `
-          })
-
-          document.body.appendChild(dialogEl)
-        }
-
-        if (response.status !== 'ok') {
-          this.emit('notify', { type: 'error', message: 'Profile not updated' })
+        if (status >= 400 && contentType && contentType.indexOf('application/json') !== -1) {
+          const { error } = await response.json()
+          this.local.error.message = error
+          return this.local.machine.emit('request:error')
         }
 
         this.local.machine.emit('request:resolve')
       } catch (err) {
         this.local.machine.emit('request:reject')
-        this.emit('error', err)
+        console.log(err)
       }
     })
 
@@ -155,70 +139,48 @@ class ProfileForm extends Component {
   createElement (props = {}) {
     this.local.data = this.local.data || props.data
 
-    const pristine = this.local.form.pristine
-    const errors = this.local.form.errors
     const values = this.local.form.values
 
     for (const [key, value] of Object.entries(this.local.data)) {
       values[key] = value
     }
 
-    const submitButton = new Button('update-profile-button', this.state, this.emit)
-    const disabled = (this.local.machine.state.form === 'submitted' && this.local.form.valid) || !this.local.form.changed
-
     return html`
-      <div class="flex flex-column flex-auto pb6">
-        ${messages(this.state, this.local.form)}
-
-        <form novalidate onsubmit=${(e) => {
-          e.preventDefault()
-          this.local.machine.emit('form:submit')
-        }}>
-          <fieldset id="account_informations" class="ma0 pa0 bn flex flex-column w-100">
-            <legend class="f3 mb3">Account information</legend>
-
-            ${inputField(input({
-              name: 'email',
-              invalid: errors.email && !pristine.email,
-              value: values.email,
-              onchange: (e) => {
-                this.validator.validate(e.target.name, e.target.value)
-                this.local.data[e.target.name] = e.target.value
-                this.rerender()
-              }
-            }), this.local.form)({
-              prefix: 'mb3',
-              labelText: 'Email',
-              inputName: 'email',
-              displayErrors: true
-            })}
-
-            ${inputField(input({
+      <div class="flex flex-column flex-auto">
+        ${this.state.cache(Form, 'update-profile-form').render({
+          id: 'profile-form',
+          method: 'POST',
+          action: '',
+          buttonText: 'Update my profile',
+          validate: (props) => {
+            this.local.data[props.name] = props.value
+            this.validator.validate(props.name, props.value)
+            this.rerender()
+          },
+          form: this.local.form || {
+            changed: false,
+            valid: true,
+            pristine: {},
+            required: {},
+            values: {},
+            errors: {}
+          },
+          submit: (data) => {
+            this.local.machine.emit('form:submit')
+          },
+          fields: [
+            {
+              type: 'email',
+              placeholder: 'E-mail'
+            },
+            {
+              type: 'text',
               name: 'displayName',
-              value: values.displayName,
-              invalid: errors.displayName && !pristine.displayName,
-              onchange: (e) => {
-                this.validator.validate(e.target.name, e.target.value)
-                this.local.data[e.target.name] = e.target.value
-                this.rerender()
-              }
-            }), this.local.form)({
-              prefix: 'mb3',
-              labelText: 'Profile name',
-              inputName: 'displayName',
-              displayErrors: true
-            })}
-          </fieldset>
-
-          ${submitButton.render({
-            type: 'submit',
-            prefix: `bg-white ba bw b--dark-gray f5 b pv3 ph5 ${!disabled ? 'grow' : ''}`,
-            text: 'Update',
-            disabled: disabled,
-            style: 'none',
-            size: 'none'
-          })}
-        </form>
+              placeholder: 'Display name',
+              help: html`<p class="ma0 mt1 lh-copy f7">Your artist name, nickname or label name</p>`
+            }
+          ]
+        })}
       </div>
     `
   }
@@ -229,7 +191,7 @@ class ProfileForm extends Component {
       if (!isEmail(data)) return new Error('Email is invalid')
     })
     this.validator.field('displayName', (data) => {
-      if (isEmpty(data)) return new Error('Name is required')
+      if (isEmpty(data)) return new Error('Display name is required')
     })
   }
 

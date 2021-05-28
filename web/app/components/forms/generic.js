@@ -31,13 +31,13 @@ class Form extends Component {
     const values = this.form.values
 
     const inputs = this.local.fields.map(fieldProps => {
-      const { name = fieldProps.type, help } = fieldProps
+      const { name = fieldProps.type, help, component } = fieldProps
 
       fieldProps.onInput = typeof fieldProps.onInput === 'function'
         ? fieldProps.onInput.bind(this)
         : null
 
-      const props = Object.assign({}, fieldProps, {
+      const element = component || input(Object.assign({}, fieldProps, {
         onchange: (e) => {
           this.validate({
             name: e.target.name,
@@ -46,29 +46,39 @@ class Form extends Component {
           this.rerender()
         },
         value: values[name]
-      })
+      }))
 
       return html`
         <div class="flex flex-column mb3">
-          ${fieldProps.label ? html`
-            <label for=${fieldProps.id || name} class="f5 db mb1">${fieldProps.label}</label>
-          ` : ''}
+          ${fieldProps.label
+            ? html`
+                <label for=${fieldProps.id || name} class="f5 db mb1">
+                  ${fieldProps.label}
+                </label>
+              `
+            : ''
+          }
           <div class="relative">
-            ${input(props)}
-            ${errors[name] && !pristine[name] ? html`
-              <div class="absolute left-0 ph1 flex items-center" style="top:50%;transform: translate(-100%, -50%);">
-                ${icon('info', { class: 'fill-red', size: 'sm' })}
-              </div>
-            ` : ''}
+            ${element}
+            ${errors[name] && !pristine[name]
+              ? html`
+                <div class="absolute left-0 ph1 flex items-center" style="top:50%;transform: translate(-100%, -50%);">
+                  ${icon('info', { class: 'fill-red', size: 'sm' })}
+                </div>
+              `
+              : ''
+            }
           </div>
           ${typeof help === 'function' ? help(values[name]) : help}
-          ${errors[name] && !pristine[name] ? html`
-            <span class="message f5 pb2">${errors[name].message}</span>
-          ` : ''}
+          ${errors[name] && !pristine[name]
+            ? html`<span class="message f5 pb2">${errors[name].message}</span>`
+            : ''
+          }
         </div>
       `
     })
 
+    // form attributes
     const attrs = {
       novalidate: 'novalidate',
       class: 'flex flex-column flex-auto',
@@ -96,7 +106,8 @@ class Form extends Component {
     const submitButton = (props = {}) => {
       const attrs = Object.assign({
         disabled: false,
-        class: `bg-white dib ba bw b--near-black b pv2 ph4 flex-shrink-0 f5 ${props.disabled ? 'o-50' : 'grow'}`,
+        class: `bg-white dib bn b pv2 ph4 flex-shrink-0 f5 ${props.disabled ? 'o-50' : 'grow'}`,
+        style: 'outline:solid 1px var(--near-black);outline-offset:-1px',
         type: 'submit'
       }, props)
 
@@ -113,7 +124,7 @@ class Form extends Component {
             <div class="flex mr3">
               ${this.local.altButton}
             </div>
-            <div class="flex flex-auto justify-end pr1">
+            <div class="flex flex-auto justify-end">
               ${submitButton({ disabled: this.local.submitted })}
             </div>
           </div>

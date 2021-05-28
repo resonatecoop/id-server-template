@@ -103,7 +103,9 @@ class Authorize extends Component {
             credentials: 'include',
             headers: {
               Accept: 'application/json',
-              'X-CSRF-Token': csrfToken
+              'X-CSRF-Token': csrfToken,
+              Pragma: 'no-cache',
+              'Cache-Control': 'no-cache'
             },
             body: new URLSearchParams({
               [name]: value

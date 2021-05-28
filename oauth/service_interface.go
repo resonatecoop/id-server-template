@@ -34,6 +34,8 @@ type ServiceInterface interface {
 	FindUserByUsername(username string) (*models.OauthUser, error)
 	CreateUser(roleID, username, password string) (*models.OauthUser, error)
 	CreateUserTx(tx *gorm.DB, roleID, username, password string) (*models.OauthUser, error)
+	DeleteUser(user *models.OauthUser, password string) error
+	DeleteUserTx(tx *gorm.DB, user *models.OauthUser, password string) error
 	CreateWpUser(email, password, login, displayName string) (*models.WpUser, error)
 	CreateWpUserTx(tx *gorm.DB, username, password, login, displayName string) (*models.WpUser, error)
 	FindWpUserByLogin(login string) (*models.WpUser, error)
@@ -46,6 +48,10 @@ type ServiceInterface interface {
 	SetWpPasswordTx(tx *gorm.DB, wpuser *models.WpUser, password string) error
 	UpdateUsername(user *models.OauthUser, username string) error
 	UpdateUsernameTx(db *gorm.DB, user *models.OauthUser, username string) error
+	UpdateWpUserNickname(wpuser *models.WpUser, nickname string) error
+	UpdateWpUserCountry(wpuser *models.WpUser, country string) error
+	FindWpUserMetaValue(userId uint64, key string) (string, error)
+	UpdateWpUserMetaValue(userId uint64, key string, value string) error
 	AuthUser(username, thePassword string) (*models.OauthUser, error)
 	GetScope(requestedScope string) (string, error)
 	GetDefaultScope() string
