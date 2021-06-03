@@ -58,6 +58,7 @@
     "@resonate/icon-element": "^1.3.0",
     "@resonate/input-element": "^1.3.0",
     "@resonate/link-element": "^1.2.0",
+    "@resonate/rangeslider": "^1.1.3",
     "@resonate/tachyons": "^1.3.4",
     "@resonate/theme-skins": "^1.1.2",
     "babel-polyfill": "^6.26.0",
