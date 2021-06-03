@@ -17,6 +17,7 @@ import (
 var (
 	ErrEmailAsLogin    = errors.New("Username cannot be an email address")
 	ErrCountryNotFound = errors.New("Country cannot be found")
+	ErrRoleNotAllowed  = errors.New("Role is not allowed")
 )
 
 // FindUserByLogin looks up a user by login (wordpress)
@@ -84,6 +85,24 @@ func (s *Service) UpdateWpUserNickname(user *models.WpUser, nickname string) err
 		Where("user_id = ? AND meta_key = ?", user.ID, "nickname").
 		UpdateColumn("meta_value", util.StringOrNull(string(nickname))).
 		Error
+}
+
+// IsAllowedRole returns true if role can be set by user
+func IsAllowedRole(role string) bool {
+	switch role {
+	case "fans", "label-owner", "member":
+		return true
+	}
+	return false
+}
+
+// Update wp user role
+func (s *Service) UpdateWpUserRole(user *models.WpUser, role string) error {
+	if !IsAllowedRole(role) {
+		return ErrRoleNotAllowed
+	}
+
+	return s.UpdateWpUserMetaValue(user.ID, "role", role)
 }
 
 // Update wp user country (resolve from common name and official name, fallback to alpha code otherwise)

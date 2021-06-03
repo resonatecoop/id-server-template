@@ -49,6 +49,7 @@ type ServiceInterface interface {
 	UpdateUsername(user *models.OauthUser, username string) error
 	UpdateUsernameTx(db *gorm.DB, user *models.OauthUser, username string) error
 	UpdateWpUserNickname(wpuser *models.WpUser, nickname string) error
+	UpdateWpUserRole(wpuser *models.WpUser, role string) error
 	UpdateWpUserCountry(wpuser *models.WpUser, country string) error
 	FindWpUserMetaValue(userId uint64, key string) (string, error)
 	UpdateWpUserMetaValue(userId uint64, key string, value string) error
