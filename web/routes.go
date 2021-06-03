@@ -177,6 +177,70 @@ func (s *Service) GetRoutes() []routes.Route {
 			},
 		},
 		{
+			Name:        "welcome_form",
+			Method:      "GET",
+			Pattern:     "/welcome",
+			HandlerFunc: s.welcomeForm,
+			Middlewares: []negroni.Handler{
+				new(parseFormMiddleware),
+				newLoggedInMiddleware(s),
+				newClientMiddleware(s),
+			},
+		},
+		{
+			Name:        "account_form",
+			Method:      "GET",
+			Pattern:     "/account-settings",
+			HandlerFunc: s.accountForm,
+			Middlewares: []negroni.Handler{
+				new(parseFormMiddleware),
+				newLoggedInMiddleware(s),
+				newClientMiddleware(s),
+			},
+		},
+		{
+			Name:        "account",
+			Method:      "POST",
+			Pattern:     "/account-settings",
+			HandlerFunc: s.account,
+			Middlewares: []negroni.Handler{
+				tollbooth_negroni.LimitHandler(
+					tollbooth.NewLimiter(1, nil),
+				),
+				new(parseFormMiddleware),
+				newLoggedInMiddleware(s),
+				newClientMiddleware(s),
+			},
+		},
+		{
+			Name:        "account_update",
+			Method:      "PUT",
+			Pattern:     "/account-settings",
+			HandlerFunc: s.account,
+			Middlewares: []negroni.Handler{
+				tollbooth_negroni.LimitHandler(
+					tollbooth.NewLimiter(1, nil),
+				),
+				new(parseFormMiddleware),
+				newLoggedInMiddleware(s),
+				newClientMiddleware(s),
+			},
+		},
+		{
+			Name:        "account_delete",
+			Method:      "DELETE",
+			Pattern:     "/account-settings",
+			HandlerFunc: s.account,
+			Middlewares: []negroni.Handler{
+				tollbooth_negroni.LimitHandler(
+					tollbooth.NewLimiter(1, nil),
+				),
+				new(parseFormMiddleware),
+				newLoggedInMiddleware(s),
+				newClientMiddleware(s),
+			},
+		},
+		{
 			Name:        "profile_form",
 			Method:      "GET",
 			Pattern:     "/profile",
@@ -190,20 +254,6 @@ func (s *Service) GetRoutes() []routes.Route {
 		{
 			Name:        "profile",
 			Method:      "POST",
-			Pattern:     "/profile",
-			HandlerFunc: s.profile,
-			Middlewares: []negroni.Handler{
-				tollbooth_negroni.LimitHandler(
-					tollbooth.NewLimiter(1, nil),
-				),
-				new(parseFormMiddleware),
-				newLoggedInMiddleware(s),
-				newClientMiddleware(s),
-			},
-		},
-		{
-			Name:        "profile_delete",
-			Method:      "DELETE",
 			Pattern:     "/profile",
 			HandlerFunc: s.profile,
 			Middlewares: []negroni.Handler{
