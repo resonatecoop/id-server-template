@@ -140,7 +140,7 @@ func (s *Service) profile(w http.ResponseWriter, r *http.Request) {
 
 		// username is always email
 		if r.Form.Get("email") != "" {
-			if s.oauthService.UpdateUsername(
+			if err = s.oauthService.UpdateUsername(
 				user,
 				r.Form.Get("email"),
 			); err != nil {
@@ -164,7 +164,7 @@ func (s *Service) profile(w http.ResponseWriter, r *http.Request) {
 
 		if r.Form.Get("nickname") != "" {
 			// update wpuser nickname
-			if s.oauthService.UpdateWpUserMetaValue(
+			if err = s.oauthService.UpdateWpUserMetaValue(
 				wpuser.ID,
 				"nickname",
 				r.Form.Get("nickname"),
@@ -189,7 +189,7 @@ func (s *Service) profile(w http.ResponseWriter, r *http.Request) {
 
 		if r.Form.Get("country") != "" {
 			// update wpuser country
-			if s.oauthService.UpdateWpUserCountry(
+			if err = s.oauthService.UpdateWpUserCountry(
 				wpuser,
 				r.Form.Get("country"),
 			); err != nil {
