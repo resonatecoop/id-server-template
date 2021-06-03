@@ -184,7 +184,7 @@ func (s *Service) createWpUserCommon(db *gorm.DB, email, password, login, displa
 
 	role := &models.WpUserMeta{
 		MetaKey:   "role",
-		MetaValue: "fans",
+		MetaValue: "user", // user role has no capabilities yet
 		UserId:    wpuser.ID,
 	}
 
