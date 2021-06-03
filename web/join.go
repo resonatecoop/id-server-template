@@ -104,15 +104,9 @@ func (s *Service) join(w http.ResponseWriter, r *http.Request) {
 		}
 		response.WriteJSON(w, obj, http.StatusCreated)
 	} else {
-		err = sessionService.SetFlashMessage(&session.Flash{
-			Type:    "Error",
-			Message: err.Error(),
-		})
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		redirectWithQueryString("/web/login", r.URL.Query(), w, r)
+		query := r.URL.Query()
+		query.Set("login_redirect_uri", "/web/welcome")
+		redirectWithQueryString("/web/login", query, w, r)
 	}
 
 	_, err = s.oauthService.SendEmailToken(
