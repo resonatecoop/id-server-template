@@ -39,7 +39,7 @@ func (s *Service) passwordUpdate(w http.ResponseWriter, r *http.Request) {
 			Message: "Invalid password",
 		})
 		if err != nil {
-			http.Error(w, ErrInvalidPassword.Error(), http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		redirectWithQueryString("/web/profile", r.URL.Query(), w, r)
