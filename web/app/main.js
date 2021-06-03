@@ -23,19 +23,40 @@ app.use(require('choo-meta')())
 
 // main app store
 app.use((state, emitter) => {
+  state.profile = state.profile || {
+    displayName: ''
+  }
+
+  state.usergroup = {
+    member: 'artist',
+    listener: 'listener',
+    fans: 'listener',
+    'label-owner': 'label',
+    admin: 'admin',
+    uploader: 'uploader',
+    volunteer: 'volunteer'
+  }[state.profile.role]
+
   state.clients = state.clients || [
+    {
+      connectUrl: 'https://stream.resonate.coop/api/user/connect/resonate',
+      name: 'Player',
+      description: 'stream.resonate.coop'
+    },
     {
       connectUrl: 'https://dash.resonate.coop/api/user/connect/resonate',
       name: 'Artist Dashboard',
       description: 'dash.resonate.coop'
     }
   ]
-  state.profile = state.profile || {
-    displayName: ''
-  }
 
   emitter.on(state.events.DOMCONTENTLOADED, () => {
     setMeta()
+  })
+
+  emitter.on('set:usergroup', (usergroup) => {
+    state.usergroup = usergroup
+    emitter.emit(state.events.RENDER)
   })
 
   emitter.on(state.events.NAVIGATE, () => {
@@ -78,7 +99,10 @@ app.route('/join', layoutNarrow(require('./views/join')))
 app.route('/login', layoutNarrow(require('./views/login')))
 app.route('/password-reset', layoutNarrow(require('./views/password-reset')))
 app.route('/email-confirmation', layoutNarrow(require('./views/email-confirmation')))
-app.route('/profile', layout(require('./views/profile')))
-app.route('*', layout(require('./views/404')))
+app.route('/account-settings', layout(require('./views/account-settings')))
+app.route('/welcome', layoutNarrow(require('./views/welcome')))
+app.route('/profile', layoutNarrow(require('./views/profile')))
+app.route('/profile/new', layoutNarrow(require('./views/profile/new')))
+app.route('*', layoutNarrow(require('./views/404')))
 
 module.exports = app.mount('#app')
