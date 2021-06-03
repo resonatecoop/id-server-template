@@ -70,7 +70,7 @@ class ProfileForm extends Component {
 
         const csrfToken = response.headers.get('X-CSRF-Token')
 
-        response = await fetch('/password', {
+        response = await fetch('', {
           method: 'PUT',
           headers: {
             Accept: 'application/json',
