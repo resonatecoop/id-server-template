@@ -10,9 +10,9 @@ const icon = require('@resonate/icon-element')
 class SelectCountryList extends Component {
   /***
    * Create a select country list component
-   * @param {string} id - The select country list component id (unique)
-   * @param {number} state - The choo app state
-   * @param {function} emit - Emit event on choo app
+   * @param {String} id - The select country list component id (unique)
+   * @param {Number} state - The choo app state
+   * @param {Function} emit - Emit event on choo app
    */
   constructor (id, state, emit) {
     super(id)
@@ -36,7 +36,7 @@ class SelectCountryList extends Component {
 
   /***
    * Create select country list component element
-   * @param {Object} props - The menu button options component props
+   * @param {Object} props - The select country list component props
    * @param {String} props.country - Initial country name or country Alpha-2 code
    * @param {String} props.name - Select element name attribute
    * @param {Object} props.form - Form
