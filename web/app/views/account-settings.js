@@ -15,6 +15,11 @@ const navigateToAnchor = (e) => {
   e.preventDefault()
 }
 
+/**
+ * Account settings
+ * @param {Object} state Choo state
+ * @param {Function} emit Emit choo event (nanobus)
+ */
 module.exports = (state, emit) => {
   const deleteButton = new Button('delete-profile-button')
 
