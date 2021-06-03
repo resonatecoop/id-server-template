@@ -70,6 +70,8 @@ func loadTemplates() {
 		"web/layouts/inside.html": {
 			"./web/includes/authorize.html",
 			"./web/includes/client.html",
+			"./web/includes/welcome.html",
+			"./web/includes/account_settings.html",
 			"./web/includes/profile.html",
 		},
 	}
