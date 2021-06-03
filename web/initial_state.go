@@ -10,6 +10,7 @@ type Profile struct {
 	Email          string `json:"email"`
 	DisplayName    string `json:"displayName"`
 	Country        string `json:"country"`
+	Role           string `json:"role"`
 	EmailConfirmed bool   `json:"emailConfirmed"`
 }
 

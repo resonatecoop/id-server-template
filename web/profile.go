@@ -15,7 +15,7 @@ import (
 )
 
 func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
-	sessionService, client, user, wpuser, nickname, country, err := s.profileCommon(r)
+	sessionService, client, user, wpuser, nickname, country, role, err := s.profileCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -38,6 +38,7 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 		Email:          wpuser.Email,
 		DisplayName:    nickname,
 		Country:        gountry.Codes.Alpha2,
+		Role:           role,
 		EmailConfirmed: user.EmailConfirmed,
 	}
 
@@ -113,6 +114,30 @@ func (s *Service) profile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if method == "put" || r.Method == http.MethodPut {
+		if r.Form.Get("role") != "" {
+			// update wpuser role
+			if err = s.oauthService.UpdateWpUserRole(
+				wpuser,
+				r.Form.Get("role"),
+			); err != nil {
+				switch r.Header.Get("Accept") {
+				case "application/json":
+					response.Error(w, err.Error(), http.StatusBadRequest)
+				default:
+					err = sessionService.SetFlashMessage(&session.Flash{
+						Type:    "Error",
+						Message: err.Error(),
+					})
+					if err != nil {
+						http.Error(w, err.Error(), http.StatusInternalServerError)
+						return
+					}
+					http.Redirect(w, r, r.RequestURI, http.StatusFound)
+				}
+				return
+			}
+		}
+
 		// username is always email
 		if r.Form.Get("email") != "" {
 			if s.oauthService.UpdateUsername(
@@ -215,24 +240,25 @@ func (s *Service) profileCommon(r *http.Request) (
 	*models.WpUser,
 	string,
 	string,
+	string,
 	error,
 ) {
 	// Get the session service from the request context
 	sessionService, err := getSessionService(r)
 	if err != nil {
-		return nil, nil, nil, nil, "", "", err
+		return nil, nil, nil, nil, "", "", "", err
 	}
 
 	// Get the client from the request context
 	client, err := getClient(r)
 	if err != nil {
-		return nil, nil, nil, nil, "", "", err
+		return nil, nil, nil, nil, "", "", "", err
 	}
 
 	// Get the user session
 	userSession, err := sessionService.GetUserSession()
 	if err != nil {
-		return nil, nil, nil, nil, "", "", err
+		return nil, nil, nil, nil, "", "", "", err
 	}
 
 	// Fetch the user
@@ -240,7 +266,7 @@ func (s *Service) profileCommon(r *http.Request) (
 		userSession.Username,
 	)
 	if err != nil {
-		return nil, nil, nil, nil, "", "", err
+		return nil, nil, nil, nil, "", "", "", err
 	}
 
 	// Fetch the wp user
@@ -248,18 +274,23 @@ func (s *Service) profileCommon(r *http.Request) (
 		userSession.Username,
 	)
 	if err != nil {
-		return nil, nil, nil, nil, "", "", err
+		return nil, nil, nil, nil, "", "", "", err
 	}
 
 	nickname, err := s.oauthService.FindWpUserMetaValue(wpuser.ID, "nickname")
 	if err != nil {
-		return nil, nil, nil, nil, "", "", err
+		return nil, nil, nil, nil, "", "", "", err
 	}
 
 	country, err := s.oauthService.FindWpUserMetaValue(wpuser.ID, "country")
 	if err != nil {
-		return nil, nil, nil, nil, "", "", err
+		return nil, nil, nil, nil, "", "", "", err
 	}
 
-	return sessionService, client, user, wpuser, nickname, country, nil
+	role, err := s.oauthService.FindWpUserMetaValue(wpuser.ID, "role")
+	if err != nil {
+		return nil, nil, nil, nil, "", "", "", err
+	}
+
+	return sessionService, client, user, wpuser, nickname, country, role, nil
 }
