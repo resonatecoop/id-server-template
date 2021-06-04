@@ -358,5 +358,9 @@ func (s *Service) updateUsernameCommon(db *gorm.DB, user *models.OauthUser, user
 	if username == user.Username || s.UserExists(username) {
 		return ErrUsernameTaken
 	}
-	return db.Model(user).UpdateColumn("username", strings.ToLower(username)).Error
+	return db.Model(user).UpdateColumns(models.OauthUser{
+		Username:       strings.ToLower(username),
+		EmailConfirmed: false, // reset email confirmed
+		MyGormModel:    models.MyGormModel{UpdatedAt: time.Now().UTC()},
+	}).Error
 }
