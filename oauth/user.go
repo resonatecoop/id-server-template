@@ -146,17 +146,6 @@ func (s *Service) AuthUser(username, password string) (*models.OauthUser, error)
 
 // UpdateUsername ...
 func (s *Service) UpdateUsername(user *models.OauthUser, username string) error {
-	if username == "" {
-		return ErrCannotSetEmptyUsername
-	}
-	if user.Username == username {
-		return ErrUsernameTaken
-	}
-	// Check the email/username is available
-	if s.UserExists(username) {
-		return ErrUsernameTaken
-	}
-
 	return s.updateUsernameCommon(s.db, user, username)
 }
 
@@ -360,12 +349,13 @@ func (s *Service) setPasswordCommon(db *gorm.DB, user *models.OauthUser, passwor
 	return nil
 }
 
+// updateUsernameCommon Update username (username is an email)
 func (s *Service) updateUsernameCommon(db *gorm.DB, user *models.OauthUser, username string) error {
 	if username == "" {
 		return ErrCannotSetEmptyUsername
 	}
 	// Check the email/username is available
-	if s.UserExists(username) {
+	if username == user.Username || s.UserExists(username) {
 		return ErrUsernameTaken
 	}
 	return db.Model(user).UpdateColumn("username", strings.ToLower(username)).Error
