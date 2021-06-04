@@ -76,7 +76,7 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) profile(w http.ResponseWriter, r *http.Request) {
-	sessionService, _, user, wpuser, _, _, err := s.profileCommon(r)
+	sessionService, _, user, wpuser, _, _, _, err := s.profileCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
