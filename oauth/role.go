@@ -1,9 +1,11 @@
 package oauth
 
 import (
+	"context"
+	"database/sql"
 	"errors"
 
-	"github.com/RichardKnop/go-oauth2-server/models"
+	"github.com/resonatecoop/user-api/model"
 )
 
 var (
@@ -12,9 +14,11 @@ var (
 )
 
 // FindRoleByID looks up a role by ID and returns it
-func (s *Service) FindRoleByID(id string) (*models.OauthRole, error) {
-	role := new(models.OauthRole)
-	if s.db.Where("id = ?", id).First(role).RecordNotFound() {
+func (s *Service) FindRoleByID(id int8) (*model.Role, error) {
+	role := new(model.Role)
+	_, err := s.db.NewSelect().Model(role).Where("id = ?", id).Scan(context.TODO())
+
+	if err == sql.ErrNoRows {
 		return nil, ErrRoleNotFound
 	}
 	return role, nil

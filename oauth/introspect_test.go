@@ -6,22 +6,22 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/RichardKnop/go-oauth2-server/models"
-	"github.com/RichardKnop/go-oauth2-server/oauth"
-	"github.com/RichardKnop/go-oauth2-server/oauth/tokentypes"
-	testutil "github.com/RichardKnop/go-oauth2-server/test-util"
-	"github.com/RichardKnop/go-oauth2-server/util"
-	"github.com/RichardKnop/uuid"
+	"github.com/resonatecoop/id/oauth"
+	"github.com/resonatecoop/id/oauth/tokentypes"
+	testutil "github.com/resonatecoop/id/test-util"
+	"github.com/resonatecoop/id/util"
+	"github.com/resonatecoop/user-api/model"
+	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 )
 
 func (suite *OauthTestSuite) TestNewIntrospectResponseFromAccessToken() {
-	MG := models.MyGormModel{
+	MG := model.MyGormModel{
 		ID:        uuid.New(),
 		CreatedAt: time.Now().UTC(),
 	}
 
-	accessToken := &models.OauthAccessToken{
+	accessToken := &model.AccessToken{
 		MyGormModel: MG,
 		Token:       "test_token_introspect_1",
 		ExpiresAt:   time.Now().UTC().Add(+10 * time.Second),
@@ -56,12 +56,12 @@ func (suite *OauthTestSuite) TestNewIntrospectResponseFromAccessToken() {
 }
 
 func (suite *OauthTestSuite) TestNewIntrospectResponseFromRefreshToken() {
-	MG := models.MyGormModel{
+	MG := model.MyGormModel{
 		ID:        uuid.New(),
 		CreatedAt: time.Now().UTC(),
 	}
 
-	refreshToken := &models.OauthRefreshToken{
+	refreshToken := &model.RefreshToken{
 		MyGormModel: MG,
 		Token:       "test_token_introspect_1",
 		ExpiresAt:   time.Now().UTC().Add(+10 * time.Second),
@@ -137,8 +137,8 @@ func (suite *OauthTestSuite) TestHandleIntrospectInvailidTokenHint() {
 
 func (suite *OauthTestSuite) TestHandleIntrospectAccessToken() {
 	// Insert a test access token with a user
-	accessToken := &models.OauthAccessToken{
-		MyGormModel: models.MyGormModel{
+	accessToken := &model.AccessToken{
+		MyGormModel: model.MyGormModel{
 			ID:        uuid.New(),
 			CreatedAt: time.Now().UTC(),
 		},
@@ -206,8 +206,8 @@ func (suite *OauthTestSuite) TestHandleIntrospectAccessToken() {
 
 func (suite *OauthTestSuite) TestHandleIntrospectRefreshToken() {
 	// Insert a test refresh token with a user
-	refreshToken := &models.OauthRefreshToken{
-		MyGormModel: models.MyGormModel{
+	refreshToken := &model.RefreshToken{
+		MyGormModel: model.MyGormModel{
 			ID:        uuid.New(),
 			CreatedAt: time.Now().UTC(),
 		},

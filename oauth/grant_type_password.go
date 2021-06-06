@@ -4,8 +4,8 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/RichardKnop/go-oauth2-server/models"
-	"github.com/RichardKnop/go-oauth2-server/oauth/tokentypes"
+	"github.com/resonatecoop/id/oauth/tokentypes"
+	"github.com/resonatecoop/user-api/model"
 )
 
 var (
@@ -13,7 +13,7 @@ var (
 	ErrInvalidUsernameOrPassword = errors.New("Invalid username or password")
 )
 
-func (s *Service) passwordGrant(r *http.Request, client *models.OauthClient) (*AccessTokenResponse, error) {
+func (s *Service) passwordGrant(r *http.Request, client *model.Client) (*AccessTokenResponse, error) {
 	// Get the scope string
 	scope, err := s.GetScope(r.Form.Get("scope"))
 	if err != nil {

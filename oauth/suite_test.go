@@ -4,30 +4,29 @@ import (
 	"os"
 	"testing"
 
-	"github.com/RichardKnop/go-oauth2-server/config"
-	"github.com/RichardKnop/go-oauth2-server/log"
-	"github.com/RichardKnop/go-oauth2-server/models"
-	"github.com/RichardKnop/go-oauth2-server/oauth"
-	"github.com/RichardKnop/go-oauth2-server/test-util"
 	"github.com/gorilla/mux"
-	"github.com/jinzhu/gorm"
+	"github.com/resonatecoop/id/config"
+	"github.com/resonatecoop/id/log"
+	"github.com/resonatecoop/id/oauth"
+	"github.com/resonatecoop/user-api/model"
 	"github.com/stretchr/testify/suite"
+	"github.com/uptrace/bun"
 )
 
 var (
 	testDbUser = "go_oauth2_server"
 	testDbName = "go_oauth2_server_oauth_test"
 
-	testFixtures = []string{
-		"./oauth/fixtures/scopes.yml",
-		"./oauth/fixtures/roles.yml",
-		"./oauth/fixtures/test_clients.yml",
-		"./oauth/fixtures/test_users.yml",
-	}
+	// testFixtures = []string{
+	// 	"./oauth/fixtures/scopes.yml",
+	// 	"./oauth/fixtures/roles.yml",
+	// 	"./oauth/fixtures/test_clients.yml",
+	// 	"./oauth/fixtures/test_users.yml",
+	// }
 
-	testMigrations = []func(*gorm.DB) error{
-		models.MigrateAll,
-	}
+// 	testMigrations = []func(*bun.DB) error{
+// 		model.MigrateAll,
+// 	}
 )
 
 func init() {
@@ -40,11 +39,10 @@ func init() {
 type OauthTestSuite struct {
 	suite.Suite
 	cnf     *config.Config
-	db      *gorm.DB
-	db2     *gorm.DB
+	db      *bun.DB
 	service *oauth.Service
-	clients []*models.OauthClient
-	users   []*models.OauthUser
+	clients []*model.Client
+	users   []*model.User
 	router  *mux.Router
 }
 
@@ -54,28 +52,29 @@ func (suite *OauthTestSuite) SetupSuite() {
 	// Initialise the config
 	suite.cnf = config.NewConfig(false, false, "etcd")
 
+	// ASSUME THAT TEST DATABASE HAS ALREADY BEEN CREATED
 	// Create the test database
-	db, err := testutil.CreateTestDatabasePostgres(
-		suite.cnf.Database.Host,
-		testDbUser,
-		testDbName,
-		testMigrations,
-		testFixtures,
-	)
-	if err != nil {
-		t.Skip(err)
-	}
-	suite.db = db
-	suite.db2 = nil // TODO setup test mysql db client
+	// db, err := testutil.CreateTestDatabasePostgres(
+	// 	suite.cnf.Database.Host,
+	// 	testDbUser,
+	// 	testDbName,
+	// 	testMigrations,
+	// 	testFixtures,
+	// )
+	// if err != nil {
+	// 	t.Skip(err)
+	// }
+	// suite.db = db
+	// suite.db2 = nil // TODO setup test mysql db client
 
 	// Fetch test client
-	suite.clients = make([]*models.OauthClient, 0)
+	suite.clients = make([]*model.Client, 0)
 	if err := suite.db.Order("created_at").Find(&suite.clients).Error; err != nil {
 		log.ERROR.Fatal(err)
 	}
 
 	// Fetch test users
-	suite.users = make([]*models.OauthUser, 0)
+	suite.users = make([]*model.User, 0)
 	if err := suite.db.Order("created_at").Find(&suite.users).Error; err != nil {
 		log.ERROR.Fatal(err)
 	}
@@ -103,11 +102,11 @@ func (suite *OauthTestSuite) SetupTest() {
 func (suite *OauthTestSuite) TearDownTest() {
 	// Scopes are static, populated from fixtures,
 	// so there is no need to clear them after running a test
-	suite.db.Unscoped().Delete(new(models.OauthAuthorizationCode))
-	suite.db.Unscoped().Delete(new(models.OauthRefreshToken))
-	suite.db.Unscoped().Delete(new(models.OauthAccessToken))
-	suite.db.Unscoped().Not("id", []string{"1", "2"}).Delete(new(models.OauthUser))
-	suite.db.Unscoped().Not("id", []string{"1", "2", "3"}).Delete(new(models.OauthClient))
+	suite.db.Unscoped().Delete(new(model.AuthorizationCode))
+	suite.db.Unscoped().Delete(new(model.RefreshToken))
+	suite.db.Unscoped().Delete(new(model.AccessToken))
+	suite.db.Unscoped().Not("id", []string{"1", "2"}).Delete(new(model.User))
+	suite.db.Unscoped().Not("id", []string{"1", "2", "3"}).Delete(new(model.Client))
 }
 
 // TestOauthTestSuite ...

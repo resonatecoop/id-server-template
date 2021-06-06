@@ -19,12 +19,7 @@ type MailgunConfig struct {
 
 // DatabaseConfig stores database connection options
 type DatabaseConfig struct {
-	Type         string
-	Host         string
-	Port         int
-	User         string
-	Password     string
-	DatabaseName string
+	PSN          string
 	MaxIdleConns int
 	MaxOpenConns int
 }

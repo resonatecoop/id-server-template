@@ -3,16 +3,16 @@ package oauth_test
 import (
 	"time"
 
-	"github.com/RichardKnop/go-oauth2-server/models"
-	"github.com/RichardKnop/uuid"
+	"github.com/resonatecoop/user-api/model"
+	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 )
 
 func (suite *OauthTestSuite) TestGrantAccessToken() {
 	var (
-		accessToken *models.OauthAccessToken
+		accessToken *model.AccessToken
 		err         error
-		tokens      []*models.OauthAccessToken
+		tokens      []*model.AccessToken
 	)
 
 	// Grant a client only access token
@@ -29,7 +29,14 @@ func (suite *OauthTestSuite) TestGrantAccessToken() {
 	// Correct access token object should be returned
 	if assert.NotNil(suite.T(), accessToken) {
 		// Fetch all access tokens
-		models.OauthAccessTokenPreload(suite.db).Order("created_at").Find(&tokens)
+		//	model.AccessTokenPreload(suite.db).Order("created_at").Find(&tokens)
+
+		suite.db.NewSelect().Model(&tokens).
+			Column("tokens.*").
+			Relation("Client").
+			Relation("User").
+			OrderExpr("created_at").
+			Scan(ctx)
 
 		// There should be just one right now
 		assert.Equal(suite.T(), 1, len(tokens))
@@ -59,7 +66,7 @@ func (suite *OauthTestSuite) TestGrantAccessToken() {
 	// Correct access token object should be returned
 	if assert.NotNil(suite.T(), accessToken) {
 		// Fetch all access tokens
-		models.OauthAccessTokenPreload(suite.db).Order("created_at").Find(&tokens)
+		model.AccessTokenPreload(suite.db).Order("created_at").Find(&tokens)
 
 		// There should be 2 tokens now
 		assert.Equal(suite.T(), 2, len(tokens))
@@ -79,10 +86,10 @@ func (suite *OauthTestSuite) TestGrantAccessToken() {
 
 func (suite *OauthTestSuite) TestGrantAccessTokenDeletesExpiredTokens() {
 	var (
-		testAccessTokens = []*models.OauthAccessToken{
+		testAccessTokens = []*model.AccessToken{
 			// Expired access token with a user
 			{
-				MyGormModel: models.MyGormModel{
+				MyGormModel: model.MyGormModel{
 					ID:        uuid.New(),
 					CreatedAt: time.Now().UTC(),
 				},
@@ -93,7 +100,7 @@ func (suite *OauthTestSuite) TestGrantAccessTokenDeletesExpiredTokens() {
 			},
 			// Expired access token without a user
 			{
-				MyGormModel: models.MyGormModel{
+				MyGormModel: model.MyGormModel{
 					ID:        uuid.New(),
 					CreatedAt: time.Now().UTC(),
 				},
@@ -103,7 +110,7 @@ func (suite *OauthTestSuite) TestGrantAccessTokenDeletesExpiredTokens() {
 			},
 			// Access token with a user
 			{
-				MyGormModel: models.MyGormModel{
+				MyGormModel: model.MyGormModel{
 					ID:        uuid.New(),
 					CreatedAt: time.Now().UTC(),
 				},
@@ -114,7 +121,7 @@ func (suite *OauthTestSuite) TestGrantAccessTokenDeletesExpiredTokens() {
 			},
 			// Access token without a user
 			{
-				MyGormModel: models.MyGormModel{
+				MyGormModel: model.MyGormModel{
 					ID:        uuid.New(),
 					CreatedAt: time.Now().UTC(),
 				},
@@ -145,7 +152,7 @@ func (suite *OauthTestSuite) TestGrantAccessTokenDeletesExpiredTokens() {
 
 	// Check the test_token_1 was deleted
 	notFound = suite.db.Unscoped().Where("token = ?", "test_token_1").
-		First(new(models.OauthAccessToken)).RecordNotFound()
+		First(new(model.AccessToken)).RecordNotFound()
 	assert.True(suite.T(), notFound)
 
 	// Check the other three tokens are still around
@@ -156,7 +163,7 @@ func (suite *OauthTestSuite) TestGrantAccessTokenDeletesExpiredTokens() {
 	}
 	for _, token := range existingTokens {
 		notFound = suite.db.Unscoped().Where("token = ?", token).
-			First(new(models.OauthAccessToken)).RecordNotFound()
+			First(new(model.AccessToken)).RecordNotFound()
 		assert.False(suite.T(), notFound)
 	}
 
@@ -171,7 +178,7 @@ func (suite *OauthTestSuite) TestGrantAccessTokenDeletesExpiredTokens() {
 
 	// Check the test_token_2 was deleted
 	notFound = suite.db.Unscoped().Where("token = ?", "test_token_2").
-		First(new(models.OauthAccessToken)).RecordNotFound()
+		First(new(model.AccessToken)).RecordNotFound()
 	assert.True(suite.T(), notFound)
 
 	// Check that last two tokens are still around
@@ -181,7 +188,7 @@ func (suite *OauthTestSuite) TestGrantAccessTokenDeletesExpiredTokens() {
 	}
 	for _, token := range existingTokens {
 		notFound := suite.db.Unscoped().Where("token = ?", token).
-			First(new(models.OauthAccessToken)).RecordNotFound()
+			First(new(model.AccessToken)).RecordNotFound()
 		assert.False(suite.T(), notFound)
 	}
 }

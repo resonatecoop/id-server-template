@@ -1,8 +1,6 @@
 package oauth
 
-import (
-	"github.com/RichardKnop/go-oauth2-server/models"
-)
+import "github.com/resonatecoop/user-api/model"
 
 // AccessTokenResponse ...
 type AccessTokenResponse struct {
@@ -25,7 +23,7 @@ type IntrospectResponse struct {
 }
 
 // NewAccessTokenResponse ...
-func NewAccessTokenResponse(accessToken *models.OauthAccessToken, refreshToken *models.OauthRefreshToken, lifetime int, theTokenType string) (*AccessTokenResponse, error) {
+func NewAccessTokenResponse(accessToken *model.AccessToken, refreshToken *model.RefreshToken, lifetime int, theTokenType string) (*AccessTokenResponse, error) {
 	response := &AccessTokenResponse{
 		AccessToken: accessToken.Token,
 		ExpiresIn:   lifetime,

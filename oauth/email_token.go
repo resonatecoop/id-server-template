@@ -7,11 +7,11 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/RichardKnop/go-oauth2-server/models"
-	"github.com/RichardKnop/go-oauth2-server/util"
 	"github.com/form3tech-oss/jwt-go"
-	"github.com/jinzhu/gorm"
 	"github.com/mailgun/mailgun-go/v4"
+	"github.com/resonatecoop/id/util"
+	"github.com/resonatecoop/user-api/model"
+	"github.com/uptrace/bun"
 )
 
 var (
@@ -21,8 +21,8 @@ var (
 )
 
 // GetValidEmailToken ...
-func (s *Service) GetValidEmailToken(token string) (*models.EmailTokenModel, string, error) {
-	claims := &models.EmailTokenClaimsModel{}
+func (s *Service) GetValidEmailToken(token string) (*model.EmailToken, string, error) {
+	claims := &model.EmailToken{}
 
 	jwtKey := []byte(s.cnf.EmailTokenSecretKey)
 
@@ -38,7 +38,7 @@ func (s *Service) GetValidEmailToken(token string) (*models.EmailTokenModel, str
 		return nil, "", ErrEmailTokenInvalid
 	}
 
-	emailToken := new(models.EmailTokenModel)
+	emailToken := new(model.EmailTokenModel)
 	notFound := s.db.Where("reference = ?", claims.Reference).
 		First(emailToken).RecordNotFound()
 
@@ -51,9 +51,9 @@ func (s *Service) GetValidEmailToken(token string) (*models.EmailTokenModel, str
 
 // SendEmailToken ...
 func (s *Service) SendEmailToken(
-	email *models.MailgunEmailModel,
+	email *model.Email,
 	emailTokenLink string,
-) (*models.EmailTokenModel, error) {
+) (*model.EmailToken, error) {
 	if !util.ValidateEmail(email.Recipient) {
 		return nil, ErrEmailInvalid
 	}
@@ -77,18 +77,18 @@ func (s *Service) SendEmailToken(
 
 // SendEmailTokenTx ...
 func (s *Service) SendEmailTokenTx(
-	tx *gorm.DB,
-	email *models.MailgunEmailModel,
+	tx *bun.DB,
+	email *model.Email,
 	emailTokenLink string,
-) (*models.EmailTokenModel, error) {
+) (*model.EmailToken, error) {
 	return s.sendEmailTokenCommon(tx, email, emailTokenLink)
 }
 
 // CreateEmailToken ...
-func (s *Service) CreateEmailToken(email string) (*models.EmailTokenModel, error) {
+func (s *Service) CreateEmailToken(email string) (*model.EmailToken, error) {
 	expiresIn := 10 * time.Minute // 10 minutes
 
-	emailToken := models.NewOauthEmailToken(&expiresIn)
+	emailToken := model.NewOauthEmailToken(&expiresIn)
 
 	if err := s.db.Create(emailToken).Error; err != nil {
 		return nil, err
@@ -99,7 +99,7 @@ func (s *Service) CreateEmailToken(email string) (*models.EmailTokenModel, error
 
 // createJwtTokenWithEmailTokenClaims ...
 func (s *Service) createJwtTokenWithEmailTokenClaims(
-	claims *models.EmailTokenClaimsModel,
+	claims *model.EmailToken,
 ) (string, error) {
 	jwtKey := []byte(s.cnf.EmailTokenSecretKey)
 
@@ -116,11 +116,11 @@ func (s *Service) createJwtTokenWithEmailTokenClaims(
 
 // sendEmailTokenCommon ...
 func (s *Service) sendEmailTokenCommon(
-	db *gorm.DB,
-	email *models.MailgunEmailModel,
+	db *bun.DB,
+	email *model.Email,
 	link string,
 ) (
-	*models.EmailTokenModel,
+	*model.EmailToken,
 	error,
 ) {
 	// Check if email token link is valid
@@ -139,7 +139,7 @@ func (s *Service) sendEmailTokenCommon(
 	}
 
 	// Create the JWT claims, which includes the username, expiry time and uuid reference
-	claims := models.NewOauthEmailTokenClaims(email.Recipient, emailToken)
+	claims := model.NewOauthEmailTokenClaims(email.Recipient, emailToken)
 
 	token, err := s.createJwtTokenWithEmailTokenClaims(claims)
 
@@ -181,7 +181,7 @@ func (s *Service) sendEmailTokenCommon(
 	now := time.Now().UTC()
 
 	if err := db.Model(emailToken).Select("email_sent", "email_sent_at").UpdateColumns(
-		models.EmailTokenModel{
+		model.EmailTokenModel{
 			EmailSent:   true,
 			EmailSentAt: &now,
 		},
@@ -199,11 +199,11 @@ func (s *Service) ClearExpiredEmailTokens() error {
 	return s.db.Unscoped().Where(
 		"expires_at < ?",
 		now.AddDate(0, -30, 0), // 30 days ago
-	).Delete(&models.EmailTokenModel{}).Error
+	).Delete(&model.EmailTokenModel{}).Error
 }
 
 // DeleteEmailToken ...
-func (s *Service) DeleteEmailToken(emailToken *models.EmailTokenModel, soft bool) error {
+func (s *Service) DeleteEmailToken(emailToken *model.EmailToken, soft bool) error {
 	if soft == true {
 		return s.db.Delete(emailToken).Error
 	}

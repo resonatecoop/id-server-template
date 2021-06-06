@@ -1,31 +1,59 @@
 package oauth
 
 import (
+	"context"
 	"time"
 
-	"github.com/RichardKnop/go-oauth2-server/models"
+	"github.com/resonatecoop/user-api/model"
 )
 
 // GrantAccessToken deletes old tokens and grants a new access token
-func (s *Service) GrantAccessToken(client *models.OauthClient, user *models.OauthUser, expiresIn int, scope string) (*models.OauthAccessToken, error) {
+func (s *Service) GrantAccessToken(client *model.Client, user *model.User, expiresIn int, scope string) (*model.AccessToken, error) {
 	// Begin a transaction
-	tx := s.db.Begin()
+	tx, err := s.db.Begin()
+	ctx := context.TODO()
+
+	//var result Sql.result
+
+	if err != nil {
+		return nil, err
+	}
+
+	access_token := new(model.AccessToken)
 
 	// Delete expired access tokens
-	query := tx.Unscoped().Where("client_id = ?", client.ID)
-	if user != nil && len([]rune(user.ID)) > 0 {
-		query = query.Where("user_id = ?", user.ID)
+	if user != nil && len(user.ID.String()) > 0 {
+		_, err = tx.NewDelete().
+			Model(access_token).
+			Where("user_id = ?", user.ID).
+			Where("client_id = ?", client.ID).
+			Where("expires_at <= ?", time.Now()).
+			Exec(ctx)
 	} else {
-		query = query.Where("user_id IS NULL")
+		_, err = tx.NewDelete().
+			Model(access_token).
+			Where("user_id IS NULL").
+			Where("client_id = ?", client.ID).
+			Where("expires_at <= ?", time.Now()).
+			Exec(ctx)
 	}
-	if err := query.Where("expires_at <= ?", time.Now()).Delete(new(models.OauthAccessToken)).Error; err != nil {
+
+	_, err = tx.NewDelete().
+		Model(access_token).
+		Where("expires_at <= ?", time.Now()).
+		Exec(ctx)
+	if err != nil {
 		tx.Rollback() // rollback the transaction
 		return nil, err
 	}
 
 	// Create a new access token
-	accessToken := models.NewOauthAccessToken(client, user, expiresIn, scope)
-	if err := tx.Create(accessToken).Error; err != nil {
+	accessToken := model.NewOauthAccessToken(client, user, expiresIn, scope)
+
+	_, err = tx.NewInsert().
+		Model(accessToken).
+		Exec(ctx)
+	if err != nil {
 		tx.Rollback() // rollback the transaction
 		return nil, err
 	}
@@ -33,7 +61,8 @@ func (s *Service) GrantAccessToken(client *models.OauthClient, user *models.Oaut
 	accessToken.User = user
 
 	// Commit the transaction
-	if err := tx.Commit().Error; err != nil {
+	err = tx.Commit()
+	if err != nil {
 		tx.Rollback() // rollback the transaction
 		return nil, err
 	}

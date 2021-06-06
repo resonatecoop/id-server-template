@@ -1,7 +1,7 @@
 package oauth_test
 
 import (
-	"github.com/RichardKnop/go-oauth2-server/models"
+	"github.com/resonatecoop/user-api/model"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -10,7 +10,7 @@ func (suite *OauthTestSuite) TestPasswordReset() {
 		err error
 	)
 
-	_, err = suite.service.SendEmailToken(models.NewOauthEmail(
+	_, err = suite.service.SendEmailToken(model.NewOauthEmail(
 		"test@localhost",
 		"Reset your password",
 		"password-reset",

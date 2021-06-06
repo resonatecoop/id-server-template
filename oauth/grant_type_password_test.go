@@ -5,11 +5,11 @@ import (
 	"net/http/httptest"
 	"net/url"
 
-	"github.com/RichardKnop/go-oauth2-server/models"
-	"github.com/RichardKnop/go-oauth2-server/oauth"
-	"github.com/RichardKnop/go-oauth2-server/oauth/roles"
-	"github.com/RichardKnop/go-oauth2-server/oauth/tokentypes"
-	"github.com/RichardKnop/go-oauth2-server/test-util"
+	"github.com/resonatecoop/id/oauth"
+
+	"github.com/resonatecoop/id/oauth/tokentypes"
+	testutil "github.com/resonatecoop/id/test-util"
+	"github.com/resonatecoop/user-api/model"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -30,10 +30,10 @@ func (suite *OauthTestSuite) TestPasswordGrant() {
 	suite.router.ServeHTTP(w, r)
 
 	// Fetch data
-	accessToken, refreshToken := new(models.OauthAccessToken), new(models.OauthRefreshToken)
-	assert.False(suite.T(), models.OauthAccessTokenPreload(suite.db).
+	accessToken, refreshToken := new(model.AccessToken), new(model.RefreshToken)
+	assert.False(suite.T(), model.AccessTokenPreload(suite.db).
 		Last(accessToken).RecordNotFound())
-	assert.False(suite.T(), models.OauthRefreshTokenPreload(suite.db).
+	assert.False(suite.T(), model.RefreshTokenPreload(suite.db).
 		Last(refreshToken).RecordNotFound())
 
 	// Check the response
@@ -49,7 +49,7 @@ func (suite *OauthTestSuite) TestPasswordGrant() {
 }
 
 func (suite *OauthTestSuite) TestPasswordGrantWithRoleRestriction() {
-	suite.service.RestrictToRoles(roles.Superuser)
+	suite.service.RestrictToRoles(model.)
 
 	// Prepare a request
 	r, err := http.NewRequest("POST", "http://1.2.3.4/v1/oauth/tokens", nil)

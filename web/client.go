@@ -6,10 +6,9 @@ import (
 	"html/template"
 	"net/http"
 
-	"github.com/RichardKnop/go-oauth2-server/models"
-	"github.com/RichardKnop/go-oauth2-server/session"
-	"github.com/RichardKnop/go-oauth2-server/util/response"
 	"github.com/gorilla/csrf"
+	"github.com/resonatecoop/id/session"
+	"github.com/resonatecoop/id/util/response"
 	"github.com/rs/xid"
 	"github.com/thanhpk/randstr"
 )
@@ -151,9 +150,9 @@ func (s *Service) clientDelete(w http.ResponseWriter, r *http.Request) {
 
 func (s *Service) clientCommon(r *http.Request) (
 	session.ServiceInterface,
-	*models.OauthClient,
-	*models.OauthUser,
-	*models.WpUser,
+	*model.Client,
+	*model.User,
+	*model.WpUser,
 	string,
 	error,
 ) {

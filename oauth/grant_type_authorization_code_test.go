@@ -6,12 +6,11 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/RichardKnop/go-oauth2-server/models"
-	"github.com/RichardKnop/go-oauth2-server/oauth"
-	"github.com/RichardKnop/go-oauth2-server/oauth/tokentypes"
-	"github.com/RichardKnop/go-oauth2-server/test-util"
-	"github.com/RichardKnop/go-oauth2-server/util"
-	"github.com/RichardKnop/uuid"
+	"github.com/resonatecoop/id/oauth"
+	"github.com/resonatecoop/id/oauth/tokentypes"
+	testutil "github.com/resonatecoop/id/test-util"
+	"github.com/resonatecoop/id/util"
+	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -63,8 +62,8 @@ func (suite *OauthTestSuite) TestAuthorizationCodeGrantBogusNotFound() {
 
 func (suite *OauthTestSuite) TestAuthorizationCodeGrantExpired() {
 	// Insert a test authorization code
-	err := suite.db.Create(&models.OauthAuthorizationCode{
-		MyGormModel: models.MyGormModel{
+	err := suite.db.Create(&model.AuthorizationCode{
+		MyGormModel: model.MyGormModel{
 			ID:        uuid.New(),
 			CreatedAt: time.Now().UTC(),
 		},
@@ -102,8 +101,8 @@ func (suite *OauthTestSuite) TestAuthorizationCodeGrantExpired() {
 
 func (suite *OauthTestSuite) TestAuthorizationCodeGrantInvalidRedirectURI() {
 	// Insert a test authorization code
-	err := suite.db.Create(&models.OauthAuthorizationCode{
-		MyGormModel: models.MyGormModel{
+	err := suite.db.Create(&model.AuthorizationCode{
+		MyGormModel: model.MyGormModel{
 			ID:        uuid.New(),
 			CreatedAt: time.Now().UTC(),
 		},
@@ -141,8 +140,8 @@ func (suite *OauthTestSuite) TestAuthorizationCodeGrantInvalidRedirectURI() {
 
 func (suite *OauthTestSuite) TestAuthorizationCodeGrant() {
 	// Insert a test authorization code
-	err := suite.db.Create(&models.OauthAuthorizationCode{
-		MyGormModel: models.MyGormModel{
+	err := suite.db.Create(&model.AuthorizationCode{
+		MyGormModel: model.MyGormModel{
 			ID:        uuid.New(),
 			CreatedAt: time.Now().UTC(),
 		},
@@ -170,10 +169,10 @@ func (suite *OauthTestSuite) TestAuthorizationCodeGrant() {
 	suite.router.ServeHTTP(w, r)
 
 	// Fetch data
-	accessToken, refreshToken := new(models.OauthAccessToken), new(models.OauthRefreshToken)
-	assert.False(suite.T(), models.OauthAccessTokenPreload(suite.db).
+	accessToken, refreshToken := new(model.AccessToken), new(model.RefreshToken)
+	assert.False(suite.T(), model.AccessTokenPreload(suite.db).
 		Last(accessToken).RecordNotFound())
-	assert.False(suite.T(), models.OauthRefreshTokenPreload(suite.db).
+	assert.False(suite.T(), model.RefreshTokenPreload(suite.db).
 		Last(refreshToken).RecordNotFound())
 
 	// Check the response
@@ -189,5 +188,5 @@ func (suite *OauthTestSuite) TestAuthorizationCodeGrant() {
 
 	// The authorization code should get deleted after use
 	assert.True(suite.T(), suite.db.Unscoped().
-		First(new(models.OauthAuthorizationCode)).RecordNotFound())
+		First(new(model.AuthorizationCode)).RecordNotFound())
 }

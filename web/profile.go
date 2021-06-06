@@ -7,11 +7,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/RichardKnop/go-oauth2-server/models"
-	"github.com/RichardKnop/go-oauth2-server/session"
-	"github.com/RichardKnop/go-oauth2-server/util/response"
 	"github.com/gorilla/csrf"
 	"github.com/pariz/gountries"
+	"github.com/resonatecoop/id/session"
+	"github.com/resonatecoop/id/util/response"
 )
 
 func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
@@ -210,9 +209,9 @@ func (s *Service) profile(w http.ResponseWriter, r *http.Request) {
 
 func (s *Service) profileCommon(r *http.Request) (
 	session.ServiceInterface,
-	*models.OauthClient,
-	*models.OauthUser,
-	*models.WpUser,
+	*model.Client,
+	*model.User,
+	*model.WpUser,
 	string,
 	string,
 	error,

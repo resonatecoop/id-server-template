@@ -3,25 +3,27 @@ package oauth_test
 import (
 	"time"
 
-	"github.com/RichardKnop/go-oauth2-server/models"
-	"github.com/RichardKnop/go-oauth2-server/oauth"
-	"github.com/RichardKnop/go-oauth2-server/session"
-	"github.com/RichardKnop/uuid"
 	"github.com/jinzhu/gorm"
+	"github.com/resonatecoop/id/oauth"
+	"github.com/resonatecoop/id/session"
+	uuid "github.com/satori/go.uuid"
+
+	//uuid "github.com/satori/go.uuid"
+
 	"github.com/stretchr/testify/assert"
 )
 
 func (suite *OauthTestSuite) TestAuthenticate() {
 	var (
-		accessToken *models.OauthAccessToken
+		accessToken *model.AccessToken
 		err         error
 	)
 
 	// Insert some test access tokens
-	testAccessTokens := []*models.OauthAccessToken{
+	testAccessTokens := []*model.AccessToken{
 		// Expired access token
 		{
-			MyGormModel: models.MyGormModel{
+			MyGormModel: model.MyGormModel{
 				ID:        uuid.New(),
 				CreatedAt: time.Now().UTC(),
 			},
@@ -32,7 +34,7 @@ func (suite *OauthTestSuite) TestAuthenticate() {
 		},
 		// Access token without a user
 		{
-			MyGormModel: models.MyGormModel{
+			MyGormModel: model.MyGormModel{
 				ID:        uuid.New(),
 				CreatedAt: time.Now().UTC(),
 			},
@@ -42,7 +44,7 @@ func (suite *OauthTestSuite) TestAuthenticate() {
 		},
 		// Access token with a user
 		{
-			MyGormModel: models.MyGormModel{
+			MyGormModel: model.MyGormModel{
 				ID:        uuid.New(),
 				CreatedAt: time.Now().UTC(),
 			},
@@ -119,17 +121,17 @@ func (suite *OauthTestSuite) TestAuthenticate() {
 
 func (suite *OauthTestSuite) TestAuthenticateRollingRefreshToken() {
 	var (
-		testAccessTokens  []*models.OauthAccessToken
-		testRefreshTokens []*models.OauthRefreshToken
-		accessToken       *models.OauthAccessToken
+		testAccessTokens  []*model.AccessToken
+		testRefreshTokens []*model.RefreshToken
+		accessToken       *model.AccessToken
 		err               error
-		refreshTokens     []*models.OauthRefreshToken
+		refreshTokens     []*model.RefreshToken
 	)
 
 	// Insert some test access tokens
-	testAccessTokens = []*models.OauthAccessToken{
+	testAccessTokens = []*model.AccessToken{
 		{
-			MyGormModel: models.MyGormModel{
+			MyGormModel: model.MyGormModel{
 				ID:        uuid.New(),
 				CreatedAt: time.Now().UTC(),
 			},
@@ -139,7 +141,7 @@ func (suite *OauthTestSuite) TestAuthenticateRollingRefreshToken() {
 			User:      suite.users[0],
 		},
 		{
-			MyGormModel: models.MyGormModel{
+			MyGormModel: model.MyGormModel{
 				ID:        uuid.New(),
 				CreatedAt: time.Now().UTC(),
 			},
@@ -148,7 +150,7 @@ func (suite *OauthTestSuite) TestAuthenticateRollingRefreshToken() {
 			Client:    suite.clients[0],
 		},
 		{
-			MyGormModel: models.MyGormModel{
+			MyGormModel: model.MyGormModel{
 				ID:        uuid.New(),
 				CreatedAt: time.Now().UTC(),
 			},
@@ -164,9 +166,9 @@ func (suite *OauthTestSuite) TestAuthenticateRollingRefreshToken() {
 	}
 
 	// Insert some test access tokens
-	testRefreshTokens = []*models.OauthRefreshToken{
+	testRefreshTokens = []*model.RefreshToken{
 		{
-			MyGormModel: models.MyGormModel{
+			MyGormModel: model.MyGormModel{
 				ID:        uuid.New(),
 				CreatedAt: time.Now().UTC(),
 			},
@@ -176,7 +178,7 @@ func (suite *OauthTestSuite) TestAuthenticateRollingRefreshToken() {
 			User:      suite.users[0],
 		},
 		{
-			MyGormModel: models.MyGormModel{
+			MyGormModel: model.MyGormModel{
 				ID:        uuid.New(),
 				CreatedAt: time.Now().UTC(),
 			},
@@ -185,7 +187,7 @@ func (suite *OauthTestSuite) TestAuthenticateRollingRefreshToken() {
 			Client:    suite.clients[0],
 		},
 		{
-			MyGormModel: models.MyGormModel{
+			MyGormModel: model.MyGormModel{
 				ID:        uuid.New(),
 				CreatedAt: time.Now().UTC(),
 			},
@@ -212,7 +214,7 @@ func (suite *OauthTestSuite) TestAuthenticateRollingRefreshToken() {
 	assert.EqualValues(suite.T(), suite.users[0].ID, accessToken.UserID.String)
 
 	// First refresh token expiration date should be extended
-	refreshTokens = make([]*models.OauthRefreshToken, len(testRefreshTokens))
+	refreshTokens = make([]*model.RefreshToken, len(testRefreshTokens))
 	err = suite.db.Where(
 		"token IN ('test_token_1', 'test_token_2', 'test_token_3')",
 	).Order("created_at").Find(&refreshTokens).Error
@@ -248,7 +250,7 @@ func (suite *OauthTestSuite) TestAuthenticateRollingRefreshToken() {
 	assert.False(suite.T(), accessToken.UserID.Valid)
 
 	// Second refresh token expiration date should be extended
-	refreshTokens = make([]*models.OauthRefreshToken, len(testRefreshTokens))
+	refreshTokens = make([]*model.RefreshToken, len(testRefreshTokens))
 	err = suite.db.Where(
 		"token IN ('test_token_1', 'test_token_2', 'test_token_3')",
 	).Order("created_at").Find(&refreshTokens).Error
@@ -284,7 +286,7 @@ func (suite *OauthTestSuite) TestAuthenticateRollingRefreshToken() {
 	assert.EqualValues(suite.T(), suite.users[1].ID, accessToken.UserID.String)
 
 	// First refresh token expiration date should be extended
-	refreshTokens = make([]*models.OauthRefreshToken, len(testRefreshTokens))
+	refreshTokens = make([]*model.RefreshToken, len(testRefreshTokens))
 	err = suite.db.Where(
 		"token IN ('test_token_1', 'test_token_2', 'test_token_3')",
 	).Order("created_at").Find(&refreshTokens).Error
@@ -311,16 +313,16 @@ func (suite *OauthTestSuite) TestAuthenticateRollingRefreshToken() {
 
 func (suite *OauthTestSuite) TestClearUserTokens() {
 	var (
-		testAccessTokens  []*models.OauthAccessToken
-		testRefreshTokens []*models.OauthRefreshToken
+		testAccessTokens  []*model.AccessToken
+		testRefreshTokens []*model.RefreshToken
 		err               error
 		testUserSession   *session.UserSession
 	)
 
 	// Insert some test access tokens
-	testAccessTokens = []*models.OauthAccessToken{
+	testAccessTokens = []*model.AccessToken{
 		{
-			MyGormModel: models.MyGormModel{
+			MyGormModel: model.MyGormModel{
 				ID:        uuid.New(),
 				CreatedAt: time.Now().UTC(),
 			},
@@ -330,7 +332,7 @@ func (suite *OauthTestSuite) TestClearUserTokens() {
 			User:      suite.users[0],
 		},
 		{
-			MyGormModel: models.MyGormModel{
+			MyGormModel: model.MyGormModel{
 				ID:        uuid.New(),
 				CreatedAt: time.Now().UTC(),
 			},
@@ -340,7 +342,7 @@ func (suite *OauthTestSuite) TestClearUserTokens() {
 			User:      suite.users[0],
 		},
 		{
-			MyGormModel: models.MyGormModel{
+			MyGormModel: model.MyGormModel{
 				ID:        uuid.New(),
 				CreatedAt: time.Now().UTC(),
 			},
@@ -356,9 +358,9 @@ func (suite *OauthTestSuite) TestClearUserTokens() {
 	}
 
 	// Insert some test access tokens
-	testRefreshTokens = []*models.OauthRefreshToken{
+	testRefreshTokens = []*model.RefreshToken{
 		{
-			MyGormModel: models.MyGormModel{
+			MyGormModel: model.MyGormModel{
 				ID:        uuid.New(),
 				CreatedAt: time.Now().UTC(),
 			},
@@ -368,7 +370,7 @@ func (suite *OauthTestSuite) TestClearUserTokens() {
 			User:      suite.users[0],
 		},
 		{
-			MyGormModel: models.MyGormModel{
+			MyGormModel: model.MyGormModel{
 				ID:        uuid.New(),
 				CreatedAt: time.Now().UTC(),
 			},
@@ -378,7 +380,7 @@ func (suite *OauthTestSuite) TestClearUserTokens() {
 			User:      suite.users[0],
 		},
 		{
-			MyGormModel: models.MyGormModel{
+			MyGormModel: model.MyGormModel{
 				ID:        uuid.New(),
 				CreatedAt: time.Now().UTC(),
 			},
@@ -404,24 +406,24 @@ func (suite *OauthTestSuite) TestClearUserTokens() {
 	suite.service.ClearUserTokens(testUserSession)
 
 	// Assert that the refresh token was removed
-	found := !models.OauthRefreshTokenPreload(suite.db).Where("token = ?", testUserSession.RefreshToken).First(&models.OauthRefreshToken{}).RecordNotFound()
+	found := !model.RefreshTokenPreload(suite.db).Where("token = ?", testUserSession.RefreshToken).First(&model.RefreshToken{}).RecordNotFound()
 	assert.Equal(suite.T(), false, found)
 
 	// Assert that the access token was removed
-	found = !models.OauthAccessTokenPreload(suite.db).Where("token = ?", testUserSession.AccessToken).First(&models.OauthAccessToken{}).RecordNotFound()
+	found = !model.AccessTokenPreload(suite.db).Where("token = ?", testUserSession.AccessToken).First(&model.AccessToken{}).RecordNotFound()
 	assert.Equal(suite.T(), false, found)
 
 	// Assert that the other two tokens are still there
 	// Refresh tokens
-	found = !models.OauthRefreshTokenPreload(suite.db).Where("token = ?", "test_token_2").First(&models.OauthRefreshToken{}).RecordNotFound()
+	found = !model.RefreshTokenPreload(suite.db).Where("token = ?", "test_token_2").First(&model.RefreshToken{}).RecordNotFound()
 	assert.Equal(suite.T(), true, found)
-	found = !models.OauthRefreshTokenPreload(suite.db).Where("token = ?", "test_token_3").First(&models.OauthRefreshToken{}).RecordNotFound()
+	found = !model.RefreshTokenPreload(suite.db).Where("token = ?", "test_token_3").First(&model.RefreshToken{}).RecordNotFound()
 	assert.Equal(suite.T(), true, found)
 
 	// Access tokens
-	found = !models.OauthAccessTokenPreload(suite.db).Where("token = ?", "test_token_2").First(&models.OauthAccessToken{}).RecordNotFound()
+	found = !model.AccessTokenPreload(suite.db).Where("token = ?", "test_token_2").First(&model.AccessToken{}).RecordNotFound()
 	assert.Equal(suite.T(), true, found)
-	found = !models.OauthAccessTokenPreload(suite.db).Where("token = ?", "test_token_3").First(&models.OauthAccessToken{}).RecordNotFound()
+	found = !model.AccessTokenPreload(suite.db).Where("token = ?", "test_token_3").First(&model.AccessToken{}).RecordNotFound()
 	assert.Equal(suite.T(), true, found)
 
 }

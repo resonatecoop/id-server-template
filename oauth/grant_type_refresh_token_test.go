@@ -6,11 +6,11 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/RichardKnop/go-oauth2-server/models"
-	"github.com/RichardKnop/go-oauth2-server/oauth"
-	"github.com/RichardKnop/go-oauth2-server/oauth/tokentypes"
-	"github.com/RichardKnop/go-oauth2-server/test-util"
-	"github.com/RichardKnop/uuid"
+	"github.com/resonatecoop/id/oauth"
+	"github.com/resonatecoop/id/oauth/tokentypes"
+	testutil "github.com/resonatecoop/id/test-util"
+	"github.com/resonatecoop/user-api/model"
+	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -62,8 +62,8 @@ func (suite *OauthTestSuite) TestRefreshTokenGrantBogusNotFound() {
 
 func (suite *OauthTestSuite) TestRefreshTokenGrantExipired() {
 	// Insert a test refresh token
-	err := suite.db.Create(&models.OauthRefreshToken{
-		MyGormModel: models.MyGormModel{
+	err := suite.db.Create(&model.RefreshToken{
+		MyGormModel: model.MyGormModel{
 			ID:        uuid.New(),
 			CreatedAt: time.Now().UTC(),
 		},
@@ -100,8 +100,8 @@ func (suite *OauthTestSuite) TestRefreshTokenGrantExipired() {
 
 func (suite *OauthTestSuite) TestRefreshTokenGrantScopeCannotBeGreater() {
 	// Insert a test refresh token
-	err := suite.db.Create(&models.OauthRefreshToken{
-		MyGormModel: models.MyGormModel{
+	err := suite.db.Create(&model.RefreshToken{
+		MyGormModel: model.MyGormModel{
 			ID:        uuid.New(),
 			CreatedAt: time.Now().UTC(),
 		},
@@ -138,8 +138,8 @@ func (suite *OauthTestSuite) TestRefreshTokenGrantScopeCannotBeGreater() {
 
 func (suite *OauthTestSuite) TestRefreshTokenGrantDefaultsToOriginalScope() {
 	// Insert a test refresh token
-	err := suite.db.Create(&models.OauthRefreshToken{
-		MyGormModel: models.MyGormModel{
+	err := suite.db.Create(&model.RefreshToken{
+		MyGormModel: model.MyGormModel{
 			ID:        uuid.New(),
 			CreatedAt: time.Now().UTC(),
 		},
@@ -165,8 +165,8 @@ func (suite *OauthTestSuite) TestRefreshTokenGrantDefaultsToOriginalScope() {
 	suite.router.ServeHTTP(w, r)
 
 	// Fetch data
-	accessToken := new(models.OauthAccessToken)
-	assert.False(suite.T(), models.OauthAccessTokenPreload(suite.db).
+	accessToken := new(model.AccessToken)
+	assert.False(suite.T(), model.AccessTokenPreload(suite.db).
 		Last(accessToken).RecordNotFound())
 
 	// Check the response body
@@ -183,8 +183,8 @@ func (suite *OauthTestSuite) TestRefreshTokenGrantDefaultsToOriginalScope() {
 
 func (suite *OauthTestSuite) TestRefreshTokenGrant() {
 	// Insert a test refresh token
-	err := suite.db.Create(&models.OauthRefreshToken{
-		MyGormModel: models.MyGormModel{
+	err := suite.db.Create(&model.RefreshToken{
+		MyGormModel: model.MyGormModel{
 			ID:        uuid.New(),
 			CreatedAt: time.Now().UTC(),
 		},
@@ -211,8 +211,8 @@ func (suite *OauthTestSuite) TestRefreshTokenGrant() {
 	suite.router.ServeHTTP(w, r)
 
 	// Fetch data
-	accessToken := new(models.OauthAccessToken)
-	assert.False(suite.T(), models.OauthAccessTokenPreload(suite.db).
+	accessToken := new(model.AccessToken)
+	assert.False(suite.T(), model.AccessTokenPreload(suite.db).
 		Last(accessToken).RecordNotFound())
 
 	// Check the response

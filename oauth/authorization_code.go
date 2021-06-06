@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/RichardKnop/go-oauth2-server/models"
+	"github.com/resonatecoop/user-api/model"
 )
 
 var (
@@ -15,9 +15,9 @@ var (
 )
 
 // GrantAuthorizationCode grants a new authorization code
-func (s *Service) GrantAuthorizationCode(client *models.OauthClient, user *models.OauthUser, expiresIn int, redirectURI, scope string) (*models.OauthAuthorizationCode, error) {
+func (s *Service) GrantAuthorizationCode(client *model.Client, user *model.User, expiresIn int, redirectURI, scope string) (*model.AuthorizationCode, error) {
 	// Create a new authorization code
-	authorizationCode := models.NewOauthAuthorizationCode(client, user, expiresIn, redirectURI, scope)
+	authorizationCode := model.NewOauthAuthorizationCode(client, user, expiresIn, redirectURI, scope)
 	if err := s.db.Create(authorizationCode).Error; err != nil {
 		return nil, err
 	}
@@ -28,10 +28,10 @@ func (s *Service) GrantAuthorizationCode(client *models.OauthClient, user *model
 }
 
 // getValidAuthorizationCode returns a valid non expired authorization code
-func (s *Service) getValidAuthorizationCode(code, redirectURI string, client *models.OauthClient) (*models.OauthAuthorizationCode, error) {
+func (s *Service) getValidAuthorizationCode(code, redirectURI string, client *model.Client) (*model.AuthorizationCode, error) {
 	// Fetch the auth code from the database
-	authorizationCode := new(models.OauthAuthorizationCode)
-	notFound := models.OauthAuthorizationCodePreload(s.db).Where("client_id = ?", client.ID).
+	authorizationCode := new(model.AuthorizationCode)
+	notFound := model.AuthorizationCodePreload(s.db).Where("client_id = ?", client.ID).
 		Where("code = ?", code).First(authorizationCode).RecordNotFound()
 
 	// Not found

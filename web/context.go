@@ -4,9 +4,9 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/RichardKnop/go-oauth2-server/models"
-	"github.com/RichardKnop/go-oauth2-server/session"
 	"github.com/gorilla/context"
+	"github.com/resonatecoop/id/session"
+	"github.com/resonatecoop/user-api/model"
 )
 
 type contextKey int
@@ -39,13 +39,13 @@ func getSessionService(r *http.Request) (session.ServiceInterface, error) {
 }
 
 // Returns *oauth.Client from the request context
-func getClient(r *http.Request) (*models.OauthClient, error) {
+func getClient(r *http.Request) (*model.Client, error) {
 	val, ok := context.GetOk(r, clientKey)
 	if !ok {
 		return nil, ErrClientNotPresent
 	}
 
-	client, ok := val.(*models.OauthClient)
+	client, ok := val.(*model.Client)
 	if !ok {
 		return nil, ErrClientNotPresent
 	}

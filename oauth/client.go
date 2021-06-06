@@ -5,11 +5,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/RichardKnop/go-oauth2-server/models"
-	"github.com/RichardKnop/go-oauth2-server/util"
-	"github.com/RichardKnop/go-oauth2-server/util/password"
-	"github.com/RichardKnop/uuid"
-	"github.com/jinzhu/gorm"
+	"github.com/resonatecoop/id/util"
+	"github.com/resonatecoop/id/util/password"
+	"github.com/resonatecoop/user-api/model"
+	uuid "github.com/satori/go.uuid"
+	"github.com/uptrace/bun"
 )
 
 var (
@@ -28,9 +28,9 @@ func (s *Service) ClientExists(clientID string) bool {
 }
 
 // FindClientByClientID looks up a client by client ID
-func (s *Service) FindClientByClientID(clientID string) (*models.OauthClient, error) {
+func (s *Service) FindClientByClientID(clientID string) (*model.Client, error) {
 	// Client IDs are case insensitive
-	client := new(models.OauthClient)
+	client := new(model.Client)
 	notFound := s.db.Where("key = LOWER(?)", clientID).
 		First(client).RecordNotFound()
 
@@ -43,8 +43,8 @@ func (s *Service) FindClientByClientID(clientID string) (*models.OauthClient, er
 }
 
 // FindClientByRedirectURI looks up a client by redirect URI
-func (s *Service) FindClientByApplicationURL(applicationURL string) (*models.OauthClient, error) {
-	client := new(models.OauthClient)
+func (s *Service) FindClientByApplicationURL(applicationURL string) (*model.Client, error) {
+	client := new(model.Client)
 	notFound := s.db.Where("application_url = ? AND application_hostname IN (?)", applicationURL, s.cnf.Origins).
 		First(client).RecordNotFound()
 
@@ -57,17 +57,17 @@ func (s *Service) FindClientByApplicationURL(applicationURL string) (*models.Oau
 }
 
 // CreateClient saves a new client to database
-func (s *Service) CreateClient(clientID, secret, redirectURI, applicationName, applicationHostname, applicationURL string) (*models.OauthClient, error) {
+func (s *Service) CreateClient(clientID, secret, redirectURI, applicationName, applicationHostname, applicationURL string) (*model.Client, error) {
 	return s.createClientCommon(s.db, clientID, secret, redirectURI, applicationName, applicationHostname, applicationURL)
 }
 
 // CreateClientTx saves a new client to database using injected db object
-func (s *Service) CreateClientTx(tx *gorm.DB, clientID, secret, redirectURI, applicationName, applicationHostname, applicationURL string) (*models.OauthClient, error) {
+func (s *Service) CreateClientTx(tx *bun.DB, clientID, secret, redirectURI, applicationName, applicationHostname, applicationURL string) (*model.Client, error) {
 	return s.createClientCommon(tx, clientID, secret, redirectURI, applicationName, applicationHostname, applicationURL)
 }
 
 // AuthClient authenticates client
-func (s *Service) AuthClient(clientID, secret string) (*models.OauthClient, error) {
+func (s *Service) AuthClient(clientID, secret string) (*model.Client, error) {
 	// Fetch the client
 	client, err := s.FindClientByClientID(clientID)
 	if err != nil {
@@ -82,7 +82,7 @@ func (s *Service) AuthClient(clientID, secret string) (*models.OauthClient, erro
 	return client, nil
 }
 
-func (s *Service) createClientCommon(db *gorm.DB, clientID, secret, redirectURI, applicationName, applicationHostname, applicationURL string) (*models.OauthClient, error) {
+func (s *Service) createClientCommon(db *bun.DB, clientID, secret, redirectURI, applicationName, applicationHostname, applicationURL string) (*model.Client, error) {
 	// Check client ID
 	if s.ClientExists(clientID) {
 		return nil, ErrClientIDTaken
@@ -94,8 +94,8 @@ func (s *Service) createClientCommon(db *gorm.DB, clientID, secret, redirectURI,
 		return nil, err
 	}
 
-	client := &models.OauthClient{
-		MyGormModel: models.MyGormModel{
+	client := &model.Client{
+		MybunModel: model.MybunModel{
 			ID:        uuid.New(),
 			CreatedAt: time.Now().UTC(),
 		},

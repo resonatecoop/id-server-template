@@ -6,9 +6,9 @@ import (
 	"html/template"
 	"net/http"
 
-	"github.com/RichardKnop/go-oauth2-server/session"
-	"github.com/RichardKnop/go-oauth2-server/util/response"
 	"github.com/gorilla/csrf"
+	"github.com/resonatecoop/id/session"
+	"github.com/resonatecoop/id/util/response"
 )
 
 func (s *Service) loginForm(w http.ResponseWriter, r *http.Request) {

@@ -4,11 +4,10 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/RichardKnop/go-oauth2-server/models"
-	"github.com/RichardKnop/go-oauth2-server/session"
-	pass "github.com/RichardKnop/go-oauth2-server/util/password"
-	"github.com/RichardKnop/go-oauth2-server/util/response"
 	"github.com/gorilla/csrf"
+	"github.com/resonatecoop/id/session"
+	pass "github.com/resonatecoop/id/util/password"
+	"github.com/resonatecoop/id/util/response"
 )
 
 var (
@@ -108,9 +107,9 @@ func (s *Service) passwordUpdate(w http.ResponseWriter, r *http.Request) {
 
 func (s *Service) passwordCommon(r *http.Request) (
 	session.ServiceInterface,
-	*models.OauthClient,
-	*models.OauthUser,
-	*models.WpUser,
+	*model.Client,
+	*model.User,
+	*model.WpUser,
 	error,
 ) {
 	// Get the session service from the request context

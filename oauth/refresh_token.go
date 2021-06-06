@@ -4,8 +4,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/RichardKnop/go-oauth2-server/models"
-	"github.com/RichardKnop/go-oauth2-server/util"
+	"github.com/resonatecoop/id/util"
+	"github.com/resonatecoop/user-api/model"
 )
 
 var (
@@ -19,10 +19,10 @@ var (
 
 // GetOrCreateRefreshToken retrieves an existing refresh token, if expired,
 // the token gets deleted and new refresh token is created
-func (s *Service) GetOrCreateRefreshToken(client *models.OauthClient, user *models.OauthUser, expiresIn int, scope string) (*models.OauthRefreshToken, error) {
+func (s *Service) GetOrCreateRefreshToken(client *model.Client, user *model.User, expiresIn int, scope string) (*model.RefreshToken, error) {
 	// Try to fetch an existing refresh token first
-	refreshToken := new(models.OauthRefreshToken)
-	query := models.OauthRefreshTokenPreload(s.db).Where("client_id = ?", client.ID)
+	refreshToken := new(model.RefreshToken)
+	query := model.RefreshTokenPreload(s.db).Where("client_id = ?", client.ID)
 	if user != nil && len([]rune(user.ID)) > 0 {
 		query = query.Where("user_id = ?", user.ID)
 	} else {
@@ -43,7 +43,7 @@ func (s *Service) GetOrCreateRefreshToken(client *models.OauthClient, user *mode
 
 	// Create a new refresh token if it expired or was not found
 	if expired || !found {
-		refreshToken = models.NewOauthRefreshToken(client, user, expiresIn, scope)
+		refreshToken = model.NewOauthRefreshToken(client, user, expiresIn, scope)
 		if err := s.db.Create(refreshToken).Error; err != nil {
 			return nil, err
 		}
@@ -55,10 +55,10 @@ func (s *Service) GetOrCreateRefreshToken(client *models.OauthClient, user *mode
 }
 
 // GetValidRefreshToken returns a valid non expired refresh token
-func (s *Service) GetValidRefreshToken(token string, client *models.OauthClient) (*models.OauthRefreshToken, error) {
+func (s *Service) GetValidRefreshToken(token string, client *model.Client) (*model.RefreshToken, error) {
 	// Fetch the refresh token from the database
-	refreshToken := new(models.OauthRefreshToken)
-	notFound := models.OauthRefreshTokenPreload(s.db).Where("client_id = ?", client.ID).
+	refreshToken := new(model.RefreshToken)
+	notFound := model.RefreshTokenPreload(s.db).Where("client_id = ?", client.ID).
 		Where("token = ?", token).First(refreshToken).RecordNotFound()
 
 	// Not found
@@ -75,7 +75,7 @@ func (s *Service) GetValidRefreshToken(token string, client *models.OauthClient)
 }
 
 // getRefreshTokenScope returns scope for a new refresh token
-func (s *Service) getRefreshTokenScope(refreshToken *models.OauthRefreshToken, requestedScope string) (string, error) {
+func (s *Service) getRefreshTokenScope(refreshToken *model.RefreshToken, requestedScope string) (string, error) {
 	var (
 		scope = refreshToken.Scope // default to the scope originally granted by the resource owner
 		err   error

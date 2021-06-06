@@ -4,11 +4,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/RichardKnop/go-oauth2-server/log"
-	"github.com/RichardKnop/go-oauth2-server/services"
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
 	"github.com/phyber/negroni-gzip/gzip"
+	"github.com/resonatecoop/id/log"
+	"github.com/resonatecoop/id/services"
 	"github.com/unrolled/secure"
 	"github.com/urfave/negroni"
 	"gopkg.in/tylerb/graceful.v1"
@@ -16,15 +16,14 @@ import (
 
 // RunServer runs the app
 func RunServer(configBackend string) error {
-	cnf, db, db2, err := initConfigDB(true, true, configBackend)
+	cnf, db, err := initConfigDB(true, true, configBackend)
 	if err != nil {
 		return err
 	}
 	defer db.Close()
-	defer db2.Close()
 
 	// start the services
-	if err := services.Init(cnf, db, db2); err != nil {
+	if err := services.Init(cnf, db); err != nil {
 		return err
 	}
 	defer services.Close()

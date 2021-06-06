@@ -3,12 +3,11 @@ package oauth_test
 import (
 	"time"
 
-	"github.com/RichardKnop/go-oauth2-server/models"
-	"github.com/RichardKnop/go-oauth2-server/oauth"
-	"github.com/RichardKnop/go-oauth2-server/oauth/roles"
-	"github.com/RichardKnop/go-oauth2-server/util"
-	pass "github.com/RichardKnop/go-oauth2-server/util/password"
-	"github.com/RichardKnop/uuid"
+	"github.com/resonatecoop/id/oauth"
+	"github.com/resonatecoop/id/util"
+	pass "github.com/resonatecoop/id/util/password"
+	"github.com/resonatecoop/user-api/model"
+	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -24,7 +23,7 @@ func (suite *OauthTestSuite) TestUserExistsDoesntFindInvalidUser() {
 
 func (suite *OauthTestSuite) TestUpdateUsernameWorksWithValidEntry() {
 	user, err := suite.service.CreateUser(
-		roles.User,      // role ID
+		model.UserRole,  // role ID
 		"test@newuser",  // username
 		"test_password", // password
 	)
@@ -84,7 +83,7 @@ func (suite *OauthTestSuite) TestUpdateUsernameFailsWithABlankEntry() {
 
 func (suite *OauthTestSuite) TestFindUserByUsername() {
 	var (
-		user *models.OauthUser
+		user *model.User
 		err  error
 	)
 
@@ -124,7 +123,7 @@ func (suite *OauthTestSuite) TestFindUserByUsername() {
 
 func (suite *OauthTestSuite) TestCreateUser() {
 	var (
-		user *models.OauthUser
+		user *model.User
 		err  error
 	)
 
@@ -176,13 +175,13 @@ func (suite *OauthTestSuite) TestCreateUser() {
 
 func (suite *OauthTestSuite) TestSetPassword() {
 	var (
-		user *models.OauthUser
+		user *model.User
 		err  error
 	)
 
 	// Insert a test user without a password
-	user = &models.OauthUser{
-		MyGormModel: models.MyGormModel{
+	user = &model.User{
+		MyGormModel: model.MyGormModel{
 			ID:        uuid.New(),
 			CreatedAt: time.Now().UTC(),
 		},
@@ -214,13 +213,13 @@ func (suite *OauthTestSuite) TestSetPassword() {
 
 func (suite *OauthTestSuite) TestAuthUser() {
 	var (
-		user *models.OauthUser
+		user *model.User
 		err  error
 	)
 
 	// Insert a test user without a password
-	err = suite.db.Create(&models.OauthUser{
-		MyGormModel: models.MyGormModel{
+	err = suite.db.Create(&model.User{
+		MyGormModel: model.MyGormModel{
 			ID:        uuid.New(),
 			CreatedAt: time.Now().UTC(),
 		},
@@ -288,7 +287,7 @@ func (suite *OauthTestSuite) TestAuthUser() {
 
 func (suite *OauthTestSuite) TestBlankPassword() {
 	var (
-		user *models.OauthUser
+		user *model.User
 		err  error
 	)
 

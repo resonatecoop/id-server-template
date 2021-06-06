@@ -1,8 +1,8 @@
 package web
 
 import (
-	"github.com/RichardKnop/go-oauth2-server/config"
-	"github.com/RichardKnop/go-oauth2-server/models"
+	"github.com/resonatecoop/id/config"
+	"github.com/resonatecoop/user-api/model"
 )
 
 type Profile struct {
@@ -22,7 +22,7 @@ type InitialState struct {
 
 func NewInitialState(
 	cnf *config.Config,
-	client *models.OauthClient,
+	client *model.Client,
 	profile *Profile,
 ) *InitialState {
 	return &InitialState{

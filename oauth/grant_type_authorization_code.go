@@ -4,8 +4,8 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/RichardKnop/go-oauth2-server/models"
-	"github.com/RichardKnop/go-oauth2-server/oauth/tokentypes"
+	"github.com/resonatecoop/id/oauth/tokentypes"
+	"github.com/resonatecoop/user-api/model"
 )
 
 var (
@@ -13,7 +13,7 @@ var (
 	ErrInvalidRedirectURI = errors.New("Invalid redirect URI")
 )
 
-func (s *Service) authorizationCodeGrant(r *http.Request, client *models.OauthClient) (*AccessTokenResponse, error) {
+func (s *Service) authorizationCodeGrant(r *http.Request, client *model.Client) (*AccessTokenResponse, error) {
 	// Fetch the authorization code
 	authorizationCode, err := s.getValidAuthorizationCode(
 		r.Form.Get("code"),

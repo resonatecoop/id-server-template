@@ -3,17 +3,16 @@ package oauth_test
 import (
 	"time"
 
-	"github.com/RichardKnop/go-oauth2-server/models"
-	"github.com/RichardKnop/go-oauth2-server/oauth"
-	"github.com/RichardKnop/uuid"
+	"github.com/resonatecoop/id/oauth"
+	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 )
 
 func (suite *OauthTestSuite) TestGetOrCreateRefreshTokenCreatesNew() {
 	var (
-		refreshToken *models.OauthRefreshToken
+		refreshToken *model.RefreshToken
 		err          error
-		tokens       []*models.OauthRefreshToken
+		tokens       []*model.RefreshToken
 	)
 
 	// Since there is no user specific token,
@@ -28,7 +27,7 @@ func (suite *OauthTestSuite) TestGetOrCreateRefreshTokenCreatesNew() {
 	// Error should be nil
 	if assert.Nil(suite.T(), err) {
 		// Fetch all refresh tokens
-		models.OauthRefreshTokenPreload(suite.db).Order("created_at").Find(&tokens)
+		model.RefreshTokenPreload(suite.db).Order("created_at").Find(&tokens)
 
 		// There should be just one token now
 		assert.Equal(suite.T(), 1, len(tokens))
@@ -57,7 +56,7 @@ func (suite *OauthTestSuite) TestGetOrCreateRefreshTokenCreatesNew() {
 	// Error should be nil
 	if assert.Nil(suite.T(), err) {
 		// Fetch all refresh tokens
-		models.OauthRefreshTokenPreload(suite.db).Order("created_at").Find(&tokens)
+		model.RefreshTokenPreload(suite.db).Order("created_at").Find(&tokens)
 
 		// There should be just one token now
 		assert.Equal(suite.T(), 1, len(tokens))
@@ -87,7 +86,7 @@ func (suite *OauthTestSuite) TestGetOrCreateRefreshTokenCreatesNew() {
 	// Error should be nil
 	if assert.Nil(suite.T(), err) {
 		// Fetch all refresh tokens
-		models.OauthRefreshTokenPreload(suite.db).Order("created_at").Find(&tokens)
+		model.RefreshTokenPreload(suite.db).Order("created_at").Find(&tokens)
 
 		// There should be 2 tokens
 		assert.Equal(suite.T(), 2, len(tokens))
@@ -115,7 +114,7 @@ func (suite *OauthTestSuite) TestGetOrCreateRefreshTokenCreatesNew() {
 	// Error should be nil
 	if assert.Nil(suite.T(), err) {
 		// Fetch all refresh tokens
-		models.OauthRefreshTokenPreload(suite.db).Order("created_at").Find(&tokens)
+		model.RefreshTokenPreload(suite.db).Order("created_at").Find(&tokens)
 
 		// There should be 2 tokens
 		assert.Equal(suite.T(), 2, len(tokens))
@@ -135,14 +134,14 @@ func (suite *OauthTestSuite) TestGetOrCreateRefreshTokenCreatesNew() {
 
 func (suite *OauthTestSuite) TestGetOrCreateRefreshTokenReturnsExisting() {
 	var (
-		refreshToken *models.OauthRefreshToken
+		refreshToken *model.RefreshToken
 		err          error
-		tokens       []*models.OauthRefreshToken
+		tokens       []*model.RefreshToken
 	)
 
 	// Insert an access token without a user
-	err = suite.db.Create(&models.OauthRefreshToken{
-		MyGormModel: models.MyGormModel{
+	err = suite.db.Create(&model.RefreshToken{
+		MyGormModel: model.MyGormModel{
 			ID:        uuid.New(),
 			CreatedAt: time.Now().UTC(),
 		},
@@ -166,7 +165,7 @@ func (suite *OauthTestSuite) TestGetOrCreateRefreshTokenReturnsExisting() {
 	// Correct refresh token should be returned
 	if assert.NotNil(suite.T(), refreshToken) {
 		// Fetch all refresh tokens
-		models.OauthRefreshTokenPreload(suite.db).Order("created_at").Find(&tokens)
+		model.RefreshTokenPreload(suite.db).Order("created_at").Find(&tokens)
 
 		// There should be just one token right now
 		assert.Equal(suite.T(), 1, len(tokens))
@@ -186,8 +185,8 @@ func (suite *OauthTestSuite) TestGetOrCreateRefreshTokenReturnsExisting() {
 	}
 
 	// Insert an access token with a user
-	err = suite.db.Create(&models.OauthRefreshToken{
-		MyGormModel: models.MyGormModel{
+	err = suite.db.Create(&model.RefreshToken{
+		MyGormModel: model.MyGormModel{
 			ID:        uuid.New(),
 			CreatedAt: time.Now().UTC(),
 		},
@@ -213,7 +212,7 @@ func (suite *OauthTestSuite) TestGetOrCreateRefreshTokenReturnsExisting() {
 	// Correct refresh token should be returned
 	if assert.NotNil(suite.T(), refreshToken) {
 		// Fetch all refresh tokens
-		models.OauthRefreshTokenPreload(suite.db).Order("created_at").Find(&tokens)
+		model.RefreshTokenPreload(suite.db).Order("created_at").Find(&tokens)
 
 		// There should be 2 tokens now
 		assert.Equal(suite.T(), 2, len(tokens))
@@ -236,14 +235,14 @@ func (suite *OauthTestSuite) TestGetOrCreateRefreshTokenReturnsExisting() {
 
 func (suite *OauthTestSuite) TestGetOrCreateRefreshTokenDeletesExpired() {
 	var (
-		refreshToken *models.OauthRefreshToken
+		refreshToken *model.RefreshToken
 		err          error
-		tokens       []*models.OauthRefreshToken
+		tokens       []*model.RefreshToken
 	)
 
 	// Insert an expired client only test refresh token
-	err = suite.db.Create(&models.OauthRefreshToken{
-		MyGormModel: models.MyGormModel{
+	err = suite.db.Create(&model.RefreshToken{
+		MyGormModel: model.MyGormModel{
 			ID:        uuid.New(),
 			CreatedAt: time.Now().UTC(),
 		},
@@ -265,7 +264,7 @@ func (suite *OauthTestSuite) TestGetOrCreateRefreshTokenDeletesExpired() {
 	// Error should be nil
 	if assert.Nil(suite.T(), err) {
 		// Fetch all refresh tokens
-		models.OauthRefreshTokenPreload(suite.db.Unscoped()).Order("created_at").Find(&tokens)
+		model.RefreshTokenPreload(suite.db.Unscoped()).Order("created_at").Find(&tokens)
 
 		// There should be just one token right now
 		assert.Equal(suite.T(), 1, len(tokens))
@@ -285,8 +284,8 @@ func (suite *OauthTestSuite) TestGetOrCreateRefreshTokenDeletesExpired() {
 	}
 
 	// Insert an expired user specific test refresh token
-	err = suite.db.Create(&models.OauthRefreshToken{
-		MyGormModel: models.MyGormModel{
+	err = suite.db.Create(&model.RefreshToken{
+		MyGormModel: model.MyGormModel{
 			ID:        uuid.New(),
 			CreatedAt: time.Now().UTC(),
 		},
@@ -309,7 +308,7 @@ func (suite *OauthTestSuite) TestGetOrCreateRefreshTokenDeletesExpired() {
 	// Error should be nil
 	if assert.Nil(suite.T(), err) {
 		// Fetch all refresh tokens
-		models.OauthRefreshTokenPreload(suite.db.Unscoped()).Order("created_at").Find(&tokens)
+		model.RefreshTokenPreload(suite.db.Unscoped()).Order("created_at").Find(&tokens)
 
 		// There should be 2 tokens now
 		assert.Equal(suite.T(), 2, len(tokens))
@@ -332,15 +331,15 @@ func (suite *OauthTestSuite) TestGetOrCreateRefreshTokenDeletesExpired() {
 
 func (suite *OauthTestSuite) TestGetValidRefreshToken() {
 	var (
-		refreshToken *models.OauthRefreshToken
+		refreshToken *model.RefreshToken
 		err          error
 	)
 
 	// Insert some test refresh tokens
-	testRefreshTokens := []*models.OauthRefreshToken{
+	testRefreshTokens := []*model.RefreshToken{
 		// Expired test refresh token
 		{
-			MyGormModel: models.MyGormModel{
+			MyGormModel: model.MyGormModel{
 				ID:        uuid.New(),
 				CreatedAt: time.Now().UTC(),
 			},
@@ -351,7 +350,7 @@ func (suite *OauthTestSuite) TestGetValidRefreshToken() {
 		},
 		// Refresh token
 		{
-			MyGormModel: models.MyGormModel{
+			MyGormModel: model.MyGormModel{
 				ID:        uuid.New(),
 				CreatedAt: time.Now().UTC(),
 			},

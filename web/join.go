@@ -6,11 +6,10 @@ import (
 	"html/template"
 	"net/http"
 
-	"github.com/RichardKnop/go-oauth2-server/log"
-	"github.com/RichardKnop/go-oauth2-server/models"
-	"github.com/RichardKnop/go-oauth2-server/oauth/roles"
-	"github.com/RichardKnop/go-oauth2-server/session"
-	"github.com/RichardKnop/go-oauth2-server/util/response"
+	"github.com/resonatecoop/id/log"
+	"github.com/resonatecoop/id/session"
+	"github.com/resonatecoop/id/util/response"
+	"github.com/resonatecoop/user-api/model"
 
 	"github.com/gorilla/csrf"
 	"github.com/pariz/gountries"
@@ -116,7 +115,7 @@ func (s *Service) join(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, err = s.oauthService.SendEmailToken(
-		models.NewOauthEmail(
+		model.NewOauthEmail(
 			r.Form.Get("email"), // Recipient
 			"Member details",    // Subject
 			"signup",            // Template (mailgun)
@@ -132,31 +131,20 @@ func (s *Service) join(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Service) createUserAndWpUser(r *http.Request) (
-	*models.OauthUser,
-	*models.WpUser,
+func (s *Service) createUser(r *http.Request) (
+	*model.User,
 	error,
 ) {
-	wpuser, err := s.oauthService.CreateWpUser(
-		r.Form.Get("email"),        // username
-		r.Form.Get("password"),     // password
-		"",                         // wp login blank
-		r.Form.Get("display_name"), // wp display name
-	)
-
-	if err != nil {
-		return nil, nil, err
-	}
 
 	user, err := s.oauthService.CreateUser(
-		roles.User,             // role ID
+		model.UserRole,         // role ID
 		r.Form.Get("email"),    // username
 		r.Form.Get("password"), // password
 	)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return user, wpuser, nil
+	return user, nil
 }
