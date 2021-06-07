@@ -7,13 +7,13 @@ import (
 	"strings"
 	"time"
 
+	uuid "github.com/google/uuid"
 	"github.com/mailgun/mailgun-go/v4"
 	"github.com/pariz/gountries"
 	"github.com/resonatecoop/id/log"
 	"github.com/resonatecoop/id/util"
 	pass "github.com/resonatecoop/id/util/password"
 	"github.com/resonatecoop/user-api/model"
-	uuid "github.com/satori/go.uuid"
 	"github.com/trustelem/zxcvbn"
 	"github.com/uptrace/bun"
 )

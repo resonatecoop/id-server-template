@@ -8,9 +8,9 @@ import (
 
 	//"github.com/resonatecoop/id/oauth"
 	//"github.com/resonatecoop/id/oauth"
+	uuid "github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/resonatecoop/id/util/routes"
-	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/uptrace/bun"
 )

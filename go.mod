@@ -10,6 +10,7 @@ require (
 	github.com/didip/tollbooth_negroni v0.0.0-20170928042109-a4e3efc33255
 	github.com/dlclark/regexp2 v1.4.0 // indirect
 	github.com/form3tech-oss/jwt-go v3.2.3+incompatible
+	github.com/google/uuid v1.2.0 // indirect
 	github.com/gorilla/context v1.1.1
 	github.com/gorilla/csrf v1.7.0
 	github.com/gorilla/mux v1.8.0

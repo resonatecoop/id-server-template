@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/resonatecoop/id/session"
+	"github.com/resonatecoop/id/util"
 	"github.com/resonatecoop/user-api/model"
 )
 
@@ -23,17 +24,14 @@ func (s *Service) Authenticate(token string) (*model.AccessToken, error) {
 	ctx := context.Background()
 	accessToken := new(model.AccessToken)
 
-	var result sql.Result
-	var err error
-
-	result, err = s.db.NewSelect().
+	err := s.db.NewSelect().
 		Model(accessToken).
 		Where("token = ?", token).
 		Limit(1).
-		Exec(ctx)
+		Scan(ctx)
 
 	// Not found
-	if result.RowsAffected() < 1 {
+	if err != nil {
 		return nil, ErrAccessTokenNotFound
 	}
 
@@ -43,16 +41,30 @@ func (s *Service) Authenticate(token string) (*model.AccessToken, error) {
 	}
 
 	// Extend refresh token expiration database
-	query := s.db.Model(new(model.RefreshToken)).Where("client_id = ?", accessToken.ClientID.String)
-	if accessToken.UserID.Valid {
-		query = query.Where("user_id = ?", accessToken.UserID.String)
-	} else {
-		query = query.Where("user_id IS NULL")
-	}
-	increasedExpiresAt := gorm.NowFunc().Add(
+
+	increasedExpiresAt := time.Now().Add(
 		time.Duration(s.cnf.Oauth.RefreshTokenLifetime) * time.Second,
 	)
-	if err := query.UpdateColumn("expires_at", increasedExpiresAt).Error; err != nil {
+
+	var res sql.Result
+
+	if util.IsValidUUID(accessToken.UserID.String()) {
+		res, err = s.db.NewUpdate().
+			Model(new(model.RefreshToken)).
+			Set("expires_at = ?", increasedExpiresAt).
+			Where("client_id = ?", accessToken.ClientID.String).
+			Where("user_id = ?", accessToken.UserID.String).
+			Exec(ctx)
+	} else {
+		res, err = s.db.NewUpdate().
+			Model(new(model.RefreshToken)).
+			Set("expires_at = ?", increasedExpiresAt).
+			Where("client_id = ?", accessToken.ClientID.String).
+			Where("user_id IS NULL").
+			Exec(ctx)
+	}
+
+	if err != nil {
 		return nil, err
 	}
 
@@ -62,16 +74,36 @@ func (s *Service) Authenticate(token string) (*model.AccessToken, error) {
 // ClearUserTokens deletes the user's access and refresh tokens associated with this client id
 func (s *Service) ClearUserTokens(userSession *session.UserSession) {
 	// Clear all refresh tokens with user_id and client_id
+	ctx := context.Background()
 	refreshToken := new(model.RefreshToken)
-	found := !model.RefreshTokenPreload(s.db).Where("token = ?", userSession.RefreshToken).First(refreshToken).RecordNotFound()
-	if found {
-		s.db.Unscoped().Where("client_id = ? AND user_id = ?", refreshToken.ClientID, refreshToken.UserID).Delete(model.RefreshToken{})
+
+	err := s.db.NewSelect().
+		Model(refreshToken).
+		Where("token = ?", userSession.RefreshToken).
+		Limit(1).
+		Scan(ctx)
+
+	// Found
+	if err == nil {
+		//s.db.Unscoped().Where("client_id = ? AND user_id = ?", refreshToken.ClientID, refreshToken.UserID).Delete(model.RefreshToken{})
+		_, err = s.db.NewDelete().
+			Where("client_id = ? AND user_id = ?", refreshToken.ClientID, refreshToken.UserID).
+			Exec(ctx)
 	}
 
 	// Clear all access tokens with user_id and client_id
 	accessToken := new(model.AccessToken)
-	found = !model.AccessTokenPreload(s.db).Where("token = ?", userSession.AccessToken).First(accessToken).RecordNotFound()
-	if found {
-		s.db.Unscoped().Where("client_id = ? AND user_id = ?", accessToken.ClientID, accessToken.UserID).Delete(model.AccessToken{})
+
+	err = s.db.NewSelect().
+		Model(accessToken).
+		Where("token = ?", userSession.AccessToken).
+		Limit(1).
+		Scan(ctx)
+
+	// Found
+	if err == nil {
+		_, err = s.db.NewDelete().
+			Where("client_id = ? AND user_id = ?", accessToken.ClientID, accessToken.UserID).
+			Exec(ctx)
 	}
 }

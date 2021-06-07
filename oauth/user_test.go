@@ -3,11 +3,11 @@ package oauth_test
 import (
 	"time"
 
+	uuid "github.com/google/uuid"
 	"github.com/resonatecoop/id/oauth"
 	"github.com/resonatecoop/id/util"
 	pass "github.com/resonatecoop/id/util/password"
 	"github.com/resonatecoop/user-api/model"
-	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -1,6 +1,7 @@
 package oauth
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -18,7 +19,11 @@ var (
 func (s *Service) GrantAuthorizationCode(client *model.Client, user *model.User, expiresIn int, redirectURI, scope string) (*model.AuthorizationCode, error) {
 	// Create a new authorization code
 	authorizationCode := model.NewOauthAuthorizationCode(client, user, expiresIn, redirectURI, scope)
-	if err := s.db.Create(authorizationCode).Error; err != nil {
+
+	ctx := context.Background()
+
+	_, err := s.db.NewInsert().Model(authorizationCode).Exec(ctx)
+	if err != nil {
 		return nil, err
 	}
 	authorizationCode.Client = client
@@ -30,12 +35,18 @@ func (s *Service) GrantAuthorizationCode(client *model.Client, user *model.User,
 // getValidAuthorizationCode returns a valid non expired authorization code
 func (s *Service) getValidAuthorizationCode(code, redirectURI string, client *model.Client) (*model.AuthorizationCode, error) {
 	// Fetch the auth code from the database
+	ctx := context.Background()
 	authorizationCode := new(model.AuthorizationCode)
-	notFound := model.AuthorizationCodePreload(s.db).Where("client_id = ?", client.ID).
-		Where("code = ?", code).First(authorizationCode).RecordNotFound()
 
-	// Not found
-	if notFound {
+	err := s.db.NewSelect().
+		Model(authorizationCode).
+		Where("client_id = ?", client.ID).
+		Where("code = ?", code).
+		Limit(1).
+		Scan(ctx)
+
+	// Not Found!
+	if err != nil {
 		return nil, ErrAuthorizationCodeNotFound
 	}
 

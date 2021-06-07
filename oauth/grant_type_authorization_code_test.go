@@ -6,11 +6,12 @@ import (
 	"net/url"
 	"time"
 
+	uuid "github.com/google/uuid"
 	"github.com/resonatecoop/id/oauth"
 	"github.com/resonatecoop/id/oauth/tokentypes"
 	testutil "github.com/resonatecoop/id/test-util"
 	"github.com/resonatecoop/id/util"
-	uuid "github.com/satori/go.uuid"
+	"github.com/resonatecoop/user-api/model"
 	"github.com/stretchr/testify/assert"
 )
 

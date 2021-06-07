@@ -1,14 +1,13 @@
 package oauth
 
 import (
+	"context"
 	"errors"
 	"strings"
-	"time"
 
 	"github.com/resonatecoop/id/util"
 	"github.com/resonatecoop/id/util/password"
 	"github.com/resonatecoop/user-api/model"
-	uuid "github.com/satori/go.uuid"
 	"github.com/uptrace/bun"
 )
 
@@ -30,12 +29,17 @@ func (s *Service) ClientExists(clientID string) bool {
 // FindClientByClientID looks up a client by client ID
 func (s *Service) FindClientByClientID(clientID string) (*model.Client, error) {
 	// Client IDs are case insensitive
+	ctx := context.Background()
 	client := new(model.Client)
-	notFound := s.db.Where("key = LOWER(?)", clientID).
-		First(client).RecordNotFound()
 
-	// Not found
-	if notFound {
+	err := s.db.NewSelect().
+		Model(client).
+		Where("key = LOWER(?)", clientID).
+		Limit(1).
+		Scan(ctx)
+
+	// Not Found!
+	if err != nil {
 		return nil, ErrClientNotFound
 	}
 
@@ -44,12 +48,17 @@ func (s *Service) FindClientByClientID(clientID string) (*model.Client, error) {
 
 // FindClientByRedirectURI looks up a client by redirect URI
 func (s *Service) FindClientByApplicationURL(applicationURL string) (*model.Client, error) {
+	ctx := context.Background()
 	client := new(model.Client)
-	notFound := s.db.Where("application_url = ? AND application_hostname IN (?)", applicationURL, s.cnf.Origins).
-		First(client).RecordNotFound()
 
-	// Not found
-	if notFound {
+	err := s.db.NewSelect().
+		Model(client).
+		Where("application_url = ? AND application_hostname IN (?)", applicationURL, s.cnf.Origins).
+		Limit(1).
+		Scan(ctx)
+
+	// Not Found!
+	if err != nil {
 		return nil, ErrClientNotFound
 	}
 
@@ -83,6 +92,7 @@ func (s *Service) AuthClient(clientID, secret string) (*model.Client, error) {
 }
 
 func (s *Service) createClientCommon(db *bun.DB, clientID, secret, redirectURI, applicationName, applicationHostname, applicationURL string) (*model.Client, error) {
+	ctx := context.Background()
 	// Check client ID
 	if s.ClientExists(clientID) {
 		return nil, ErrClientIDTaken
@@ -95,10 +105,6 @@ func (s *Service) createClientCommon(db *bun.DB, clientID, secret, redirectURI, 
 	}
 
 	client := &model.Client{
-		MybunModel: model.MybunModel{
-			ID:        uuid.New(),
-			CreatedAt: time.Now().UTC(),
-		},
 		Key:                 strings.ToLower(clientID),
 		Secret:              string(secretHash),
 		RedirectURI:         util.StringOrNull(redirectURI),
@@ -106,8 +112,11 @@ func (s *Service) createClientCommon(db *bun.DB, clientID, secret, redirectURI, 
 		ApplicationHostname: util.StringOrNull(strings.ToLower(applicationHostname)),
 		ApplicationURL:      util.StringOrNull(strings.ToLower(applicationURL)),
 	}
-	if err := db.Create(client).Error; err != nil {
+
+	_, err = s.db.NewInsert().Model(client).Exec(ctx)
+	if err != nil {
 		return nil, err
 	}
+
 	return client, nil
 }
