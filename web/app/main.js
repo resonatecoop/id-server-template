@@ -1,3 +1,5 @@
+/* global fetch */
+
 const choo = require('choo')
 const app = choo({ href: false }) // disable choo href routing
 
@@ -51,6 +53,7 @@ app.use((state, emitter) => {
   ]
 
   emitter.on(state.events.DOMCONTENTLOADED, () => {
+    emitter.emit(`route:${state.route}`)
     setMeta()
   })
 
@@ -59,7 +62,24 @@ app.use((state, emitter) => {
     emitter.emit(state.events.RENDER)
   })
 
+  emitter.on('route:profile', async () => {
+    try {
+      const response = await (await fetch(`https://${process.env.API_DOMAIN}/v2/user/profile`, {
+        headers: {
+          Authorization: 'Bearer ' + state.profile.token
+        }
+      })).json()
+
+      state.profile = Object.assign({}, state.profile, response.data)
+
+      emitter.emit(state.events.RENDER)
+    } catch (err) {
+      console.log(err)
+    }
+  })
+
   emitter.on(state.events.NAVIGATE, () => {
+    emitter.emit(`route:${state.route}`)
     setMeta()
   })
 
