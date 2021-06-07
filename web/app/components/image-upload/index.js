@@ -226,8 +226,11 @@ class ImageUpload extends Component {
             const formData = new FormData()
             formData.append('uploads', file)
 
-            const response = await uploadFile('/api/user/upload', {
+            const response = await uploadFile('/upload', {
               method: 'POST',
+              headers: {
+                Authorization: 'Bearer ' + this.state.profile.token
+              },
               body: formData
             }, event => {
               if (event.lengthComputable) {
