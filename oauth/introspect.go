@@ -1,10 +1,12 @@
 package oauth
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
 	"github.com/resonatecoop/id/oauth/tokentypes"
+	"github.com/resonatecoop/id/util"
 	"github.com/resonatecoop/user-api/model"
 )
 
@@ -62,6 +64,7 @@ func (s *Service) introspectToken(r *http.Request, client *model.Client) (*Intro
 
 // NewIntrospectResponseFromAccessToken ...
 func (s *Service) NewIntrospectResponseFromAccessToken(accessToken *model.AccessToken) (*IntrospectResponse, error) {
+	ctx := context.Background()
 	var introspectResponse = &IntrospectResponse{
 		Active:    true,
 		Scope:     accessToken.Scope,
@@ -69,23 +72,32 @@ func (s *Service) NewIntrospectResponseFromAccessToken(accessToken *model.Access
 		ExpiresAt: int(accessToken.ExpiresAt.Unix()),
 	}
 
-	if accessToken.ClientID.Valid {
+	if util.IsValidUUID(accessToken.ClientID.String()) {
 		client := new(model.Client)
-		notFound := s.db.Select("key").First(client, accessToken.ClientID.String).
-			RecordNotFound()
-		if notFound {
+		err := s.db.NewSelect().
+			Column("key").
+			Model(client).
+			Where("id = ?", accessToken.ClientID.String()).
+			Limit(1).
+			Scan(ctx)
+		if err != nil {
 			return nil, ErrClientNotFound
 		}
 		introspectResponse.ClientID = client.Key
 	}
 
-	if accessToken.UserID.Valid {
+	if util.IsValidUUID(accessToken.UserID.String()) {
 		user := new(model.User)
-		notFound := s.db.Select("username").Where("id = ?", accessToken.UserID.String).
-			First(user).RecordNotFound()
-		if notFound {
+		err := s.db.NewSelect().
+			Column("username").
+			Model(user).
+			Where("id = ?", accessToken.UserID.String()).
+			Limit(1).
+			Scan(ctx)
+		if err != nil {
 			return nil, ErrUserNotFound
 		}
+
 		introspectResponse.Username = user.Username
 	}
 
@@ -94,6 +106,7 @@ func (s *Service) NewIntrospectResponseFromAccessToken(accessToken *model.Access
 
 // NewIntrospectResponseFromRefreshToken ...
 func (s *Service) NewIntrospectResponseFromRefreshToken(refreshToken *model.RefreshToken) (*IntrospectResponse, error) {
+	ctx := context.Background()
 	var introspectResponse = &IntrospectResponse{
 		Active:    true,
 		Scope:     refreshToken.Scope,
@@ -101,23 +114,32 @@ func (s *Service) NewIntrospectResponseFromRefreshToken(refreshToken *model.Refr
 		ExpiresAt: int(refreshToken.ExpiresAt.Unix()),
 	}
 
-	if refreshToken.ClientID.Valid {
+	if util.IsValidUUID(refreshToken.ClientID.String()) {
 		client := new(model.Client)
-		notFound := s.db.Select("key").First(client, refreshToken.ClientID.String).
-			RecordNotFound()
-		if notFound {
+		err := s.db.NewSelect().
+			Column("key").
+			Model(client).
+			Where("id = ?", refreshToken.ClientID.String()).
+			Limit(1).
+			Scan(ctx)
+		if err != nil {
 			return nil, ErrClientNotFound
 		}
 		introspectResponse.ClientID = client.Key
 	}
 
-	if refreshToken.UserID.Valid {
+	if util.IsValidUUID(refreshToken.UserID.String()) {
 		user := new(model.User)
-		notFound := s.db.Select("username").Where("id = ?", refreshToken.UserID.String).
-			First(user, refreshToken.UserID.String).RecordNotFound()
-		if notFound {
+		err := s.db.NewSelect().
+			Column("username").
+			Model(user).
+			Where("id = ?", refreshToken.UserID.String()).
+			Limit(1).
+			Scan(ctx)
+		if err != nil {
 			return nil, ErrUserNotFound
 		}
+
 		introspectResponse.Username = user.Username
 	}
 

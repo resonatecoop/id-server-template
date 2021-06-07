@@ -25,7 +25,7 @@ require (
 	github.com/pariz/gountries v0.0.0-20200430155801-1c6a393df9c7
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/phyber/negroni-gzip v1.0.0
-	github.com/resonatecoop/user-api v0.0.0-20210604103114-de956025c449
+	github.com/resonatecoop/user-api v0.0.0-20210607123548-7b3a2e214783
 	github.com/rs/xid v1.3.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/stretchr/testify v1.7.0
@@ -33,9 +33,9 @@ require (
 	github.com/thanhpk/randstr v1.0.4
 	github.com/trustelem/zxcvbn v1.0.1
 	github.com/unrolled/secure v1.0.9
-	github.com/uptrace/bun v0.1.16
-	github.com/uptrace/bun/dialect/pgdialect v0.1.15
-	github.com/uptrace/bun/extra/bundebug v0.1.15
+	github.com/uptrace/bun v0.1.17
+	github.com/uptrace/bun/dialect/pgdialect v0.1.17
+	github.com/uptrace/bun/extra/bundebug v0.1.17
 	github.com/urfave/cli v1.22.5
 	github.com/urfave/negroni v1.0.0
 	go.etcd.io/etcd v0.0.0-20191023171146-3cf2f69b5738

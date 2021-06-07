@@ -1,6 +1,7 @@
 package oauth
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
@@ -14,6 +15,7 @@ var (
 )
 
 func (s *Service) authorizationCodeGrant(r *http.Request, client *model.Client) (*AccessTokenResponse, error) {
+	ctx := context.Background()
 	// Fetch the authorization code
 	authorizationCode, err := s.getValidAuthorizationCode(
 		r.Form.Get("code"),
@@ -35,7 +37,15 @@ func (s *Service) authorizationCodeGrant(r *http.Request, client *model.Client) 
 	}
 
 	// Delete the authorization code
-	s.db.Unscoped().Delete(&authorizationCode)
+	//s.db.Unscoped().Delete(&authorizationCode)
+
+	_, err = s.db.NewDelete().
+		Model(authorizationCode).
+		Exec(ctx)
+
+	if err != nil {
+		return nil, err
+	}
 
 	// Create response
 	accessTokenResponse, err := NewAccessTokenResponse(

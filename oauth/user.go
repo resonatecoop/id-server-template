@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	uuid "github.com/google/uuid"
 	"github.com/mailgun/mailgun-go/v4"
 	"github.com/pariz/gountries"
 	"github.com/resonatecoop/id/log"
@@ -85,19 +84,17 @@ func (s *Service) UserExists(username string) bool {
 	return err == nil
 }
 
-func (s *Service) LoginTaken(login string) bool {
-	_, err := s.FindWpUserByLogin(login)
-	return err == nil
-}
-
 // FindUserByUsername looks up a user by username (email)
 func (s *Service) FindUserByUsername(username string) (*model.User, error) {
+	ctx := context.Background()
 	// Usernames are case insensitive
 	user := new(model.User)
-	notFound := s.db.Where("username = LOWER(?)", username).
-		First(user).RecordNotFound()
+	err := s.db.NewSelect().
+		Where("username = LOWER(?)", username).
+		Limit(1).
+		Scan(ctx)
 
-	if notFound {
+	if err != nil {
 		return nil, ErrUserNotFound
 	}
 
@@ -167,13 +164,19 @@ func (s *Service) UpdateUsernameTx(tx *bun.DB, user *model.User, username string
 }
 
 func (s *Service) ConfirmUserEmail(email string) error {
+	ctx := context.Background()
 	user, err := s.FindUserByUsername(email)
 
 	if err != nil {
 		return err
 	}
 
-	return s.db.Model(user).UpdateColumn("email_confirmed", true).Error
+	_, err = s.db.NewUpdate().
+		Model(user).
+		Set("email_confirmed = ?", true).
+		Exec(ctx)
+
+	return err
 }
 
 func (s *Service) createUserCommon(db *bun.DB, roleID, username, password string) (*model.User, error) {
@@ -186,10 +189,6 @@ func (s *Service) createUserCommon(db *bun.DB, roleID, username, password string
 	}
 
 	user := &model.User{
-		MyGormModel: model.MyGormModel{
-			ID:        uuid.New(),
-			CreatedAt: time.Now().UTC(),
-		},
 		RoleID:   util.StringOrNull(roleID),
 		Username: strings.ToLower(username),
 		Password: util.StringOrNull(""),
@@ -298,6 +297,8 @@ func (s *Service) deleteUserCommon(db *bun.DB, user *model.User, password string
 }
 
 func (s *Service) setPasswordCommon(db *bun.DB, user *model.User, password string) error {
+	ctx := context.Background()
+
 	if len(password) < MinPasswordLength {
 		return ErrPasswordTooShort
 	}
@@ -319,11 +320,19 @@ func (s *Service) setPasswordCommon(db *bun.DB, user *model.User, password strin
 		return err
 	}
 
+	userUpdates := &model.User{
+		IDRecord: &model.User.IDRecord{
+			ID:        user.IDRecord.ID,
+			UpdatedAt: time.Now().UTC(),
+		},
+		Password: util.StringOrNull(passwordHash),
+	}
+
 	// Set the password on the user object
-	err = db.Model(user).UpdateColumns(model.User{
-		Password:    util.StringOrNull(string(passwordHash)),
-		MyGormModel: model.MyGormModel{UpdatedAt: time.Now().UTC()},
-	}).Error
+	_, err = s.db.NewUpdate().
+		Model(userUpdates).
+		WherePK().
+		Exec(ctx)
 
 	if err != nil {
 		return err

@@ -19,7 +19,7 @@ func NewService(cnf *config.Config, db *bun.DB) *Service {
 	return &Service{
 		cnf:          cnf,
 		db:           db,
-		allowedRoles: []model.AccessRole{model.AdminRole, model.UserRole},
+		allowedRoles: []model.AccessRole{model.SuperAdminRole, model.AdminRole, model.TenantAdminRole, model.LabelRole, model.ArtistRole, model.UserRole},
 	}
 }
 
@@ -34,9 +34,9 @@ func (s *Service) RestrictToRoles(allowedRoles ...model.AccessRole) {
 }
 
 // IsRoleAllowed returns true if the role is allowed to use this service
-func (s *Service) IsRoleAllowed(role model.AccessRole) bool {
+func (s *Service) IsRoleAllowed(role int32) bool {
 	for _, allowedRole := range s.allowedRoles {
-		if role == allowedRole {
+		if role == int32(allowedRole) {
 			return true
 		}
 	}

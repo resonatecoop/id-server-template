@@ -53,6 +53,7 @@ func (s *Service) GrantAccessToken(client *model.Client, user *model.User, expir
 	_, err = tx.NewInsert().
 		Model(accessToken).
 		Exec(ctx)
+
 	if err != nil {
 		tx.Rollback() // rollback the transaction
 		return nil, err

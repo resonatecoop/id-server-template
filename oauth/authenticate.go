@@ -2,7 +2,6 @@ package oauth
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"time"
 
@@ -46,17 +45,17 @@ func (s *Service) Authenticate(token string) (*model.AccessToken, error) {
 		time.Duration(s.cnf.Oauth.RefreshTokenLifetime) * time.Second,
 	)
 
-	var res sql.Result
+	//var res sql.Result
 
 	if util.IsValidUUID(accessToken.UserID.String()) {
-		res, err = s.db.NewUpdate().
+		_, err = s.db.NewUpdate().
 			Model(new(model.RefreshToken)).
 			Set("expires_at = ?", increasedExpiresAt).
 			Where("client_id = ?", accessToken.ClientID.String).
 			Where("user_id = ?", accessToken.UserID.String).
 			Exec(ctx)
 	} else {
-		res, err = s.db.NewUpdate().
+		_, err = s.db.NewUpdate().
 			Model(new(model.RefreshToken)).
 			Set("expires_at = ?", increasedExpiresAt).
 			Where("client_id = ?", accessToken.ClientID.String).

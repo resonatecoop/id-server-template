@@ -5,7 +5,7 @@ import "github.com/resonatecoop/user-api/model"
 // Login creates an access token and refresh token for a user (logs him/her in)
 func (s *Service) Login(client *model.Client, user *model.User, scope string) (*model.AccessToken, *model.RefreshToken, error) {
 	// Return error if user's role is not allowed to use this service
-	if !s.IsRoleAllowed(user.RoleID.String) {
+	if !s.IsRoleAllowed(user.RoleID) {
 		// For security reasons, return a general error message
 		return nil, nil, ErrInvalidUsernameOrPassword
 	}

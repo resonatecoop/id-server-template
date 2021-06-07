@@ -194,7 +194,7 @@ func (_m *ServiceInterface) FindUserByUsername(username string) (*model.User, er
 
 	return r0, r1
 }
-func (_m *ServiceInterface) CreateUser(roleID string, username string, password string) (*model.User, error) {
+func (_m *ServiceInterface) CreateUser(roleID int32, username string, password string) (*model.User, error) {
 	ret := _m.Called(roleID, username, password)
 
 	var r0 *model.User
@@ -215,7 +215,7 @@ func (_m *ServiceInterface) CreateUser(roleID string, username string, password 
 
 	return r0, r1
 }
-func (_m *ServiceInterface) CreateUserTx(tx *bun.DB, roleID string, username string, password string) (*model.User, error) {
+func (_m *ServiceInterface) CreateUserTx(tx *bun.DB, roleID int32, username string, password string) (*model.User, error) {
 	ret := _m.Called(tx, roleID, username, password)
 
 	var r0 *model.User

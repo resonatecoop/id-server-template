@@ -14,7 +14,7 @@ type ServiceInterface interface {
 	// Exported methods
 	GetConfig() *config.Config
 	RestrictToRoles(allowedRoles ...string)
-	IsRoleAllowed(role string) bool
+	IsRoleAllowed(role int32) bool
 	FindRoleByID(id int8) (*model.AccessRole, error)
 	GetRoutes() []routes.Route
 	RegisterRoutes(router *mux.Router, prefix string)
@@ -32,8 +32,8 @@ type ServiceInterface interface {
 	UserExists(username string) bool
 	LoginTaken(login string) bool
 	FindUserByUsername(username string) (*model.User, error)
-	CreateUser(roleID int8, username, password string) (*model.User, error)
-	CreateUserTx(tx *bun.DB, roleID, username, password string) (*model.User, error)
+	CreateUser(roleID int32, username, password string) (*model.User, error)
+	CreateUserTx(tx *bun.DB, roleID int32, username, password string) (*model.User, error)
 	DeleteUser(user *model.User, password string) error
 	DeleteUserTx(tx *bun.DB, user *model.User, password string) error
 	FindNicknameByWpUserID(id uint64) (string, error)

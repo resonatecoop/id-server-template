@@ -1,6 +1,7 @@
 package oauth
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -20,33 +21,55 @@ var (
 // GetOrCreateRefreshToken retrieves an existing refresh token, if expired,
 // the token gets deleted and new refresh token is created
 func (s *Service) GetOrCreateRefreshToken(client *model.Client, user *model.User, expiresIn int, scope string) (*model.RefreshToken, error) {
+	ctx := context.Background()
 	// Try to fetch an existing refresh token first
 	refreshToken := new(model.RefreshToken)
-	query := model.RefreshTokenPreload(s.db).Where("client_id = ?", client.ID)
-	if user != nil && len([]rune(user.ID)) > 0 {
-		query = query.Where("user_id = ?", user.ID)
+	// query := model.RefreshTokenPreload(s.db).Where("client_id = ?", client.ID)
+
+	var err error
+
+	if user != nil && len(user.ID.String()) > 0 {
+		err = s.db.NewSelect().
+			Model(refreshToken).
+			Where("client_id = ?", client.ID).
+			Where("user_id = ?", user.ID).
+			Limit(1).
+			Scan(ctx)
 	} else {
-		query = query.Where("user_id IS NULL")
+		err = s.db.NewSelect().
+			Model(refreshToken).
+			Where("client_id = ?", client.ID).
+			Where("user_id IS NULL").
+			Limit(1).
+			Scan(ctx)
 	}
-	found := !query.First(refreshToken).RecordNotFound()
 
 	// Check if the token is expired, if found
 	var expired bool
-	if found {
+	if err == nil {
 		expired = time.Now().UTC().After(refreshToken.ExpiresAt)
 	}
 
 	// If the refresh token has expired, delete it
 	if expired {
-		s.db.Unscoped().Delete(refreshToken)
+		_, dberr := s.db.NewDelete().
+			Model(refreshToken).
+			Exec(ctx)
+		//		s.db.Unscoped().Delete(refreshToken)
 	}
 
 	// Create a new refresh token if it expired or was not found
-	if expired || !found {
+	if expired || (err != nil) {
 		refreshToken = model.NewOauthRefreshToken(client, user, expiresIn, scope)
-		if err := s.db.Create(refreshToken).Error; err != nil {
+
+		_, err = s.db.NewInsert().
+			Model(refreshToken).
+			Exec(ctx)
+
+		if err != nil {
 			return nil, err
 		}
+
 		refreshToken.Client = client
 		refreshToken.User = user
 	}
@@ -56,13 +79,19 @@ func (s *Service) GetOrCreateRefreshToken(client *model.Client, user *model.User
 
 // GetValidRefreshToken returns a valid non expired refresh token
 func (s *Service) GetValidRefreshToken(token string, client *model.Client) (*model.RefreshToken, error) {
+	ctx := context.Background()
 	// Fetch the refresh token from the database
 	refreshToken := new(model.RefreshToken)
-	notFound := model.RefreshTokenPreload(s.db).Where("client_id = ?", client.ID).
-		Where("token = ?", token).First(refreshToken).RecordNotFound()
+
+	err := s.db.NewSelect().
+		Model(refreshToken).
+		Where("client_id = ?", client.ID).
+		Where("token = ?", token).
+		Limit(1).
+		Scan(ctx)
 
 	// Not found
-	if notFound {
+	if err != nil {
 		return nil, ErrRefreshTokenNotFound
 	}
 

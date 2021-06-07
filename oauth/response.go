@@ -1,6 +1,9 @@
 package oauth
 
-import "github.com/resonatecoop/user-api/model"
+import (
+	"github.com/resonatecoop/id/util"
+	"github.com/resonatecoop/user-api/model"
+)
 
 // AccessTokenResponse ...
 type AccessTokenResponse struct {
@@ -30,11 +33,11 @@ func NewAccessTokenResponse(accessToken *model.AccessToken, refreshToken *model.
 		TokenType:   theTokenType,
 		Scope:       accessToken.Scope,
 	}
-	if accessToken.UserID.Valid {
-		response.UserID = accessToken.UserID.String
+	if util.IsValidUUID(accessToken.UserID.String()) {
+		response.UserID = accessToken.UserID.String()
 	}
 	if refreshToken != nil {
-		response.RefreshToken = refreshToken.Token
+		response.RefreshToken = refreshToken.Token.String()
 	}
 	return response, nil
 }
