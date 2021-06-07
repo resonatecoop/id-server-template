@@ -15,7 +15,7 @@ import (
 )
 
 func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
-	sessionService, client, user, wpuser, nickname, country, role, err := s.profileCommon(r)
+	sessionService, client, user, wpuser, nickname, country, role, accessToken, err := s.profileCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -40,6 +40,7 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 		Country:        gountry.Codes.Alpha2,
 		Role:           role,
 		EmailConfirmed: user.EmailConfirmed,
+		Token:          accessToken,
 	}
 
 	initialState, err := json.Marshal(NewInitialState(
@@ -76,7 +77,7 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) profile(w http.ResponseWriter, r *http.Request) {
-	sessionService, _, user, wpuser, _, _, _, err := s.profileCommon(r)
+	sessionService, _, user, wpuser, _, _, _, _, err := s.profileCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -241,56 +242,56 @@ func (s *Service) profileCommon(r *http.Request) (
 	string,
 	string,
 	string,
+	string,
 	error,
 ) {
 	// Get the session service from the request context
 	sessionService, err := getSessionService(r)
 	if err != nil {
-		return nil, nil, nil, nil, "", "", "", err
+		return nil, nil, nil, nil, "", "", "", "", err
 	}
 
 	// Get the client from the request context
 	client, err := getClient(r)
 	if err != nil {
-		return nil, nil, nil, nil, "", "", "", err
+		return nil, nil, nil, nil, "", "", "", "", err
 	}
 
 	// Get the user session
 	userSession, err := sessionService.GetUserSession()
 	if err != nil {
-		return nil, nil, nil, nil, "", "", "", err
+		return nil, nil, nil, nil, "", "", "", "", err
 	}
 
+	accessToken := userSession.AccessToken
+	username := userSession.Username
+
 	// Fetch the user
-	user, err := s.oauthService.FindUserByUsername(
-		userSession.Username,
-	)
+	user, err := s.oauthService.FindUserByUsername(username)
 	if err != nil {
-		return nil, nil, nil, nil, "", "", "", err
+		return nil, nil, nil, nil, "", "", "", "", err
 	}
 
 	// Fetch the wp user
-	wpuser, err := s.oauthService.FindWpUserByEmail(
-		userSession.Username,
-	)
+	wpuser, err := s.oauthService.FindWpUserByEmail(username)
 	if err != nil {
-		return nil, nil, nil, nil, "", "", "", err
+		return nil, nil, nil, nil, "", "", "", "", err
 	}
 
 	nickname, err := s.oauthService.FindWpUserMetaValue(wpuser.ID, "nickname")
 	if err != nil {
-		return nil, nil, nil, nil, "", "", "", err
+		return nil, nil, nil, nil, "", "", "", "", err
 	}
 
 	country, err := s.oauthService.FindWpUserMetaValue(wpuser.ID, "country")
 	if err != nil {
-		return nil, nil, nil, nil, "", "", "", err
+		return nil, nil, nil, nil, "", "", "", "", err
 	}
 
 	role, err := s.oauthService.FindWpUserMetaValue(wpuser.ID, "role")
 	if err != nil {
-		return nil, nil, nil, nil, "", "", "", err
+		return nil, nil, nil, nil, "", "", "", "", err
 	}
 
-	return sessionService, client, user, wpuser, nickname, country, role, nil
+	return sessionService, client, user, wpuser, nickname, country, role, accessToken, nil
 }

@@ -14,7 +14,7 @@ import (
 )
 
 func (s *Service) accountForm(w http.ResponseWriter, r *http.Request) {
-	sessionService, client, user, wpuser, nickname, country, role, err := s.profileCommon(r)
+	sessionService, client, user, wpuser, nickname, country, role, _, err := s.profileCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -75,7 +75,7 @@ func (s *Service) accountForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) account(w http.ResponseWriter, r *http.Request) {
-	sessionService, _, user, wpuser, _, _, _, err := s.profileCommon(r)
+	sessionService, _, user, wpuser, _, _, _, _, err := s.profileCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

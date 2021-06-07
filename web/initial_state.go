@@ -12,6 +12,7 @@ type Profile struct {
 	Country        string `json:"country"`
 	Role           string `json:"role"`
 	EmailConfirmed bool   `json:"emailConfirmed"`
+	Token          string `json:"token"`
 }
 
 type InitialState struct {
