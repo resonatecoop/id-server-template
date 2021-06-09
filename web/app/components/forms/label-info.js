@@ -12,8 +12,8 @@ class LabelInfoForm extends Component {
    * @param {Number} state - The choo app state
    * @param {Function} emit - Emit event on choo app
    */
-  constructor (name, state, emit) {
-    super(name)
+  constructor (id, state, emit) {
+    super(id)
 
     this.emit = emit
     this.state = state

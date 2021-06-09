@@ -125,11 +125,7 @@ class ProfileForm extends Component {
 
       this.rerender()
 
-      if (this.local.form.valid) {
-        return this.local.machine.emit('form:valid')
-      }
-
-      return this.local.machine.emit('form:invalid')
+      this.local.machine.emit(`form:${this.local.form.valid ? 'valid' : 'invalid'}`)
     })
 
     this.validator = validateFormdata()
