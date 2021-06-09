@@ -14,7 +14,7 @@ function javascript () {
     debug: true,
     transform: [
       [
-        './web/app/lib/envlocalify', { NODE_ENV: 'development', global: true }
+        '@resonate/envlocalify', { NODE_ENV: 'development', global: true }
       ],
       ['babelify', {
         presets: ['@babel/preset-env'],
