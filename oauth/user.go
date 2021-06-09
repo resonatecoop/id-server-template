@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/mailgun/mailgun-go/v4"
-	"github.com/pariz/gountries"
 	"github.com/resonatecoop/id/log"
 	"github.com/resonatecoop/id/util"
 	pass "github.com/resonatecoop/id/util/password"
@@ -76,6 +75,10 @@ var (
 	ErrEmailNotFound = errors.New("We can't find an account registered with that address or username")
 	// ErrAccountDeletionFailed
 	ErrAccountDeletionFailed = errors.New("Account could not be deleted. Please reach to us now")
+	// ErrEmailAsLogin
+	ErrEmailAsLogin = errors.New("Username cannot be an email address")
+	// ErrCountryNotFound
+	ErrCountryNotFound = errors.New("Country cannot be found")
 )
 
 // UserExists returns true if user exists
@@ -101,13 +104,30 @@ func (s *Service) FindUserByUsername(username string) (*model.User, error) {
 	return user, nil
 }
 
+func (s *Service) FindUserByEmail(email string) (*model.User, error) {
+	ctx := context.Background()
+	user := new(model.User)
+	err := s.db.NewSelect().
+		Model(user).
+		Where("user_email = ?", email).
+		Limit(1).
+		Scan(ctx)
+
+	// Not found
+	if err != nil {
+		return nil, ErrUserNotFound
+	}
+
+	return user, nil
+}
+
 // CreateUser saves a new user to database
-func (s *Service) CreateUser(roleID, username, password string) (*model.User, error) {
+func (s *Service) CreateUser(roleID int32, username, password string) (*model.User, error) {
 	return s.createUserCommon(s.db, roleID, username, password)
 }
 
 // CreateUserTx saves a new user to database using injected db object
-func (s *Service) CreateUserTx(tx *bun.DB, roleID, username, password string) (*model.User, error) {
+func (s *Service) CreateUserTx(tx *bun.DB, roleID int32, username, password string) (*model.User, error) {
 	return s.createUserCommon(tx, roleID, username, password)
 }
 
@@ -179,7 +199,9 @@ func (s *Service) ConfirmUserEmail(email string) error {
 	return err
 }
 
-func (s *Service) createUserCommon(db *bun.DB, roleID, username, password string) (*model.User, error) {
+func (s *Service) createUserCommon(db *bun.DB, roleID int32, username, password string) (*model.User, error) {
+	ctx := context.Background()
+
 	if password == "" {
 		return nil, ErrPasswordRequired
 	}
@@ -189,7 +211,7 @@ func (s *Service) createUserCommon(db *bun.DB, roleID, username, password string
 	}
 
 	user := &model.User{
-		RoleID:   util.StringOrNull(roleID),
+		RoleID:   roleID,
 		Username: strings.ToLower(username),
 		Password: util.StringOrNull(""),
 	}
@@ -229,7 +251,11 @@ func (s *Service) createUserCommon(db *bun.DB, roleID, username, password string
 	}
 
 	// Create the user
-	if err := db.Create(user).Error; err != nil {
+	_, err = db.NewInsert().
+		Model(user).
+		Exec(ctx)
+
+	if err != nil {
 		return nil, err
 	}
 
@@ -247,6 +273,7 @@ func (s *Service) DeleteUserTx(tx *bun.DB, user *model.User, password string) er
 }
 
 func (s *Service) deleteUserCommon(db *bun.DB, user *model.User, password string) error {
+	ctx := context.Background()
 	// Check that the password is set
 	/*
 		if !user.Password.Valid {
@@ -260,7 +287,12 @@ func (s *Service) deleteUserCommon(db *bun.DB, user *model.User, password string
 	*/
 
 	// will set deleted_at to current time
-	if db.Delete(&user).Error != nil {
+	_, err := db.NewUpdate().
+		Model(&user).
+		Set("DeletedAt", time.Now().UTC()).
+		Exec(ctx)
+
+	if err != nil {
 		return ErrAccountDeletionFailed
 	}
 
@@ -277,7 +309,7 @@ func (s *Service) deleteUserCommon(db *bun.DB, user *model.User, password string
 	recipient := email.Recipient
 	message := mg.NewMessage(sender, subject, body, recipient)
 	message.SetTemplate(email.Template) // set mailgun template
-	err := message.AddTemplateVariable("email", recipient)
+	err = message.AddTemplateVariable("email", recipient)
 
 	if err != nil {
 		log.ERROR.Print(err)
@@ -321,11 +353,11 @@ func (s *Service) setPasswordCommon(db *bun.DB, user *model.User, password strin
 	}
 
 	userUpdates := &model.User{
-		IDRecord: &model.User.IDRecord{
+		IDRecord: model.IDRecord{
 			ID:        user.IDRecord.ID,
 			UpdatedAt: time.Now().UTC(),
 		},
-		Password: util.StringOrNull(passwordHash),
+		Password: util.StringOrNull(string(passwordHash)),
 	}
 
 	// Set the password on the user object
@@ -370,25 +402,26 @@ func (s *Service) setPasswordCommon(db *bun.DB, user *model.User, password strin
 	return nil
 }
 
-// Update wp user country (resolve from common name and official name, fallback to alpha code otherwise)
-func (s *Service) UpdateUserCountry(user *model.User, country string) error {
-	// validate country name
-	query := gountries.New()
-	_, err := query.FindCountryByName(strings.ToLower(country))
+// // Update wp user country (resolve from common name and official name, fallback to alpha code otherwise)
+// func (s *Service) UpdateUserCountry(user *model.User, country string) error {
+// 	// validate country name
+// 	query := gountries.New()
+// 	_, err := query.FindCountryByName(strings.ToLower(country))
 
-	if err != nil {
-		// fallback to code
-		result, err := query.FindCountryByAlpha(strings.ToLower(country))
-		if err != nil {
-			return ErrCountryNotFound
-		}
-		country = result.Name.Common
-	}
+// 	if err != nil {
+// 		// fallback to code
+// 		result, err := query.FindCountryByAlpha(strings.ToLower(country))
+// 		if err != nil {
+// 			return ErrCountryNotFound
+// 		}
+// 		country = result.Name.Common
+// 	}
 
-	return s.UpdateUserMetaValue(user.ID, "country", country)
-}
+// 	return s.UpdateUserMetaValue(user.ID, "country", country)
+// }
 
 func (s *Service) updateUsernameCommon(db *bun.DB, user *model.User, username string) error {
+	ctx := context.Background()
 	if username == "" {
 		return ErrCannotSetEmptyUsername
 	}
@@ -396,5 +429,9 @@ func (s *Service) updateUsernameCommon(db *bun.DB, user *model.User, username st
 	if s.UserExists(username) {
 		return ErrUsernameTaken
 	}
-	return db.Model(user).UpdateColumn("username", strings.ToLower(username)).Error
+	_, err := db.NewUpdate().
+		Model(user).
+		Set("username", strings.ToLower(username)).
+		Exec(ctx)
+	return err
 }

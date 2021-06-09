@@ -50,12 +50,17 @@ func (s *Service) GetOrCreateRefreshToken(client *model.Client, user *model.User
 		expired = time.Now().UTC().After(refreshToken.ExpiresAt)
 	}
 
+	var dberr error
 	// If the refresh token has expired, delete it
 	if expired {
-		_, dberr := s.db.NewDelete().
+		_, dberr = s.db.NewDelete().
 			Model(refreshToken).
 			Exec(ctx)
 		//		s.db.Unscoped().Delete(refreshToken)
+	}
+
+	if dberr != nil {
+		return nil, dberr
 	}
 
 	// Create a new refresh token if it expired or was not found

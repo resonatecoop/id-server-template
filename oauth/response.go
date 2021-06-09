@@ -37,7 +37,7 @@ func NewAccessTokenResponse(accessToken *model.AccessToken, refreshToken *model.
 		response.UserID = accessToken.UserID.String()
 	}
 	if refreshToken != nil {
-		response.RefreshToken = refreshToken.Token.String()
+		response.RefreshToken = refreshToken.Token
 	}
 	return response, nil
 }

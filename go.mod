@@ -10,24 +10,21 @@ require (
 	github.com/didip/tollbooth_negroni v0.0.0-20170928042109-a4e3efc33255
 	github.com/dlclark/regexp2 v1.4.0 // indirect
 	github.com/form3tech-oss/jwt-go v3.2.3+incompatible
-	github.com/google/uuid v1.2.0 // indirect
+	github.com/google/uuid v1.2.0
 	github.com/gorilla/context v1.1.1
 	github.com/gorilla/csrf v1.7.0
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/sessions v1.2.1
-	github.com/gosimple/slug v1.9.0
 	github.com/hashicorp/consul/api v1.8.1
 	github.com/jinzhu/gorm v1.9.16
 	github.com/lib/pq v1.10.2
 	github.com/mailgun/mailgun-go/v4 v4.5.1
-	github.com/mattn/go-sqlite3 v1.14.7
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c
 	github.com/pariz/gountries v0.0.0-20200430155801-1c6a393df9c7
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/phyber/negroni-gzip v1.0.0
-	github.com/resonatecoop/user-api v0.0.0-20210607123548-7b3a2e214783
+	github.com/resonatecoop/user-api v0.0.0-20210608211653-531c9c610cc9
 	github.com/rs/xid v1.3.0
-	github.com/satori/go.uuid v1.2.0
 	github.com/stretchr/testify v1.7.0
 	github.com/test-go/testify v1.1.4 // indirect
 	github.com/thanhpk/randstr v1.0.4
