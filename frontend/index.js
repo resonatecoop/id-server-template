@@ -4,7 +4,7 @@ const choo = require('choo')
 const app = choo({ href: false }) // disable choo href routing
 
 const { isBrowser } = require('browser-or-node')
-const setTitle = require('./lib/title')
+const setTitle = require('./src/lib/title')
 
 if (isBrowser) {
   require('web-animations-js/web-animations.min')
@@ -106,23 +106,23 @@ app.use((state, emitter) => {
   }
 })
 
-app.use(require('./plugins/notifications')())
+app.use(require('./src/plugins/notifications')())
 
 // layouts
-const layout = require('./layouts/default')
-const layoutNarrow = require('./layouts/narrow')
+const layout = require('./src/layouts/default')
+const layoutNarrow = require('./src/layouts/narrow')
 
 // choo routes
-app.route('/', layout(require('./views/home')))
-app.route('/authorize', layoutNarrow(require('./views/authorize')))
-app.route('/join', layoutNarrow(require('./views/join')))
-app.route('/login', layoutNarrow(require('./views/login')))
-app.route('/password-reset', layoutNarrow(require('./views/password-reset')))
-app.route('/email-confirmation', layoutNarrow(require('./views/email-confirmation')))
-app.route('/account-settings', layout(require('./views/account-settings')))
-app.route('/welcome', layoutNarrow(require('./views/welcome')))
-app.route('/profile', layoutNarrow(require('./views/profile')))
-app.route('/profile/new', layoutNarrow(require('./views/profile/new')))
-app.route('*', layoutNarrow(require('./views/404')))
+app.route('/', layout(require('./src/views/home')))
+app.route('/authorize', layoutNarrow(require('./src/views/authorize')))
+app.route('/join', layoutNarrow(require('./src/views/join')))
+app.route('/login', layoutNarrow(require('./src/views/login')))
+app.route('/password-reset', layoutNarrow(require('./src/views/password-reset')))
+app.route('/email-confirmation', layoutNarrow(require('./src/views/email-confirmation')))
+app.route('/account-settings', layout(require('./src/views/account-settings')))
+app.route('/welcome', layoutNarrow(require('./src/views/welcome')))
+app.route('/profile', layoutNarrow(require('./src/views/profile')))
+app.route('/profile/new', layoutNarrow(require('./src/views/profile/new')))
+app.route('*', layoutNarrow(require('./src/views/404')))
 
 module.exports = app.mount('#app')

@@ -1,8 +1,8 @@
 @import '@resonate/tachyons';
-@import './components/progress-bar/index.css';
-@import './components/image-upload/index.css';
-@import './components/autocomplete-typeahead/index.css';
-@import './components/notifications/index.css';
+@import './src/components/progress-bar/index.css';
+@import './src/components/image-upload/index.css';
+@import './src/components/autocomplete-typeahead/index.css';
+@import './src/components/notifications/index.css';
 
 .dropdown-navigation li {
   position: relative;
