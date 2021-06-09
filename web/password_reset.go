@@ -208,17 +208,17 @@ func (s *Service) passwordResetUpdatePassword(r *http.Request) error {
 		return err
 	}
 
-	wpuser, err := s.oauthService.FindWpUserByEmail(email)
+	// wpuser, err := s.oauthService.FindWpUserByEmail(email)
 
-	if err != nil {
-		return err
-	}
+	// if err != nil {
+	// 	return err
+	// }
 
-	err = s.oauthService.SetWpPassword(wpuser, r.Form.Get("password_new"))
+	// err = s.oauthService.SetWpPassword(wpuser, r.Form.Get("password_new"))
 
-	if err != nil {
-		return err
-	}
+	// if err != nil {
+	// 	return err
+	// }
 
 	softDelete := true
 	err = s.oauthService.DeleteEmailToken(emailToken, softDelete)

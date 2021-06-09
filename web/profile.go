@@ -11,10 +11,11 @@ import (
 	"github.com/pariz/gountries"
 	"github.com/resonatecoop/id/session"
 	"github.com/resonatecoop/id/util/response"
+	"github.com/resonatecoop/user-api/model"
 )
 
 func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
-	sessionService, client, user, wpuser, nickname, country, err := s.profileCommon(r)
+	sessionService, client, user, err := s.profileCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -30,13 +31,13 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 	q := gountries.New()
 	countries := q.FindAllCountries()
 
-	gountry, _ := q.FindCountryByName(strings.ToLower(country))
+	// gountry, _ := q.FindCountryByName(strings.ToLower(country))
 
 	profile := &Profile{
-		ID:             wpuser.ID,
-		Email:          wpuser.Email,
-		DisplayName:    nickname,
-		Country:        gountry.Codes.Alpha2,
+		ID:             user.ID.String(),
+		Email:          user.Email,
+		DisplayName:    user.FullName,
+		Country:        user.Country,
 		EmailConfirmed: user.EmailConfirmed,
 	}
 
@@ -74,7 +75,7 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) profile(w http.ResponseWriter, r *http.Request) {
-	sessionService, _, user, wpuser, _, _, err := s.profileCommon(r)
+	sessionService, _, user, err := s.profileCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -136,54 +137,54 @@ func (s *Service) profile(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		if r.Form.Get("nickname") != "" {
-			// update wpuser nickname
-			if s.oauthService.UpdateWpUserMetaValue(
-				wpuser.ID,
-				"nickname",
-				r.Form.Get("nickname"),
-			); err != nil {
-				switch r.Header.Get("Accept") {
-				case "application/json":
-					response.Error(w, err.Error(), http.StatusBadRequest)
-				default:
-					err = sessionService.SetFlashMessage(&session.Flash{
-						Type:    "Error",
-						Message: err.Error(),
-					})
-					if err != nil {
-						http.Error(w, err.Error(), http.StatusInternalServerError)
-						return
-					}
-					http.Redirect(w, r, r.RequestURI, http.StatusFound)
-				}
-				return
-			}
-		}
+		// if r.Form.Get("nickname") != "" {
+		// 	// update wpuser nickname
+		// 	if s.oauthService.UpdateWpUserMetaValue(
+		// 		wpuser.ID,
+		// 		"nickname",
+		// 		r.Form.Get("nickname"),
+		// 	); err != nil {
+		// 		switch r.Header.Get("Accept") {
+		// 		case "application/json":
+		// 			response.Error(w, err.Error(), http.StatusBadRequest)
+		// 		default:
+		// 			err = sessionService.SetFlashMessage(&session.Flash{
+		// 				Type:    "Error",
+		// 				Message: err.Error(),
+		// 			})
+		// 			if err != nil {
+		// 				http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 				return
+		// 			}
+		// 			http.Redirect(w, r, r.RequestURI, http.StatusFound)
+		// 		}
+		// 		return
+		// 	}
+		// }
 
-		if r.Form.Get("country") != "" {
-			// update wpuser country
-			if s.oauthService.UpdateWpUserCountry(
-				wpuser,
-				r.Form.Get("country"),
-			); err != nil {
-				switch r.Header.Get("Accept") {
-				case "application/json":
-					response.Error(w, err.Error(), http.StatusBadRequest)
-				default:
-					err = sessionService.SetFlashMessage(&session.Flash{
-						Type:    "Error",
-						Message: err.Error(),
-					})
-					if err != nil {
-						http.Error(w, err.Error(), http.StatusInternalServerError)
-						return
-					}
-					http.Redirect(w, r, r.RequestURI, http.StatusFound)
-				}
-				return
-			}
-		}
+		// if r.Form.Get("country") != "" {
+		// 	// update wpuser country
+		// 	if s.oauthService.UpdateWpUserCountry(
+		// 		wpuser,
+		// 		r.Form.Get("country"),
+		// 	); err != nil {
+		// 		switch r.Header.Get("Accept") {
+		// 		case "application/json":
+		// 			response.Error(w, err.Error(), http.StatusBadRequest)
+		// 		default:
+		// 			err = sessionService.SetFlashMessage(&session.Flash{
+		// 				Type:    "Error",
+		// 				Message: err.Error(),
+		// 			})
+		// 			if err != nil {
+		// 				http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 				return
+		// 			}
+		// 			http.Redirect(w, r, r.RequestURI, http.StatusFound)
+		// 		}
+		// 		return
+		// 	}
+		// }
 
 		message = "Profile updated"
 	}
@@ -211,27 +212,24 @@ func (s *Service) profileCommon(r *http.Request) (
 	session.ServiceInterface,
 	*model.Client,
 	*model.User,
-	*model.WpUser,
-	string,
-	string,
 	error,
 ) {
 	// Get the session service from the request context
 	sessionService, err := getSessionService(r)
 	if err != nil {
-		return nil, nil, nil, nil, "", "", err
+		return nil, nil, nil, err
 	}
 
 	// Get the client from the request context
 	client, err := getClient(r)
 	if err != nil {
-		return nil, nil, nil, nil, "", "", err
+		return nil, nil, nil, err
 	}
 
 	// Get the user session
 	userSession, err := sessionService.GetUserSession()
 	if err != nil {
-		return nil, nil, nil, nil, "", "", err
+		return nil, nil, nil, err
 	}
 
 	// Fetch the user
@@ -239,26 +237,26 @@ func (s *Service) profileCommon(r *http.Request) (
 		userSession.Username,
 	)
 	if err != nil {
-		return nil, nil, nil, nil, "", "", err
+		return nil, nil, nil, err
 	}
 
 	// Fetch the wp user
-	wpuser, err := s.oauthService.FindWpUserByEmail(
-		userSession.Username,
-	)
-	if err != nil {
-		return nil, nil, nil, nil, "", "", err
-	}
+	// wpuser, err := s.oauthService.FindWpUserByEmail(
+	// 	userSession.Username,
+	// )
+	// if err != nil {
+	// 	return nil, nil, nil, "", "", err
+	// }
 
-	nickname, err := s.oauthService.FindWpUserMetaValue(wpuser.ID, "nickname")
-	if err != nil {
-		return nil, nil, nil, nil, "", "", err
-	}
+	// nickname, err := s.oauthService.FindWpUserMetaValue(wpuser.ID, "nickname")
+	// if err != nil {
+	// 	return nil, nil, nil, "", "", err
+	// }
 
-	country, err := s.oauthService.FindWpUserMetaValue(wpuser.ID, "country")
-	if err != nil {
-		return nil, nil, nil, nil, "", "", err
-	}
+	// country, err := s.oauthService.FindWpUserMetaValue(wpuser.ID, "country")
+	// if err != nil {
+	// 	return nil, nil, nil, "", "", err
+	// }
 
-	return sessionService, client, user, wpuser, nickname, country, nil
+	return sessionService, client, user, nil
 }

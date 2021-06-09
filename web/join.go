@@ -62,7 +62,7 @@ func (s *Service) join(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create a user
-	_, wpuser, err := s.createUserAndWpUser(r)
+	user, err := s.createUser(r)
 
 	if err != nil {
 		switch r.Header.Get("Accept") {
@@ -82,18 +82,18 @@ func (s *Service) join(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if r.Form.Get("country") != "" {
-		// set wpuser country but do not throw
-		if s.oauthService.UpdateWpUserCountry(
-			wpuser,
-			r.Form.Get("country"),
-		); err != nil {
-			log.ERROR.Print(err)
-		}
-	}
+	// if r.Form.Get("country") != "" {
+	// 	// set user country but do not throw
+	// 	if s.oauthService.UpdateUserCountry(
+	// 		user,
+	// 		r.Form.Get("country"),
+	// 	); err != nil {
+	// 		log.ERROR.Print(err)
+	// 	}
+	// }
 
 	message := fmt.Sprintf(
-		"A confirmation email will be sent to %s", wpuser.Email,
+		"A confirmation email will be sent to %s", user.Email,
 	)
 
 	if r.Header.Get("Accept") == "application/json" {
@@ -137,7 +137,7 @@ func (s *Service) createUser(r *http.Request) (
 ) {
 
 	user, err := s.oauthService.CreateUser(
-		model.UserRole,         // role ID
+		int32(model.UserRole),  // role ID
 		r.Form.Get("email"),    // username
 		r.Form.Get("password"), // password
 	)
