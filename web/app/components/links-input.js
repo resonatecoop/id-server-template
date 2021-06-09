@@ -22,9 +22,12 @@ class LinksInput extends Component {
 
     this.validator = validateFormdata()
     this.form = this.validator.state
+
+    this._onchange = this._onchange.bind(this)
   }
 
   createElement (props) {
+    this.onchange = typeof props.onchange === 'function' ? props.onchange.bind(this) : this._onchange
     this.validator = props.validator || this.validator
     this.form = props.form || this.form || {
       changed: false,
@@ -93,9 +96,12 @@ class LinksInput extends Component {
     `
   }
 
+  _onchange () {}
+
   removeLink (index) {
     if (index > -1) {
       this.local.links.splice(index, 1)
+      this.onchange(this.local.links)
       this.rerender()
     }
   }
@@ -103,6 +109,7 @@ class LinksInput extends Component {
   addLink (value, error) {
     if (value && !this.local.links.includes(value) && !error) {
       this.local.links.push(value)
+      this.onchange(this.local.links)
       this.rerender()
     }
   }
