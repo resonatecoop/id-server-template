@@ -79,7 +79,7 @@ class BasicInfoForm extends Component {
     })
 
     this.local.machine.on('form:invalid', () => {
-      const invalidInput = document.querySelector('.invalid')
+      const invalidInput = this.element.querySelector('.invalid')
 
       if (invalidInput) {
         invalidInput.focus({ preventScroll: false }) // focus to first invalid input
@@ -101,7 +101,7 @@ class BasicInfoForm extends Component {
 
       this.rerender()
 
-      this.local.machine.emit(`form:${this.local.form.valid ? 'valid' : 'invalid'}`)
+      this.local.machine.emit(`form:${this.form.valid ? 'valid' : 'invalid'}`)
     })
 
     this.local.subscription = 'off' // newsletter subscription
