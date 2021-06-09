@@ -1,5 +1,8 @@
+/* global fetch */
+
 const html = require('choo/html')
 const Component = require('choo/component')
+const nanostate = require('nanostate')
 const isEmpty = require('validator/lib/isEmpty')
 const isLength = require('validator/lib/isLength')
 const isUUID = require('validator/lib/isUUID')
@@ -21,7 +24,85 @@ class BasicInfoForm extends Component {
     this.emit = emit
     this.state = state
 
-    this.local = state.components[id] = {}
+    this.local = state.components[id] = Object.create({
+      machine: nanostate.parallel({
+        form: nanostate('idle', {
+          idle: { submit: 'submitted' },
+          submitted: { valid: 'data', invalid: 'error' },
+          data: { reset: 'idle', submit: 'submitted' },
+          error: { reset: 'idle', submit: 'submitted', invalid: 'error' }
+        }),
+        request: nanostate('idle', {
+          idle: { start: 'loading' },
+          loading: { resolve: 'data', reject: 'error' },
+          data: { start: 'loading' },
+          error: { start: 'loading', stop: 'idle' }
+        })
+      })
+    })
+
+    this.local.machine.on('request:start', () => {
+    })
+
+    this.local.machine.on('request:reject', () => {
+    })
+
+    this.local.machine.on('request:resolve', () => {
+    })
+
+    this.local.machine.on('form:valid', async () => {
+      try {
+        this.local.machine.emit('request:start')
+
+        let response = await fetch('')
+
+        const csrfToken = response.headers.get('X-CSRF-Token')
+
+        response = await fetch('', {
+          method: 'PUT',
+          headers: {
+            Accept: 'application/json',
+            'X-CSRF-Token': csrfToken
+          },
+          body: new URLSearchParams({
+            nickname: this.local.data.displayName,
+            city: this.local.data.city,
+            bio: this.local.data.bio
+          })
+        })
+
+        this.local.machine.emit('request:resolve')
+      } catch (err) {
+        this.local.machine.emit('request:reject')
+        console.log(err)
+      }
+    })
+
+    this.local.machine.on('form:invalid', () => {
+      const invalidInput = document.querySelector('.invalid')
+
+      if (invalidInput) {
+        invalidInput.focus({ preventScroll: false }) // focus to first invalid input
+      }
+    })
+
+    this.local.machine.on('form:submit', () => {
+      const form = this.element.querySelector('form')
+
+      for (const field of form.elements) {
+        const isRequired = field.required
+        const name = field.name || ''
+        const value = field.value || ''
+
+        if (isRequired) {
+          this.validator.validate(name, value)
+        }
+      }
+
+      this.rerender()
+
+      this.local.machine.emit(`form:${this.local.form.valid ? 'valid' : 'invalid'}`)
+    })
 
     this.local.subscription = 'off' // newsletter subscription
 
@@ -98,6 +179,7 @@ class BasicInfoForm extends Component {
           value: values.name,
           onchange: (e) => {
             validator.validate(e.target.name, e.target.value)
+            this.local.data.name = e.target.value
             this.rerender()
           }
         })
@@ -130,6 +212,7 @@ class BasicInfoForm extends Component {
                 text: values.bio,
                 onchange: (e) => {
                   validator.validate(e.target.name, e.target.value)
+                  this.local.data.bio = e.target.value
                   this.rerender()
                 }
               })}
@@ -209,6 +292,7 @@ class BasicInfoForm extends Component {
           value: values.location,
           onchange: (e) => {
             validator.validate(e.target.name, e.target.value)
+            this.local.data.city = e.target.value
             this.rerender()
           }
         })
@@ -283,23 +367,7 @@ class BasicInfoForm extends Component {
   handleSubmit (e) {
     e.preventDefault()
 
-    for (const field of e.target.elements) {
-      const isRequired = field.required
-      const name = field.name || ''
-      const value = field.value || ''
-
-      if (isRequired) {
-        this.validator.validate(name, value)
-      }
-    }
-
-    this.rerender()
-    const invalidInput = document.querySelector('.invalid')
-    if (invalidInput) invalidInput.focus({ preventScroll: false }) // focus to first invalid input
-
-    if (this.form.valid) {
-      this.emit(this.state.events.PUSHSTATE, '/profile')
-    }
+    this.local.machine.emit('form:submit')
   }
 
   /**
