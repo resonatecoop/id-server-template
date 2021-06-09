@@ -17,7 +17,7 @@
   "browserify": {
     "transform": [
       [
-        "./web/app/lib/envlocalify",
+        "@resonate/envlocalify",
         {
           "global": true
         }
