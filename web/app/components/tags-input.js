@@ -157,7 +157,7 @@ class ItemsInput extends Component {
     if (index > -1) {
       this.local.items.splice(index, 1)
       this.local.form.values[this.local.inputName] = ''
-      this.changed(this.local.items)
+      this.onchange(this.local.items)
       this._update()
     }
   }
@@ -166,7 +166,7 @@ class ItemsInput extends Component {
     if (value && !this.local.items.includes(value) && !error) {
       this.local.items.push(value)
       this.local.form.values[this.local.inputName] = ''
-      this.changed(this.local.items)
+      this.onchange(this.local.items)
       this._update()
     }
   }
