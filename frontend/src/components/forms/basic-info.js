@@ -104,7 +104,8 @@ class BasicInfoForm extends Component {
       this.local.machine.emit(`form:${this.form.valid ? 'valid' : 'invalid'}`)
     })
 
-    this.local.subscription = 'off' // newsletter subscription
+    this.local.data = {}
+    this.local.data.subscription = 'off' // newsletter subscription
 
     this.validator = validateFormdata()
     this.form = this.validator.state
@@ -120,6 +121,12 @@ class BasicInfoForm extends Component {
    * @returns {HTMLElement}
    */
   createElement () {
+    const values = this.form.values
+
+    for (const [key, value] of Object.entries(this.local.data)) {
+      values[key] = value
+    }
+
     // form attrs
     const attrs = {
       novalidate: 'novalidate',
