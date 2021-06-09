@@ -88,7 +88,9 @@ class ItemsInput extends Component {
           }
         })}
         ${button({
-          onclick: (e) => this.addItem(values[this.local.inputName], errors[this.local.inputName]),
+          onclick: (e) => {
+            this.addItem(values[this.local.inputName], errors[this.local.inputName])
+          },
           prefix: 'db bg-white bw b--black-20 h-100 ml1 pa3 grow',
           style: 'none',
           size: 'none',
@@ -105,7 +107,10 @@ class ItemsInput extends Component {
 
     return html`
       <p class="errors ma0 pa0 f5 lh-copy red">
-        ${errors[this.local.inputName] && !pristine[this.local.inputName] ? errors[this.local.inputName].message : ''}
+        ${errors[this.local.inputName] && !pristine[this.local.inputName]
+          ? errors[this.local.inputName].message
+          : ''
+        }
       </p>
     `
   }
