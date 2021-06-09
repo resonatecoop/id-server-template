@@ -345,11 +345,11 @@ class BasicInfoForm extends Component {
         const { values } = form
 
         const attrs = {
-          checked: this.local.subscription === 'on' ? 'checked' : false,
+          checked: this.local.data.subscription === 'on' ? 'checked' : false,
           id: 'subscription',
           onchange: (e) => {
-            this.local.subscription = e.target.checked ? 'on' : 'off'
-            validator.validate('subscription', this.local.subscription)
+            this.local.data.subscription = e.target.checked ? 'on' : 'off'
+            validator.validate('subscription', this.local.data.subscription)
             this.rerender()
           },
           value: values.subscription,
