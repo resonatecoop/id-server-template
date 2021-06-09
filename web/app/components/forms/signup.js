@@ -191,7 +191,13 @@ class Signup extends Component {
               }
 
               if (status === 201) {
-                this.emit(this.state.events.PUSHSTATE, '/login')
+                const redirectURL = new URL('/login', 'http://localhost')
+
+                redirectURL.search = new URLSearchParams({
+                  login_redirect_uri: '/web/welcome'
+                })
+
+                this.emit(this.state.events.PUSHSTATE, redirectURL.pathname + redirectURL.search)
               }
 
               this.local.machine.emit('request:resolve')
