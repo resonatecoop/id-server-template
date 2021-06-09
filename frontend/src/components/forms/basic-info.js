@@ -186,7 +186,8 @@ class BasicInfoForm extends Component {
 
         const labelOpts = {
           labelText: 'Name',
-          inputName: 'name'
+          inputName: 'name',
+          displayErrors: true
         }
 
         return inputField(el, form)(labelOpts)
@@ -241,7 +242,8 @@ class BasicInfoForm extends Component {
 
         const labelOpts = {
           labelText: 'Profile picture',
-          inputName: 'profile-picture'
+          inputName: 'profile-picture',
+          displayErrors: true
         }
 
         return inputField(el, form)(labelOpts)
@@ -270,7 +272,8 @@ class BasicInfoForm extends Component {
 
         const labelOpts = {
           labelText: 'Header image',
-          inputName: 'header-image'
+          inputName: 'header-image',
+          displayErrors: true
         }
 
         return inputField(el, form)(labelOpts)
