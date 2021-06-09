@@ -10,7 +10,7 @@ const postcss = require('gulp-postcss')
 
 function javascript () {
   const b = browserify({
-    entries: './web/app/main.js',
+    entries: './index.js',
     debug: true,
     transform: [
       [
@@ -36,16 +36,16 @@ function javascript () {
     .pipe(buffer())
     .pipe(uglify())
     .pipe(hash())
-    .pipe(gulp.dest('./public/js'))
-    .pipe(hash.manifest('data/js/hash.json', {
+    .pipe(gulp.dest('../public/js'))
+    .pipe(hash.manifest('../data/js/hash.json', {
       deleteOld: true,
-      sourceDir: path.join(__dirname, '/public/js')
+      sourceDir: path.join(__dirname, '../public/js')
     }))
     .pipe(gulp.dest('.'))
 }
 
 function css () {
-  return gulp.src('./web/app/index.css')
+  return gulp.src('./index.css')
     .pipe(postcss([
       require('postcss-import')(),
       require('postcss-preset-env')({
@@ -64,44 +64,44 @@ function css () {
       })
     ]))
     .pipe(hash())
-    .pipe(gulp.dest('./public/css'))
-    .pipe(hash.manifest('./data/css/hash.json', {
+    .pipe(gulp.dest('../public/css'))
+    .pipe(hash.manifest('../data/css/hash.json', {
       deleteOld: true,
-      sourceDir: path.join(__dirname, '/public/css')
+      sourceDir: path.join(__dirname, '../public/css')
     }))
     .pipe(gulp.dest('.'))
 }
 
 function derevjs () {
-  return gulp.src('./web/layouts/*.html')
+  return gulp.src('../web/layouts/*.html')
     .pipe(references([
-      path.join(__dirname, './data/js/hash.json')
+      path.join(__dirname, '../data/js/hash.json')
     ], { dereference: true }))
-    .pipe(gulp.dest('./web/layouts'))
+    .pipe(gulp.dest('../web/layouts'))
 }
 
 function revjs () {
   return gulp.src('./web/layouts/*.html')
     .pipe(references([
-      path.join(__dirname, './data/js/hash.json')
+      path.join(__dirname, '../data/js/hash.json')
     ]))
-    .pipe(gulp.dest('./web/layouts'))
+    .pipe(gulp.dest('../web/layouts'))
 }
 
 function derevcss () {
-  return gulp.src('./web/layouts/*.html')
+  return gulp.src('../web/layouts/*.html')
     .pipe(references([
-      path.join(__dirname, './data/css/hash.json')
+      path.join(__dirname, '../data/css/hash.json')
     ], { dereference: true }))
-    .pipe(gulp.dest('./web/layouts'))
+    .pipe(gulp.dest('../web/layouts'))
 }
 
 function revcss () {
-  return gulp.src('./web/layouts/*.html')
+  return gulp.src('../web/layouts/*.html')
     .pipe(references([
-      path.join(__dirname, './data/css/hash.json')
+      path.join(__dirname, '../data/css/hash.json')
     ]))
-    .pipe(gulp.dest('./web/layouts'))
+    .pipe(gulp.dest('../web/layouts'))
 }
 
 gulp.task('javascript', gulp.series(derevjs, javascript, revjs))
@@ -110,8 +110,8 @@ gulp.task('rev', gulp.series(revjs, revcss))
 gulp.task('css', gulp.series(derevcss, css, revcss))
 
 gulp.task('watch', () => {
-  gulp.watch('./web/app/index.css', css)
-  gulp.watch('./web/app/**/*', javascript)
+  gulp.watch('./index.css', css)
+  gulp.watch('./src/**/*', javascript)
 })
 
 gulp.task('default', gulp.series(derevjs, javascript, revjs, derevcss, css, revcss))
