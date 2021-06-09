@@ -13,9 +13,9 @@ import (
 type ServiceInterface interface {
 	// Exported methods
 	GetConfig() *config.Config
-	RestrictToRoles(allowedRoles ...string)
+	RestrictToRoles(allowedRoles ...int32)
 	IsRoleAllowed(role int32) bool
-	FindRoleByID(id int8) (*model.AccessRole, error)
+	FindRoleByID(id int32) (*model.AccessRole, error)
 	GetRoutes() []routes.Route
 	RegisterRoutes(router *mux.Router, prefix string)
 	ClientExists(clientID string) bool
@@ -30,20 +30,19 @@ type ServiceInterface interface {
 	SendEmailToken(email *model.Email, emailTokenLink string) (*model.EmailToken, error)
 	SendEmailTokenTx(db *bun.DB, email *model.Email, emailTokenLink string) (*model.EmailToken, error)
 	UserExists(username string) bool
-	LoginTaken(login string) bool
 	FindUserByUsername(username string) (*model.User, error)
 	FindUserByEmail(email string) (*model.User, error)
 	CreateUser(roleID int32, username, password string) (*model.User, error)
 	CreateUserTx(tx *bun.DB, roleID int32, username, password string) (*model.User, error)
 	DeleteUser(user *model.User, password string) error
 	DeleteUserTx(tx *bun.DB, user *model.User, password string) error
-	FindNicknameByWpUserID(id uint64) (string, error)
+	//FindNicknameByWpUserID(id uint64) (string, error)
 	ConfirmUserEmail(email string) error
 	SetPassword(user *model.User, password string) error
 	SetPasswordTx(tx *bun.DB, user *model.User, password string) error
 	UpdateUsername(user *model.User, username string) error
 	UpdateUsernameTx(db *bun.DB, user *model.User, username string) error
-	UpdateUserCountry(user *model.User, country string) error
+	// UpdateUserCountry(user *model.User, country string) error
 	AuthUser(username, thePassword string) (*model.User, error)
 	GetScope(requestedScope string) (string, error)
 	GetDefaultScope() string

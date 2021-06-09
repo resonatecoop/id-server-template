@@ -29,8 +29,10 @@ func (s *Service) GetConfig() *config.Config {
 }
 
 // RestrictToRoles restricts this service to only specified roles
-func (s *Service) RestrictToRoles(allowedRoles ...model.AccessRole) {
-	s.allowedRoles = allowedRoles
+func (s *Service) RestrictToRoles(allowedRoles ...int32) {
+	for i := range s.allowedRoles {
+		s.allowedRoles[i] = model.AccessRole(allowedRoles[i])
+	}
 }
 
 // IsRoleAllowed returns true if the role is allowed to use this service

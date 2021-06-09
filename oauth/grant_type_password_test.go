@@ -49,7 +49,7 @@ func (suite *OauthTestSuite) TestPasswordGrant() {
 }
 
 func (suite *OauthTestSuite) TestPasswordGrantWithRoleRestriction() {
-	suite.service.RestrictToRoles(model.)
+	suite.service.RestrictToRoles(model.SuperAdminRole)
 
 	// Prepare a request
 	r, err := http.NewRequest("POST", "http://1.2.3.4/v1/oauth/tokens", nil)

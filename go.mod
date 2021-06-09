@@ -23,7 +23,7 @@ require (
 	github.com/pariz/gountries v0.0.0-20200430155801-1c6a393df9c7
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/phyber/negroni-gzip v1.0.0
-	github.com/resonatecoop/user-api v0.0.0-20210608211653-531c9c610cc9
+	github.com/resonatecoop/user-api v0.0.0-20210609064043-ec9e25a85c5f
 	github.com/rs/xid v1.3.0
 	github.com/stretchr/testify v1.7.0
 	github.com/test-go/testify v1.1.4 // indirect

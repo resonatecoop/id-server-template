@@ -553,12 +553,10 @@ github.com/prometheus/tsdb v0.7.1/go.mod h1:qhTCs0VvXwvX/y3TZrWD7rabWM+ijKTux40T
 github.com/rakyll/statik v0.1.7 h1:OF3QCZUuyPxuGEP7B4ypUa7sB/iHtqOTDYZXGM8KOdQ=
 github.com/rakyll/statik v0.1.7/go.mod h1:AlZONWzMtEnMs7W4e/1LURLiI49pIMmp6V9Unghqrcc=
 github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
-github.com/resonatecoop/user-api v0.0.0-20210607140751-eb318762e3fa h1:qQlsb6shPb0yRJmfrpxNcA1jNt3+bVXBwQ1JWyQWdoE=
-github.com/resonatecoop/user-api v0.0.0-20210607140751-eb318762e3fa/go.mod h1:On8EPVkEOolvav7RERAlvVNjlkSz/D3yRTk3D10LurM=
-github.com/resonatecoop/user-api v0.0.0-20210608204342-b67b0327c7ee h1:GwJCw3LoSqkddBIcaWJBmr92lNw/r79RVxH6vYweSsY=
-github.com/resonatecoop/user-api v0.0.0-20210608204342-b67b0327c7ee/go.mod h1:On8EPVkEOolvav7RERAlvVNjlkSz/D3yRTk3D10LurM=
 github.com/resonatecoop/user-api v0.0.0-20210608211653-531c9c610cc9 h1:1ZpRRttRC3+7iCHQmo/PYvaHE1iBaHtE9YHU30SE1QQ=
 github.com/resonatecoop/user-api v0.0.0-20210608211653-531c9c610cc9/go.mod h1:On8EPVkEOolvav7RERAlvVNjlkSz/D3yRTk3D10LurM=
+github.com/resonatecoop/user-api v0.0.0-20210609064043-ec9e25a85c5f h1:WjEO4Jp5HEK5UGoBpMB8dcflA43XG74+XV2+aRs23vI=
+github.com/resonatecoop/user-api v0.0.0-20210609064043-ec9e25a85c5f/go.mod h1:On8EPVkEOolvav7RERAlvVNjlkSz/D3yRTk3D10LurM=
 github.com/rogpeppe/fastuuid v0.0.0-20150106093220-6724a57986af/go.mod h1:XWv6SoW27p1b0cqNHllgS5HIMJraePCO15w5zCzIWYg=
 github.com/rogpeppe/fastuuid v1.2.0/go.mod h1:jVj6XXZzXRy/MSR5jhDC/2q6DgLz+nrA6LYCDYWNEvQ=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=

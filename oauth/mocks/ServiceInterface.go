@@ -33,7 +33,7 @@ func (_m *ServiceInterface) GetConfig() *config.Config {
 
 	return r0
 }
-func (_m *ServiceInterface) RestrictToRoles(allowedRoles ...model.AccessRole) {
+func (_m *ServiceInterface) RestrictToRoles(allowedRoles ...int32) {
 	_m.Called(allowedRoles)
 }
 func (_m *ServiceInterface) IsRoleAllowed(role model.AccessRole) bool {
