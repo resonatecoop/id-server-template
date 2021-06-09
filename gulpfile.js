@@ -36,7 +36,7 @@ function javascript () {
     .pipe(buffer())
     .pipe(uglify())
     .pipe(hash())
-    .pipe(gulp.dest('public/js'))
+    .pipe(gulp.dest('./public/js'))
     .pipe(hash.manifest('data/js/hash.json', {
       deleteOld: true,
       sourceDir: path.join(__dirname, '/public/js')
@@ -64,38 +64,54 @@ function css () {
       })
     ]))
     .pipe(hash())
-    .pipe(gulp.dest('public/css'))
-    .pipe(hash.manifest('data/css/hash.json', {
+    .pipe(gulp.dest('./public/css'))
+    .pipe(hash.manifest('./data/css/hash.json', {
       deleteOld: true,
       sourceDir: path.join(__dirname, '/public/css')
     }))
     .pipe(gulp.dest('.'))
 }
 
-function derev () {
-  return gulp.src('web/layouts/*.html')
+function derevjs () {
+  return gulp.src('./web/layouts/*.html')
     .pipe(references([
-      path.join(__dirname, './data/js/hash.json'),
+      path.join(__dirname, './data/js/hash.json')
+    ], { dereference: true }))
+    .pipe(gulp.dest('./web/layouts'))
+}
+
+function revjs () {
+  return gulp.src('./web/layouts/*.html')
+    .pipe(references([
+      path.join(__dirname, './data/js/hash.json')
+    ]))
+    .pipe(gulp.dest('./web/layouts'))
+}
+
+function derevcss () {
+  return gulp.src('./web/layouts/*.html')
+    .pipe(references([
       path.join(__dirname, './data/css/hash.json')
     ], { dereference: true }))
-    .pipe(gulp.dest('web/layouts'))
+    .pipe(gulp.dest('./web/layouts'))
 }
 
-function rev () {
-  return gulp.src('web/layouts/*.html')
+function revcss () {
+  return gulp.src('./web/layouts/*.html')
     .pipe(references([
-      path.join(__dirname, './data/js/hash.json'),
       path.join(__dirname, './data/css/hash.json')
     ]))
-    .pipe(gulp.dest('web/layouts'))
+    .pipe(gulp.dest('./web/layouts'))
 }
 
-gulp.task('javascript', gulp.series(derev, javascript, rev))
-gulp.task('derev', derev)
-gulp.task('rev', rev)
-gulp.task('css', gulp.series(derev, css, rev))
+gulp.task('javascript', gulp.series(derevjs, javascript, revjs))
+gulp.task('derev', gulp.series(derevjs, derevcss))
+gulp.task('rev', gulp.series(revjs, revcss))
+gulp.task('css', gulp.series(derevcss, css, revcss))
 
 gulp.task('watch', () => {
   gulp.watch('./web/app/index.css', css)
   gulp.watch('./web/app/**/*', javascript)
 })
+
+gulp.task('default', gulp.series(derevjs, javascript, revjs, derevcss, css, revcss))
