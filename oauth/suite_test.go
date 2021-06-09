@@ -1,6 +1,7 @@
 package oauth_test
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -67,20 +68,38 @@ func (suite *OauthTestSuite) SetupSuite() {
 	// suite.db = db
 	// suite.db2 = nil // TODO setup test mysql db client
 
+	ctx := context.Background()
 	// Fetch test client
 	suite.clients = make([]*model.Client, 0)
-	if err := suite.db.Order("created_at").Find(&suite.clients).Error; err != nil {
+
+	rows, err := suite.db.QueryContext(ctx, "SELECT * from clients ORDER BY created_at")
+
+	if err != nil {
+		panic(err)
+	}
+
+	err = suite.db.ScanRows(ctx, rows, &suite.clients)
+
+	if err != nil {
 		log.ERROR.Fatal(err)
 	}
 
 	// Fetch test users
 	suite.users = make([]*model.User, 0)
-	if err := suite.db.Order("created_at").Find(&suite.users).Error; err != nil {
-		log.ERROR.Fatal(err)
+
+	rows, err = suite.db.QueryContext(ctx, "SELECT * from users ORDER BY created_at")
+
+	if err != nil {
+		panic(err)
 	}
 
+	err = suite.db.ScanRows(ctx, rows, &suite.users)
+
+	if err != nil {
+		log.ERROR.Fatal(err)
+	}
 	// Initialise the service
-	suite.service = oauth.NewService(suite.cnf, suite.db, suite.db2)
+	suite.service = oauth.NewService(suite.cnf, suite.db)
 
 	// Register routes
 	suite.router = mux.NewRouter()
@@ -102,11 +121,33 @@ func (suite *OauthTestSuite) SetupTest() {
 func (suite *OauthTestSuite) TearDownTest() {
 	// Scopes are static, populated from fixtures,
 	// so there is no need to clear them after running a test
-	suite.db.Unscoped().Delete(new(model.AuthorizationCode))
-	suite.db.Unscoped().Delete(new(model.RefreshToken))
-	suite.db.Unscoped().Delete(new(model.AccessToken))
-	suite.db.Unscoped().Not("id", []string{"1", "2"}).Delete(new(model.User))
-	suite.db.Unscoped().Not("id", []string{"1", "2", "3"}).Delete(new(model.Client))
+	ctx := context.Background()
+
+	suite.db.NewDelete().
+		Model(new(model.AuthorizationCode)).
+		Exec(ctx)
+
+	suite.db.NewDelete().
+		Model(new(model.RefreshToken)).
+		Exec(ctx)
+
+	suite.db.NewDelete().
+		Model(new(model.AccessToken)).
+		Exec(ctx)
+
+	ids := []string{"1", "2"}
+
+	suite.db.NewDelete().
+		Model(new(model.User)).
+		Where("id NOT IN (?)", bun.In(ids)).
+		Exec(ctx)
+
+	ids = []string{"1", "2", "3"}
+
+	suite.db.NewDelete().
+		Model(new(model.Client)).
+		Where("id NOT IN (?)", bun.In(ids)).
+		Exec(ctx)
 }
 
 // TestOauthTestSuite ...

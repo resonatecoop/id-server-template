@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 
+	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/resonatecoop/id/config"
 	bun "github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
@@ -32,6 +33,8 @@ func NewDatabase(cnf *config.Config) (*bun.DB, error) {
 
 	db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose()))
 
+	_, err = db.Exec("SELECT 1=1")
+
 	if err != nil {
 		return db, err
 	}
@@ -45,5 +48,5 @@ func NewDatabase(cnf *config.Config) (*bun.DB, error) {
 	// // Database logging
 	// db.LogMode(cnf.IsDevelopment)
 
-	return db, nil
+	return db, err
 }

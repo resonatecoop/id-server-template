@@ -1,6 +1,7 @@
 package oauth_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -8,6 +9,7 @@ import (
 	"github.com/resonatecoop/id/oauth"
 	"github.com/resonatecoop/id/oauth/tokentypes"
 	testutil "github.com/resonatecoop/id/test-util"
+	"github.com/resonatecoop/user-api/model"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -26,9 +28,16 @@ func (suite *OauthTestSuite) TestClientCredentialsGrant() {
 	suite.router.ServeHTTP(w, r)
 
 	// Fetch data
+	ctx := context.Background()
 	accessToken := new(model.AccessToken)
-	assert.False(suite.T(), model.AccessTokenPreload(suite.db).
-		Last(accessToken).RecordNotFound())
+
+	err = suite.db.NewSelect().
+		Model(accessToken).
+		Limit(1).
+		Scan(ctx)
+
+	// A record is found
+	assert.Nil(suite.T(), err)
 
 	// Check the response
 	expected := &oauth.AccessTokenResponse{
@@ -40,6 +49,11 @@ func (suite *OauthTestSuite) TestClientCredentialsGrant() {
 	testutil.TestResponseObject(suite.T(), w, expected, 200)
 
 	// Client credentials grant does not produce refresh token
-	assert.True(suite.T(), model.RefreshTokenPreload(suite.db).
-		First(new(model.RefreshToken)).RecordNotFound())
+	suite.db.NewSelect().
+		Model(new(model.RefreshToken)).
+		Limit(1).
+		Scan(ctx)
+
+	// Error raised as no record found
+	assert.NotNil(suite.T(), err)
 }

@@ -54,7 +54,6 @@ type Config struct {
 	CSRF                CSRFConfig
 	Mailgun             MailgunConfig
 	Database            DatabaseConfig
-	Database2           DatabaseConfig
 	Oauth               OauthConfig
 	Session             SessionConfig
 	IsDevelopment       bool

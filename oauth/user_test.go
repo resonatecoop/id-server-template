@@ -1,9 +1,8 @@
 package oauth_test
 
 import (
-	"time"
+	"context"
 
-	uuid "github.com/google/uuid"
 	"github.com/resonatecoop/id/oauth"
 	"github.com/resonatecoop/id/util"
 	pass "github.com/resonatecoop/id/util/password"
@@ -23,9 +22,9 @@ func (suite *OauthTestSuite) TestUserExistsDoesntFindInvalidUser() {
 
 func (suite *OauthTestSuite) TestUpdateUsernameWorksWithValidEntry() {
 	user, err := suite.service.CreateUser(
-		model.UserRole,  // role ID
-		"test@newuser",  // username
-		"test_password", // password
+		int32(model.UserRole), // role ID
+		"test@newuser",        // username
+		"test_password",       // password
 	)
 
 	assert.NoError(suite.T(), err)
@@ -43,9 +42,9 @@ func (suite *OauthTestSuite) TestUpdateUsernameWorksWithValidEntry() {
 
 func (suite *OauthTestSuite) TestUpdateUsernameTxWorksWithValidEntry() {
 	user, err := suite.service.CreateUser(
-		roles.User,      // role ID
-		"test@newuser",  // username
-		"test_password", // password
+		int32(model.UserRole), // role ID
+		"test@newuser",        // username
+		"test_password",       // password
 	)
 
 	assert.NoError(suite.T(), err)
@@ -63,9 +62,9 @@ func (suite *OauthTestSuite) TestUpdateUsernameTxWorksWithValidEntry() {
 
 func (suite *OauthTestSuite) TestUpdateUsernameFailsWithABlankEntry() {
 	user, err := suite.service.CreateUser(
-		roles.User,      // role ID
-		"test@newuser",  // username
-		"test_password", // password
+		int32(model.UserRole), // role ID
+		"test@newuser",        // username
+		"test_password",       // password
 	)
 
 	assert.NoError(suite.T(), err)
@@ -129,9 +128,9 @@ func (suite *OauthTestSuite) TestCreateUser() {
 
 	// We try to insert a non unique user
 	user, err = suite.service.CreateUser(
-		roles.User,      // role ID
-		"test@user",     // username
-		"test_password", // password
+		int32(model.UserRole), // role ID
+		"test@user",           // username
+		"test_password",       // password
 	)
 
 	// User object should be nil
@@ -144,9 +143,9 @@ func (suite *OauthTestSuite) TestCreateUser() {
 
 	// We try to insert a unique user
 	user, err = suite.service.CreateUser(
-		roles.User,      // role ID
-		"test@newuser",  // username
-		"test_password", // password
+		int32(model.UserRole), // role ID
+		"test@newuser",        // username
+		"test_password",       // password
 	)
 
 	// Error should be nil
@@ -159,9 +158,9 @@ func (suite *OauthTestSuite) TestCreateUser() {
 
 	// Test username case insensitivity
 	user, err = suite.service.CreateUser(
-		roles.User,      // role ID
-		"TeSt@NeWuSeR2", // username
-		"test_password", // password
+		int32(model.UserRole), // role ID
+		"TeSt@NeWuSeR2",       // username
+		"test_password",       // password
 	)
 
 	// Error should be nil
@@ -175,22 +174,25 @@ func (suite *OauthTestSuite) TestCreateUser() {
 
 func (suite *OauthTestSuite) TestSetPassword() {
 	var (
+		ctx  context.Context
 		user *model.User
 		err  error
 	)
 
 	// Insert a test user without a password
 	user = &model.User{
-		MyGormModel: model.MyGormModel{
-			ID:        uuid.New(),
-			CreatedAt: time.Now().UTC(),
-		},
-		RoleID:   util.StringOrNull(roles.User),
+		RoleID:   int32(model.UserRole),
 		Username: "test@user_nopass",
 		Password: util.StringOrNull(""),
 	}
-	err = suite.db.Create(user).Error
-	assert.NoError(suite.T(), err, "Inserting test data failed")
+
+	ctx = context.Background()
+
+	_, err = suite.db.NewInsert().
+		Model(user).
+		Exec(ctx)
+
+	assert.Nil(suite.T(), err)
 
 	// Try to set an empty password
 	err = suite.service.SetPassword(user, "")
@@ -213,21 +215,25 @@ func (suite *OauthTestSuite) TestSetPassword() {
 
 func (suite *OauthTestSuite) TestAuthUser() {
 	var (
+		ctx  context.Context
 		user *model.User
 		err  error
 	)
 
 	// Insert a test user without a password
-	err = suite.db.Create(&model.User{
-		MyGormModel: model.MyGormModel{
-			ID:        uuid.New(),
-			CreatedAt: time.Now().UTC(),
-		},
-		RoleID:   util.StringOrNull(roles.User),
+	user = &model.User{
+		RoleID:   int32(model.UserRole),
 		Username: "test@user_nopass",
 		Password: util.StringOrNull(""),
-	}).Error
-	assert.NoError(suite.T(), err, "Inserting test data failed")
+	}
+
+	ctx = context.Background()
+
+	_, err = suite.db.NewInsert().
+		Model(user).
+		Exec(ctx)
+
+	assert.Nil(suite.T(), err)
 
 	// When we try to authenticate a user without a password
 	user, err = suite.service.AuthUser("test@user_nopass", "bogus")
@@ -292,9 +298,9 @@ func (suite *OauthTestSuite) TestBlankPassword() {
 	)
 
 	user, err = suite.service.CreateUser(
-		roles.User,         // role ID
-		"test@user_nopass", // username
-		"",                 // password,
+		int32(model.UserRole), // role ID
+		"test@user_nopass",    // username
+		"",                    // password,
 	)
 
 	// Error should be nil

@@ -1,6 +1,7 @@
 package oauth_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -31,14 +32,28 @@ func (suite *OauthTestSuite) TestPasswordGrant() {
 
 	// Fetch data
 	accessToken, refreshToken := new(model.AccessToken), new(model.RefreshToken)
-	assert.False(suite.T(), model.AccessTokenPreload(suite.db).
-		Last(accessToken).RecordNotFound())
-	assert.False(suite.T(), model.RefreshTokenPreload(suite.db).
-		Last(refreshToken).RecordNotFound())
+
+	ctx := context.Background()
+
+	err = suite.db.NewSelect().
+		Model(accessToken).
+		Limit(1).
+		Scan(ctx)
+
+	// an access token is found
+	assert.Nil(suite.T(), err)
+
+	err = suite.db.NewSelect().
+		Model(refreshToken).
+		Limit(1).
+		Scan(ctx)
+
+	// a refresh token is founds
+	assert.Nil(suite.T(), err)
 
 	// Check the response
 	expected := &oauth.AccessTokenResponse{
-		UserID:       accessToken.UserID.String,
+		UserID:       accessToken.UserID.String(),
 		AccessToken:  accessToken.Token,
 		ExpiresIn:    3600,
 		TokenType:    tokentypes.Bearer,
@@ -49,7 +64,7 @@ func (suite *OauthTestSuite) TestPasswordGrant() {
 }
 
 func (suite *OauthTestSuite) TestPasswordGrantWithRoleRestriction() {
-	suite.service.RestrictToRoles(model.SuperAdminRole)
+	suite.service.RestrictToRoles(int32(model.SuperAdminRole))
 
 	// Prepare a request
 	r, err := http.NewRequest("POST", "http://1.2.3.4/v1/oauth/tokens", nil)
@@ -74,5 +89,5 @@ func (suite *OauthTestSuite) TestPasswordGrantWithRoleRestriction() {
 		401,
 	)
 
-	suite.service.RestrictToRoles(roles.Superuser, roles.User)
+	suite.service.RestrictToRoles(int32(model.SuperAdminRole), int32(model.UserRole))
 }

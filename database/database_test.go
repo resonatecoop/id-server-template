@@ -1,7 +1,6 @@
 package database_test
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/resonatecoop/id/config"
@@ -12,12 +11,10 @@ import (
 func TestNewDatabaseTypeNotSupported(t *testing.T) {
 	cnf := &config.Config{
 		Database: config.DatabaseConfig{
-			Type: "bogus",
+			PSN: "bogus",
 		},
 	}
 	_, err := database.NewDatabase(cnf)
 
-	if assert.NotNil(t, err) {
-		assert.Equal(t, errors.New("Database type bogus not suppported"), err)
-	}
+	assert.NotNil(t, err)
 }

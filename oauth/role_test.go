@@ -8,7 +8,7 @@ import (
 
 func (suite *OauthTestSuite) TestFindRoleByID() {
 	var (
-		role *model.Role
+		role *model.AccessRole
 		err  error
 	)
 
@@ -24,13 +24,13 @@ func (suite *OauthTestSuite) TestFindRoleByID() {
 	}
 
 	// Now let's pass a valid ID
-	role, err = suite.service.FindRoleByID(int8(model.UserRole))
+	role, err = suite.service.FindRoleByID(int32(model.UserRole))
 
 	// Error should be nil
 	assert.Nil(suite.T(), err)
 
 	// Correct role should be returned
 	if assert.NotNil(suite.T(), role) {
-		assert.Equal(suite.T(), model.UserRole, role.ID)
+		assert.Equal(suite.T(), int32(model.UserRole), role)
 	}
 }

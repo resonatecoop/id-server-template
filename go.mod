@@ -16,6 +16,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/sessions v1.2.1
 	github.com/hashicorp/consul/api v1.8.1
+	github.com/jackc/pgx/v4 v4.11.0 // indirect
 	github.com/jinzhu/gorm v1.9.16
 	github.com/lib/pq v1.10.2
 	github.com/mailgun/mailgun-go/v4 v4.5.1

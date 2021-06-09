@@ -1,19 +1,24 @@
 package oauth_test
 
 import (
+	"context"
 	"time"
 
-	uuid "github.com/google/uuid"
+	"github.com/resonatecoop/id/util"
+
 	"github.com/resonatecoop/user-api/model"
 	"github.com/stretchr/testify/assert"
 )
 
 func (suite *OauthTestSuite) TestGrantAccessToken() {
 	var (
+		ctx         context.Context
 		accessToken *model.AccessToken
 		err         error
 		tokens      []*model.AccessToken
 	)
+
+	ctx = context.Background()
 
 	// Grant a client only access token
 	accessToken, err = suite.service.GrantAccessToken(
@@ -45,11 +50,11 @@ func (suite *OauthTestSuite) TestGrantAccessToken() {
 		assert.Equal(suite.T(), tokens[0].Token, accessToken.Token)
 
 		// Client id should be set
-		assert.True(suite.T(), tokens[0].ClientID.Valid)
-		assert.Equal(suite.T(), string(suite.clients[0].ID), tokens[0].ClientID.String)
+		assert.True(suite.T(), util.IsValidUUID(tokens[0].ClientID.String()))
+		assert.Equal(suite.T(), suite.clients[0].ID.String(), tokens[0].ClientID.String)
 
 		// User id should be nil
-		assert.False(suite.T(), tokens[0].UserID.Valid)
+		assert.False(suite.T(), util.IsValidUUID(tokens[0].UserID.String()))
 	}
 
 	// Grant a user specific access token
@@ -66,7 +71,12 @@ func (suite *OauthTestSuite) TestGrantAccessToken() {
 	// Correct access token object should be returned
 	if assert.NotNil(suite.T(), accessToken) {
 		// Fetch all access tokens
-		model.AccessTokenPreload(suite.db).Order("created_at").Find(&tokens)
+
+		rows, err := suite.db.QueryContext(ctx, "SELECT * FROM access_tokens ORDER BY created_at")
+		if err != nil {
+			panic(err)
+		}
+		err = suite.db.ScanRows(ctx, rows, &tokens)
 
 		// There should be 2 tokens now
 		assert.Equal(suite.T(), 2, len(tokens))
@@ -75,24 +85,21 @@ func (suite *OauthTestSuite) TestGrantAccessToken() {
 		assert.Equal(suite.T(), tokens[1].Token, accessToken.Token)
 
 		// Client id should be set
-		assert.True(suite.T(), tokens[1].ClientID.Valid)
-		assert.Equal(suite.T(), string(suite.clients[0].ID), tokens[1].ClientID.String)
+		assert.True(suite.T(), util.IsValidUUID(tokens[1].ClientID.String()))
+		assert.Equal(suite.T(), suite.clients[0].ID.String(), tokens[1].ClientID.String)
 
 		// User id should be set
-		assert.True(suite.T(), tokens[1].UserID.Valid)
-		assert.Equal(suite.T(), string(suite.users[0].ID), tokens[1].UserID.String)
+		assert.True(suite.T(), util.IsValidUUID(tokens[1].UserID.String()))
+		assert.Equal(suite.T(), suite.users[0].ID.String(), tokens[1].UserID.String)
 	}
 }
 
 func (suite *OauthTestSuite) TestGrantAccessTokenDeletesExpiredTokens() {
 	var (
+		ctx              context.Context
 		testAccessTokens = []*model.AccessToken{
 			// Expired access token with a user
 			{
-				MyGormModel: model.MyGormModel{
-					ID:        uuid.New(),
-					CreatedAt: time.Now().UTC(),
-				},
 				Token:     "test_token_1",
 				ExpiresAt: time.Now().UTC().Add(-10 * time.Second),
 				Client:    suite.clients[0],
@@ -100,20 +107,12 @@ func (suite *OauthTestSuite) TestGrantAccessTokenDeletesExpiredTokens() {
 			},
 			// Expired access token without a user
 			{
-				MyGormModel: model.MyGormModel{
-					ID:        uuid.New(),
-					CreatedAt: time.Now().UTC(),
-				},
 				Token:     "test_token_2",
 				ExpiresAt: time.Now().UTC().Add(-10 * time.Second),
 				Client:    suite.clients[0],
 			},
 			// Access token with a user
 			{
-				MyGormModel: model.MyGormModel{
-					ID:        uuid.New(),
-					CreatedAt: time.Now().UTC(),
-				},
 				Token:     "test_token_3",
 				ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
 				Client:    suite.clients[0],
@@ -121,23 +120,20 @@ func (suite *OauthTestSuite) TestGrantAccessTokenDeletesExpiredTokens() {
 			},
 			// Access token without a user
 			{
-				MyGormModel: model.MyGormModel{
-					ID:        uuid.New(),
-					CreatedAt: time.Now().UTC(),
-				},
 				Token:     "test_token_4",
 				ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
 				Client:    suite.clients[0],
 			},
 		}
 		err            error
-		notFound       bool
 		existingTokens []string
 	)
-
+	ctx = context.Background()
 	// Insert test access tokens
 	for _, testAccessToken := range testAccessTokens {
-		err = suite.db.Create(testAccessToken).Error
+		_, err = suite.db.NewInsert().
+			Model(testAccessToken).
+			Exec(ctx)
 		assert.NoError(suite.T(), err, "Inserting test data failed")
 	}
 
@@ -151,9 +147,12 @@ func (suite *OauthTestSuite) TestGrantAccessTokenDeletesExpiredTokens() {
 	assert.NoError(suite.T(), err)
 
 	// Check the test_token_1 was deleted
-	notFound = suite.db.Unscoped().Where("token = ?", "test_token_1").
-		First(new(model.AccessToken)).RecordNotFound()
-	assert.True(suite.T(), notFound)
+	err = suite.db.NewSelect().
+		Where("token = ?", "test_token_1").
+		Limit(1).
+		Scan(ctx)
+
+	assert.NotNil(suite.T(), err)
 
 	// Check the other three tokens are still around
 	existingTokens = []string{
@@ -162,9 +161,13 @@ func (suite *OauthTestSuite) TestGrantAccessTokenDeletesExpiredTokens() {
 		"test_token_4",
 	}
 	for _, token := range existingTokens {
-		notFound = suite.db.Unscoped().Where("token = ?", token).
-			First(new(model.AccessToken)).RecordNotFound()
-		assert.False(suite.T(), notFound)
+
+		err = suite.db.NewSelect().
+			Where("token = ?", token).
+			Limit(1).
+			Scan(ctx)
+
+		assert.Nil(suite.T(), err)
 	}
 
 	// This should only delete test_token_2
@@ -177,9 +180,12 @@ func (suite *OauthTestSuite) TestGrantAccessTokenDeletesExpiredTokens() {
 	assert.NoError(suite.T(), err)
 
 	// Check the test_token_2 was deleted
-	notFound = suite.db.Unscoped().Where("token = ?", "test_token_2").
-		First(new(model.AccessToken)).RecordNotFound()
-	assert.True(suite.T(), notFound)
+	err = suite.db.NewSelect().
+		Where("token = ?", "test_token_2").
+		Limit(1).
+		Scan(ctx)
+
+	assert.Nil(suite.T(), err)
 
 	// Check that last two tokens are still around
 	existingTokens = []string{
@@ -187,8 +193,11 @@ func (suite *OauthTestSuite) TestGrantAccessTokenDeletesExpiredTokens() {
 		"test_token_4",
 	}
 	for _, token := range existingTokens {
-		notFound := suite.db.Unscoped().Where("token = ?", token).
-			First(new(model.AccessToken)).RecordNotFound()
-		assert.False(suite.T(), notFound)
+		err = suite.db.NewSelect().
+			Where("token = ?", token).
+			Limit(1).
+			Scan(ctx)
+
+		assert.Nil(suite.T(), err)
 	}
 }
