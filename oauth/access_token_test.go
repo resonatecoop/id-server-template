@@ -51,7 +51,7 @@ func (suite *OauthTestSuite) TestGrantAccessToken() {
 
 		// Client id should be set
 		assert.True(suite.T(), util.IsValidUUID(tokens[0].ClientID.String()))
-		assert.Equal(suite.T(), suite.clients[0].ID.String(), tokens[0].ClientID.String)
+		assert.Equal(suite.T(), suite.clients[0].ID.String(), tokens[0].ClientID.String())
 
 		// User id should be nil
 		assert.False(suite.T(), util.IsValidUUID(tokens[0].UserID.String()))
@@ -86,17 +86,18 @@ func (suite *OauthTestSuite) TestGrantAccessToken() {
 
 		// Client id should be set
 		assert.True(suite.T(), util.IsValidUUID(tokens[1].ClientID.String()))
-		assert.Equal(suite.T(), suite.clients[0].ID.String(), tokens[1].ClientID.String)
+		assert.Equal(suite.T(), suite.clients[0].ID.String(), tokens[1].ClientID.String())
 
 		// User id should be set
 		assert.True(suite.T(), util.IsValidUUID(tokens[1].UserID.String()))
-		assert.Equal(suite.T(), suite.users[0].ID.String(), tokens[1].UserID.String)
+		assert.Equal(suite.T(), suite.users[0].ID.String(), tokens[1].UserID.String())
 	}
 }
 
 func (suite *OauthTestSuite) TestGrantAccessTokenDeletesExpiredTokens() {
 	var (
 		ctx              context.Context
+		accessToken      *model.AccessToken
 		testAccessTokens = []*model.AccessToken{
 			// Expired access token with a user
 			{
@@ -146,8 +147,10 @@ func (suite *OauthTestSuite) TestGrantAccessTokenDeletesExpiredTokens() {
 	)
 	assert.NoError(suite.T(), err)
 
+	accessToken = new(model.AccessToken)
 	// Check the test_token_1 was deleted
 	err = suite.db.NewSelect().
+		Model(accessToken).
 		Where("token = ?", "test_token_1").
 		Limit(1).
 		Scan(ctx)
@@ -163,6 +166,7 @@ func (suite *OauthTestSuite) TestGrantAccessTokenDeletesExpiredTokens() {
 	for _, token := range existingTokens {
 
 		err = suite.db.NewSelect().
+			Model(accessToken).
 			Where("token = ?", token).
 			Limit(1).
 			Scan(ctx)
@@ -181,6 +185,7 @@ func (suite *OauthTestSuite) TestGrantAccessTokenDeletesExpiredTokens() {
 
 	// Check the test_token_2 was deleted
 	err = suite.db.NewSelect().
+		Model(accessToken).
 		Where("token = ?", "test_token_2").
 		Limit(1).
 		Scan(ctx)
@@ -194,6 +199,7 @@ func (suite *OauthTestSuite) TestGrantAccessTokenDeletesExpiredTokens() {
 	}
 	for _, token := range existingTokens {
 		err = suite.db.NewSelect().
+			Model(accessToken).
 			Where("token = ?", token).
 			Limit(1).
 			Scan(ctx)

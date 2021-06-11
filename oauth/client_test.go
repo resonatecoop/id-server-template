@@ -41,7 +41,7 @@ func (suite *OauthTestSuite) TestCreateClient() {
 		err    error
 	)
 
-	// We try to insert a non uniqie client
+	// We try to insert a non unique client
 	client, err = suite.service.CreateClient(
 		"test_client_1",           // client ID
 		"test_secret",             // secret

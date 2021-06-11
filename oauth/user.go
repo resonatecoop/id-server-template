@@ -91,6 +91,7 @@ func (s *Service) FindUserByUsername(username string) (*model.User, error) {
 	// Usernames are case insensitive
 	user := new(model.User)
 	err := s.db.NewSelect().
+		Model(user).
 		Where("username = LOWER(?)", username).
 		Limit(1).
 		Scan(ctx)

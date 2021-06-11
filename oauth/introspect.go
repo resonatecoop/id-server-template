@@ -75,8 +75,8 @@ func (s *Service) NewIntrospectResponseFromAccessToken(accessToken *model.Access
 	if util.IsValidUUID(accessToken.ClientID.String()) {
 		client := new(model.Client)
 		err := s.db.NewSelect().
-			Column("key").
 			Model(client).
+			Column("key").
 			Where("id = ?", accessToken.ClientID.String()).
 			Limit(1).
 			Scan(ctx)
@@ -89,8 +89,8 @@ func (s *Service) NewIntrospectResponseFromAccessToken(accessToken *model.Access
 	if util.IsValidUUID(accessToken.UserID.String()) {
 		user := new(model.User)
 		err := s.db.NewSelect().
-			Column("username").
 			Model(user).
+			Column("username").
 			Where("id = ?", accessToken.UserID.String()).
 			Limit(1).
 			Scan(ctx)
@@ -117,8 +117,8 @@ func (s *Service) NewIntrospectResponseFromRefreshToken(refreshToken *model.Refr
 	if util.IsValidUUID(refreshToken.ClientID.String()) {
 		client := new(model.Client)
 		err := s.db.NewSelect().
-			Column("key").
 			Model(client).
+			Column("key").
 			Where("id = ?", refreshToken.ClientID.String()).
 			Limit(1).
 			Scan(ctx)
@@ -131,8 +131,8 @@ func (s *Service) NewIntrospectResponseFromRefreshToken(refreshToken *model.Refr
 	if util.IsValidUUID(refreshToken.UserID.String()) {
 		user := new(model.User)
 		err := s.db.NewSelect().
-			Column("username").
 			Model(user).
+			Column("username").
 			Where("id = ?", refreshToken.UserID.String()).
 			Limit(1).
 			Scan(ctx)

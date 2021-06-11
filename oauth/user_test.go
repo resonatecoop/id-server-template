@@ -2,6 +2,7 @@ package oauth_test
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/resonatecoop/id/oauth"
 	"github.com/resonatecoop/id/util"
@@ -256,6 +257,21 @@ func (suite *OauthTestSuite) TestAuthUser() {
 	if assert.NotNil(suite.T(), err) {
 		assert.Equal(suite.T(), oauth.ErrUserNotFound, err)
 	}
+
+	// Insert a test user without a password
+	user = &model.User{
+		RoleID:   int32(model.UserRole),
+		Username: "test@user",
+		Password: sql.NullString{String: "$2a$10$4J4t9xuWhOKhfjN0bOKNReS9sL3BVSN9zxIr2.VaWWQfRBWh1dQIS", Valid: true},
+	}
+
+	ctx = context.Background()
+
+	_, err = suite.db.NewInsert().
+		Model(user).
+		Exec(ctx)
+
+	assert.Nil(suite.T(), err)
 
 	// When we try to authenticate with an invalid password
 	user, err = suite.service.AuthUser("test@user", "bogus")

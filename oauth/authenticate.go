@@ -47,18 +47,20 @@ func (s *Service) Authenticate(token string) (*model.AccessToken, error) {
 
 	//var res sql.Result
 
+	//	err = GetOrCreateRefreshToken
+
 	if util.IsValidUUID(accessToken.UserID.String()) {
 		_, err = s.db.NewUpdate().
 			Model(new(model.RefreshToken)).
 			Set("expires_at = ?", increasedExpiresAt).
-			Where("client_id = ?", accessToken.ClientID.String).
-			Where("user_id = ?", accessToken.UserID.String).
+			Where("client_id = ?", accessToken.ClientID.String()).
+			Where("user_id = ?", accessToken.UserID.String()).
 			Exec(ctx)
 	} else {
 		_, err = s.db.NewUpdate().
 			Model(new(model.RefreshToken)).
 			Set("expires_at = ?", increasedExpiresAt).
-			Where("client_id = ?", accessToken.ClientID.String).
+			Where("client_id = ?", accessToken.ClientID.String()).
 			Where("user_id IS NULL").
 			Exec(ctx)
 	}

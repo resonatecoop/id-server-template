@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/resonatecoop/id/config"
+	"github.com/resonatecoop/id/database"
 	"github.com/resonatecoop/id/log"
 	"github.com/resonatecoop/id/oauth"
 	"github.com/resonatecoop/user-api/model"
@@ -52,6 +53,14 @@ type OauthTestSuite struct {
 func (suite *OauthTestSuite) SetupSuite() {
 	// Initialise the config
 	suite.cnf = config.NewConfig(false, false, "etcd")
+
+	var err error
+
+	suite.db, err = database.NewDatabase(suite.cnf)
+
+	if err != nil {
+		panic(err)
+	}
 
 	// ASSUME THAT TEST DATABASE HAS ALREADY BEEN CREATED
 	// Create the test database
@@ -135,14 +144,14 @@ func (suite *OauthTestSuite) TearDownTest() {
 		Model(new(model.AccessToken)).
 		Exec(ctx)
 
-	ids := []string{"1", "2"}
+	ids := []string{"243b4178-6f98-4bf1-bbb1-46b57a901816", "5253747c-2b8c-40e2-8a70-bab91348a9bd", "90b26113-37e0-456a-9f75-01db0eb550f8", "feb4edb0-064a-40bc-9e4a-625f1a97a522"}
 
 	suite.db.NewDelete().
 		Model(new(model.User)).
 		Where("id NOT IN (?)", bun.In(ids)).
 		Exec(ctx)
 
-	ids = []string{"1", "2", "3"}
+	ids = []string{"785cb79c-e078-4b39-9b9d-acecffd620c9", "785cb79c-e078-4b39-9b9d-acecffd620c9"}
 
 	suite.db.NewDelete().
 		Model(new(model.Client)).

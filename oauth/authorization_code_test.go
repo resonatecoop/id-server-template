@@ -48,10 +48,10 @@ func (suite *OauthTestSuite) TestGrantAuthorizationCode() {
 
 		// Client ID should be set
 		assert.True(suite.T(), util.IsValidUUID(codes[0].ClientID.String()))
-		assert.Equal(suite.T(), suite.clients[0].ID.String(), codes[0].ClientID.String)
+		assert.Equal(suite.T(), suite.clients[0].ID.String(), codes[0].ClientID.String())
 
 		// User ID should be set
 		assert.True(suite.T(), util.IsValidUUID(codes[0].UserID.String()))
-		assert.Equal(suite.T(), suite.users[0].ID.String(), codes[0].UserID.String)
+		assert.Equal(suite.T(), suite.users[0].ID.String(), codes[0].UserID.String())
 	}
 }

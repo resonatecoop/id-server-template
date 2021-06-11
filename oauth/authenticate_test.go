@@ -10,7 +10,7 @@ import (
 	"github.com/resonatecoop/id/util"
 	"github.com/resonatecoop/user-api/model"
 
-	//uuid "github.com/google/uuid"
+	"github.com/google/uuid"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -28,21 +28,21 @@ func (suite *OauthTestSuite) TestAuthenticate() {
 		{
 			Token:     "test_expired_token",
 			ExpiresAt: time.Now().UTC().Add(-10 * time.Second),
-			Client:    suite.clients[0],
-			User:      suite.users[0],
+			ClientID:  suite.clients[0].ID,
+			UserID:    suite.users[0].ID,
 		},
 		// Access token without a user
 		{
-			Token:     "test_client_token",
+			Token:     "test_client_token_2",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-			Client:    suite.clients[0],
+			ClientID:  suite.clients[0].ID,
 		},
 		// Access token with a user
 		{
-			Token:     "test_user_token",
+			Token:     "test_user_token_3",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-			Client:    suite.clients[0],
-			User:      suite.users[0],
+			ClientID:  suite.clients[0].ID,
+			UserID:    suite.users[0].ID,
 		},
 	}
 
@@ -90,26 +90,26 @@ func (suite *OauthTestSuite) TestAuthenticate() {
 	}
 
 	// Test passing a valid client token
-	accessToken, err = suite.service.Authenticate("test_client_token")
+	accessToken, err = suite.service.Authenticate("test_client_token_2")
 
 	// Correct access token should be returned
 	if assert.NotNil(suite.T(), accessToken) {
-		assert.Equal(suite.T(), "test_client_token", accessToken.Token)
+		assert.Equal(suite.T(), "test_client_token_2", accessToken.Token)
 		assert.EqualValues(suite.T(), suite.clients[0].ID, accessToken.ClientID)
-		assert.False(suite.T(), util.IsValidUUID(accessToken.UserID.String()))
+		assert.EqualValues(suite.T(), accessToken.UserID, uuid.Nil)
 	}
 
 	// Error should be nil
 	assert.Nil(suite.T(), err)
 
 	// Test passing a valid user token
-	accessToken, err = suite.service.Authenticate("test_user_token")
+	accessToken, err = suite.service.Authenticate("test_user_token_3")
 
 	// Correct access token should be returned
 	if assert.NotNil(suite.T(), accessToken) {
-		assert.Equal(suite.T(), "test_user_token", accessToken.Token)
-		assert.EqualValues(suite.T(), suite.clients[0].ID, accessToken.ClientID.String)
-		assert.EqualValues(suite.T(), suite.users[0].ID, accessToken.UserID.String)
+		assert.Equal(suite.T(), "test_user_token_3", accessToken.Token)
+		assert.EqualValues(suite.T(), suite.clients[0].ID, accessToken.ClientID.String())
+		assert.EqualValues(suite.T(), suite.users[0].ID, accessToken.UserID.String())
 	}
 
 	// Error should be nil
@@ -195,8 +195,8 @@ func (suite *OauthTestSuite) TestAuthenticateRollingRefreshToken() {
 	accessToken, err = suite.service.Authenticate("test_token_1")
 	assert.Nil(suite.T(), err)
 	assert.Equal(suite.T(), "test_token_1", accessToken.Token)
-	assert.EqualValues(suite.T(), suite.clients[0].ID, accessToken.ClientID.String)
-	assert.EqualValues(suite.T(), suite.users[0].ID, accessToken.UserID.String)
+	assert.EqualValues(suite.T(), suite.clients[0].ID, accessToken.ClientID.String())
+	assert.EqualValues(suite.T(), suite.users[0].ID, accessToken.UserID.String())
 
 	// First refresh token expiration date should be extended
 	refreshTokens = make([]*model.RefreshToken, len(testRefreshTokens))
@@ -241,7 +241,7 @@ func (suite *OauthTestSuite) TestAuthenticateRollingRefreshToken() {
 	accessToken, err = suite.service.Authenticate("test_token_2")
 	assert.Nil(suite.T(), err)
 	assert.Equal(suite.T(), "test_token_2", accessToken.Token)
-	assert.EqualValues(suite.T(), suite.clients[0].ID, accessToken.ClientID.String)
+	assert.EqualValues(suite.T(), suite.clients[0].ID, accessToken.ClientID.String())
 	assert.False(suite.T(), util.IsValidUUID(accessToken.UserID.String()))
 
 	// Second refresh token expiration date should be extended
@@ -285,8 +285,8 @@ func (suite *OauthTestSuite) TestAuthenticateRollingRefreshToken() {
 	accessToken, err = suite.service.Authenticate("test_token_3")
 	assert.Nil(suite.T(), err)
 	assert.Equal(suite.T(), "test_token_3", accessToken.Token)
-	assert.EqualValues(suite.T(), suite.clients[0].ID, accessToken.ClientID.String)
-	assert.EqualValues(suite.T(), suite.users[1].ID, accessToken.UserID.String)
+	assert.EqualValues(suite.T(), suite.clients[0].ID, accessToken.ClientID.String())
+	assert.EqualValues(suite.T(), suite.users[1].ID, accessToken.UserID.String())
 
 	// First refresh token expiration date should be extended
 	refreshTokens = make([]*model.RefreshToken, len(testRefreshTokens))
@@ -400,10 +400,10 @@ func (suite *OauthTestSuite) TestClearUserTokens() {
 
 	// Assert that the refresh token was removed
 
-	refreshtoken := new(model.RefreshToken)
+	refreshToken := new(model.RefreshToken)
 
 	err = suite.db.NewSelect().
-		Model(refreshtoken).
+		Model(refreshToken).
 		Where("token = ?", testUserSession.RefreshToken).
 		Limit(1).
 		Scan(ctx)
@@ -412,10 +412,10 @@ func (suite *OauthTestSuite) TestClearUserTokens() {
 	//TODO Improve assertion to be specific about scan error?
 
 	// Assert that the access token was removed
-	accesstoken := new(model.AccessToken)
+	accessToken := new(model.AccessToken)
 
 	err = suite.db.NewSelect().
-		Model(accesstoken).
+		Model(accessToken).
 		Where("token = ?", testUserSession.AccessToken).
 		Limit(1).
 		Scan(ctx)
@@ -426,7 +426,7 @@ func (suite *OauthTestSuite) TestClearUserTokens() {
 	// Assert that the other two tokens are still there
 	// Refresh tokens
 	err = suite.db.NewSelect().
-		Model(refreshtoken).
+		Model(refreshToken).
 		Where("token = ?", "test_token_2").
 		Limit(1).
 		Scan(ctx)
@@ -434,7 +434,7 @@ func (suite *OauthTestSuite) TestClearUserTokens() {
 	assert.NotNil(suite.T(), err)
 
 	err = suite.db.NewSelect().
-		Model(refreshtoken).
+		Model(refreshToken).
 		Where("token = ?", "test_token_3").
 		Limit(1).
 		Scan(ctx)
@@ -443,7 +443,7 @@ func (suite *OauthTestSuite) TestClearUserTokens() {
 
 	// Access tokens
 	err = suite.db.NewSelect().
-		Model(accesstoken).
+		Model(accessToken).
 		Where("token = ?", "test_token_2").
 		Limit(1).
 		Scan(ctx)
@@ -451,7 +451,7 @@ func (suite *OauthTestSuite) TestClearUserTokens() {
 	assert.NotNil(suite.T(), err)
 
 	err = suite.db.NewSelect().
-		Model(accesstoken).
+		Model(accessToken).
 		Where("token = ?", "test_token_3").
 		Limit(1).
 		Scan(ctx)

@@ -557,6 +557,8 @@ github.com/resonatecoop/user-api v0.0.0-20210608211653-531c9c610cc9 h1:1ZpRRttRC
 github.com/resonatecoop/user-api v0.0.0-20210608211653-531c9c610cc9/go.mod h1:On8EPVkEOolvav7RERAlvVNjlkSz/D3yRTk3D10LurM=
 github.com/resonatecoop/user-api v0.0.0-20210609064043-ec9e25a85c5f h1:WjEO4Jp5HEK5UGoBpMB8dcflA43XG74+XV2+aRs23vI=
 github.com/resonatecoop/user-api v0.0.0-20210609064043-ec9e25a85c5f/go.mod h1:On8EPVkEOolvav7RERAlvVNjlkSz/D3yRTk3D10LurM=
+github.com/resonatecoop/user-api v0.0.0-20210611204114-1c50a3058889 h1:tj9gji0xSdnETnPOUYlhgETEUb/JJjLefhDJjME8mrk=
+github.com/resonatecoop/user-api v0.0.0-20210611204114-1c50a3058889/go.mod h1:On8EPVkEOolvav7RERAlvVNjlkSz/D3yRTk3D10LurM=
 github.com/rogpeppe/fastuuid v0.0.0-20150106093220-6724a57986af/go.mod h1:XWv6SoW27p1b0cqNHllgS5HIMJraePCO15w5zCzIWYg=
 github.com/rogpeppe/fastuuid v1.2.0/go.mod h1:jVj6XXZzXRy/MSR5jhDC/2q6DgLz+nrA6LYCDYWNEvQ=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
