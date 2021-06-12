@@ -4,10 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/jinzhu/gorm"
 	"github.com/resonatecoop/id/oauth"
 	"github.com/resonatecoop/id/session"
-	"github.com/resonatecoop/id/util"
 	"github.com/resonatecoop/user-api/model"
 
 	"github.com/google/uuid"
@@ -108,8 +106,8 @@ func (suite *OauthTestSuite) TestAuthenticate() {
 	// Correct access token should be returned
 	if assert.NotNil(suite.T(), accessToken) {
 		assert.Equal(suite.T(), "test_user_token_3", accessToken.Token)
-		assert.EqualValues(suite.T(), suite.clients[0].ID, accessToken.ClientID.String())
-		assert.EqualValues(suite.T(), suite.users[0].ID, accessToken.UserID.String())
+		assert.EqualValues(suite.T(), suite.clients[0].ID, accessToken.ClientID)
+		assert.EqualValues(suite.T(), suite.users[0].ID, accessToken.UserID)
 	}
 
 	// Error should be nil
@@ -131,19 +129,19 @@ func (suite *OauthTestSuite) TestAuthenticateRollingRefreshToken() {
 		{
 			Token:     "test_token_1",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-			Client:    suite.clients[0],
-			User:      suite.users[0],
+			ClientID:  suite.clients[0].ID,
+			UserID:    suite.users[0].ID,
 		},
 		{
 			Token:     "test_token_2",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-			Client:    suite.clients[0],
+			ClientID:  suite.clients[0].ID,
 		},
 		{
 			Token:     "test_token_3",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-			Client:    suite.clients[0],
-			User:      suite.users[1],
+			ClientID:  suite.clients[0].ID,
+			UserID:    suite.users[1].ID,
 		},
 	}
 
@@ -161,21 +159,24 @@ func (suite *OauthTestSuite) TestAuthenticateRollingRefreshToken() {
 	// Insert some test access tokens
 	testRefreshTokens = []*model.RefreshToken{
 		{
+			IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC().Add(+1 * time.Second)},
 			Token:     "test_token_1",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-			Client:    suite.clients[0],
-			User:      suite.users[0],
+			ClientID:  suite.clients[0].ID,
+			UserID:    suite.users[0].ID,
 		},
 		{
+			IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC().Add(+2 * time.Second)},
 			Token:     "test_token_2",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-			Client:    suite.clients[0],
+			ClientID:  suite.clients[0].ID,
 		},
 		{
+			IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC().Add(+3 * time.Second)},
 			Token:     "test_token_3",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-			Client:    suite.clients[0],
-			User:      suite.users[1],
+			ClientID:  suite.clients[0].ID,
+			UserID:    suite.users[1].ID,
 		},
 	}
 	for _, testRefreshToken := range testRefreshTokens {
@@ -188,15 +189,15 @@ func (suite *OauthTestSuite) TestAuthenticateRollingRefreshToken() {
 	}
 
 	// Authenticate with the first access token
-	now1 := time.Now().UTC()
-	gorm.NowFunc = func() time.Time {
-		return now1
-	}
+	//	now1 := time.Now().UTC()
+	// gorm.NowFunc = func() time.Time {
+	// 	return now1
+	// }
 	accessToken, err = suite.service.Authenticate("test_token_1")
 	assert.Nil(suite.T(), err)
 	assert.Equal(suite.T(), "test_token_1", accessToken.Token)
-	assert.EqualValues(suite.T(), suite.clients[0].ID, accessToken.ClientID.String())
-	assert.EqualValues(suite.T(), suite.users[0].ID, accessToken.UserID.String())
+	assert.EqualValues(suite.T(), suite.clients[0].ID, accessToken.ClientID)
+	assert.EqualValues(suite.T(), suite.users[0].ID, accessToken.UserID)
 
 	// First refresh token expiration date should be extended
 	refreshTokens = make([]*model.RefreshToken, len(testRefreshTokens))
@@ -217,7 +218,8 @@ func (suite *OauthTestSuite) TestAuthenticateRollingRefreshToken() {
 	assert.Equal(suite.T(), "test_token_1", refreshTokens[0].Token)
 	assert.Equal(
 		suite.T(),
-		now1.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
+		//now1.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
+		refreshTokens[0].UpdatedAt.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
 		refreshTokens[0].ExpiresAt.Unix(),
 	)
 	assert.Equal(suite.T(), "test_token_2", refreshTokens[1].Token)
@@ -234,15 +236,15 @@ func (suite *OauthTestSuite) TestAuthenticateRollingRefreshToken() {
 	)
 
 	// Authenticate with the second access token
-	now2 := time.Now().UTC()
-	gorm.NowFunc = func() time.Time {
-		return now2
-	}
+	// now2 := time.Now().UTC()
+	// gorm.NowFunc = func() time.Time {
+	// 	return now2
+	// }
 	accessToken, err = suite.service.Authenticate("test_token_2")
 	assert.Nil(suite.T(), err)
 	assert.Equal(suite.T(), "test_token_2", accessToken.Token)
-	assert.EqualValues(suite.T(), suite.clients[0].ID, accessToken.ClientID.String())
-	assert.False(suite.T(), util.IsValidUUID(accessToken.UserID.String()))
+	assert.EqualValues(suite.T(), suite.clients[0].ID, accessToken.ClientID)
+	assert.EqualValues(suite.T(), accessToken.UserID, uuid.Nil)
 
 	// Second refresh token expiration date should be extended
 	refreshTokens = make([]*model.RefreshToken, len(testRefreshTokens))
@@ -261,13 +263,15 @@ func (suite *OauthTestSuite) TestAuthenticateRollingRefreshToken() {
 	assert.Equal(suite.T(), "test_token_1", refreshTokens[0].Token)
 	assert.Equal(
 		suite.T(),
-		now1.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
+		//now1.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
+		refreshTokens[0].UpdatedAt.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
 		refreshTokens[0].ExpiresAt.Unix(),
 	)
 	assert.Equal(suite.T(), "test_token_2", refreshTokens[1].Token)
 	assert.Equal(
 		suite.T(),
-		now2.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
+		//now2.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
+		refreshTokens[0].UpdatedAt.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
 		refreshTokens[1].ExpiresAt.Unix(),
 	)
 	assert.Equal(suite.T(), "test_token_3", refreshTokens[2].Token)
@@ -278,15 +282,15 @@ func (suite *OauthTestSuite) TestAuthenticateRollingRefreshToken() {
 	)
 
 	// Authenticate with the third access token
-	now3 := time.Now().UTC()
-	gorm.NowFunc = func() time.Time {
-		return now3
-	}
+	//now3 := time.Now().UTC()
+	// gorm.NowFunc = func() time.Time {
+	// 	return now3
+	// }
 	accessToken, err = suite.service.Authenticate("test_token_3")
 	assert.Nil(suite.T(), err)
 	assert.Equal(suite.T(), "test_token_3", accessToken.Token)
-	assert.EqualValues(suite.T(), suite.clients[0].ID, accessToken.ClientID.String())
-	assert.EqualValues(suite.T(), suite.users[1].ID, accessToken.UserID.String())
+	assert.EqualValues(suite.T(), suite.clients[0].ID, accessToken.ClientID)
+	assert.EqualValues(suite.T(), suite.users[1].ID, accessToken.UserID)
 
 	// First refresh token expiration date should be extended
 	refreshTokens = make([]*model.RefreshToken, len(testRefreshTokens))
@@ -300,19 +304,22 @@ func (suite *OauthTestSuite) TestAuthenticateRollingRefreshToken() {
 	assert.Equal(suite.T(), "test_token_1", refreshTokens[0].Token)
 	assert.Equal(
 		suite.T(),
-		now1.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
+		//now1.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
+		refreshTokens[0].UpdatedAt.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
 		refreshTokens[0].ExpiresAt.Unix(),
 	)
 	assert.Equal(suite.T(), "test_token_2", refreshTokens[1].Token)
 	assert.Equal(
 		suite.T(),
-		now2.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
+		//now2.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
+		refreshTokens[1].UpdatedAt.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
 		refreshTokens[1].ExpiresAt.Unix(),
 	)
 	assert.Equal(suite.T(), "test_token_3", refreshTokens[2].Token)
 	assert.Equal(
 		suite.T(),
-		now3.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
+		//now3.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
+		refreshTokens[2].UpdatedAt.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
 		refreshTokens[2].ExpiresAt.Unix(),
 	)
 }
@@ -331,20 +338,20 @@ func (suite *OauthTestSuite) TestClearUserTokens() {
 		{
 			Token:     "test_token_1",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-			Client:    suite.clients[0],
-			User:      suite.users[0],
+			ClientID:  suite.clients[0].ID,
+			UserID:    suite.users[0].ID,
 		},
 		{
 			Token:     "test_token_2",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-			Client:    suite.clients[1],
-			User:      suite.users[0],
+			ClientID:  suite.clients[1].ID,
+			UserID:    suite.users[0].ID,
 		},
 		{
 			Token:     "test_token_3",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-			Client:    suite.clients[0],
-			User:      suite.users[1],
+			ClientID:  suite.clients[0].ID,
+			UserID:    suite.users[1].ID,
 		},
 	}
 
@@ -363,20 +370,20 @@ func (suite *OauthTestSuite) TestClearUserTokens() {
 		{
 			Token:     "test_token_1",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-			Client:    suite.clients[0],
-			User:      suite.users[0],
+			ClientID:  suite.clients[0].ID,
+			UserID:    suite.users[0].ID,
 		},
 		{
 			Token:     "test_token_2",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-			Client:    suite.clients[1],
-			User:      suite.users[0],
+			ClientID:  suite.clients[1].ID,
+			UserID:    suite.users[0].ID,
 		},
 		{
 			Token:     "test_token_3",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-			Client:    suite.clients[0],
-			User:      suite.users[1],
+			ClientID:  suite.clients[0].ID,
+			UserID:    suite.users[1].ID,
 		},
 	}
 

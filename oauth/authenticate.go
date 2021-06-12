@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/resonatecoop/id/session"
 	"github.com/resonatecoop/id/util"
 	"github.com/resonatecoop/user-api/model"
@@ -49,10 +50,11 @@ func (s *Service) Authenticate(token string) (*model.AccessToken, error) {
 
 	//	err = GetOrCreateRefreshToken
 
-	if util.IsValidUUID(accessToken.UserID.String()) {
+	if util.IsValidUUID(accessToken.UserID.String()) && accessToken.UserID != uuid.Nil {
 		_, err = s.db.NewUpdate().
 			Model(new(model.RefreshToken)).
 			Set("expires_at = ?", increasedExpiresAt).
+			Set("updated_at = ?", time.Now().UTC()).
 			Where("client_id = ?", accessToken.ClientID.String()).
 			Where("user_id = ?", accessToken.UserID.String()).
 			Exec(ctx)
@@ -60,8 +62,9 @@ func (s *Service) Authenticate(token string) (*model.AccessToken, error) {
 		_, err = s.db.NewUpdate().
 			Model(new(model.RefreshToken)).
 			Set("expires_at = ?", increasedExpiresAt).
+			Set("updated_at = ?", time.Now().UTC()).
 			Where("client_id = ?", accessToken.ClientID.String()).
-			Where("user_id IS NULL").
+			Where("user_id = uuid_nil()").
 			Exec(ctx)
 	}
 

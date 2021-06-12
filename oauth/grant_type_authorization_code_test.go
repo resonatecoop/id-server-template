@@ -69,8 +69,8 @@ func (suite *OauthTestSuite) TestAuthorizationCodeGrantExpired() {
 	authorizationcode := &model.AuthorizationCode{
 		Code:        "test_code",
 		ExpiresAt:   time.Now().UTC().Add(-10 * time.Second),
-		Client:      suite.clients[0],
-		User:        suite.users[0],
+		ClientID:    suite.clients[0].ID,
+		UserID:      suite.users[0].ID,
 		RedirectURI: util.StringOrNull("https://www.example.com"),
 		Scope:       "read_write",
 	}
@@ -112,8 +112,8 @@ func (suite *OauthTestSuite) TestAuthorizationCodeGrantInvalidRedirectURI() {
 	authorizationcode := &model.AuthorizationCode{
 		Code:        "test_code",
 		ExpiresAt:   time.Now().UTC().Add(+10 * time.Second),
-		Client:      suite.clients[0],
-		User:        suite.users[0],
+		ClientID:    suite.clients[0].ID,
+		UserID:      suite.users[0].ID,
 		RedirectURI: util.StringOrNull("https://www.example.com"),
 		Scope:       "read_write",
 	}
@@ -153,8 +153,8 @@ func (suite *OauthTestSuite) TestAuthorizationCodeGrant() {
 	authorizationcode := &model.AuthorizationCode{
 		Code:        "test_code",
 		ExpiresAt:   time.Now().UTC().Add(+10 * time.Second),
-		Client:      suite.clients[0],
-		User:        suite.users[0],
+		ClientID:    suite.clients[0].ID,
+		UserID:      suite.users[0].ID,
 		RedirectURI: util.StringOrNull("https://www.example.com"),
 		Scope:       "read_write",
 	}

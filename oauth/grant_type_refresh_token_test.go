@@ -67,8 +67,8 @@ func (suite *OauthTestSuite) TestRefreshTokenGrantExipired() {
 	refreshtoken := &model.RefreshToken{
 		Token:     "test_token",
 		ExpiresAt: time.Now().UTC().Add(-10 * time.Second),
-		Client:    suite.clients[0],
-		User:      suite.users[0],
+		ClientID:  suite.clients[0].ID,
+		UserID:    suite.users[0].ID,
 		Scope:     "read_write",
 	}
 
@@ -107,8 +107,8 @@ func (suite *OauthTestSuite) TestRefreshTokenGrantScopeCannotBeGreater() {
 	refreshtoken := &model.RefreshToken{
 		Token:     "test_token",
 		ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-		Client:    suite.clients[0],
-		User:      suite.users[0],
+		ClientID:  suite.clients[0].ID,
+		UserID:    suite.users[0].ID,
 		Scope:     "read_write",
 	}
 
@@ -149,8 +149,8 @@ func (suite *OauthTestSuite) TestRefreshTokenGrantDefaultsToOriginalScope() {
 	refreshtoken := &model.RefreshToken{
 		Token:     "test_token",
 		ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-		Client:    suite.clients[0],
-		User:      suite.users[0],
+		ClientID:  suite.clients[0].ID,
+		UserID:    suite.users[0].ID,
 		Scope:     "read_write",
 	}
 
@@ -203,8 +203,8 @@ func (suite *OauthTestSuite) TestRefreshTokenGrant() {
 	refreshToken := &model.RefreshToken{
 		Token:     "test_token",
 		ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-		Client:    suite.clients[0],
-		User:      suite.users[0],
+		ClientID:  suite.clients[0].ID,
+		UserID:    suite.users[0].ID,
 		Scope:     "read_write",
 	}
 

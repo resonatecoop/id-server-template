@@ -165,7 +165,7 @@ func (suite *OauthTestSuite) TestGetOrCreateRefreshTokenReturnsExisting() {
 	refreshToken = &model.RefreshToken{
 		Token:     "test_token",
 		ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-		Client:    suite.clients[0],
+		ClientID:  suite.clients[0].ID,
 	}
 
 	ctx = context.Background()
@@ -218,8 +218,8 @@ func (suite *OauthTestSuite) TestGetOrCreateRefreshTokenReturnsExisting() {
 	refreshToken = &model.RefreshToken{
 		Token:     "test_token2",
 		ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-		Client:    suite.clients[0],
-		User:      suite.users[0],
+		ClientID:  suite.clients[0].ID,
+		UserID:    suite.users[0].ID,
 	}
 
 	_, err = suite.db.NewInsert().
@@ -281,7 +281,7 @@ func (suite *OauthTestSuite) TestGetOrCreateRefreshTokenDeletesExpired() {
 	refreshToken = &model.RefreshToken{
 		Token:     "test_token",
 		ExpiresAt: time.Now().UTC().Add(-10 * time.Second),
-		Client:    suite.clients[0],
+		ClientID:  suite.clients[0].ID,
 	}
 
 	ctx = context.Background()
@@ -332,8 +332,8 @@ func (suite *OauthTestSuite) TestGetOrCreateRefreshTokenDeletesExpired() {
 	refreshToken = &model.RefreshToken{
 		Token:     "test_token",
 		ExpiresAt: time.Now().UTC().Add(-10 * time.Second),
-		Client:    suite.clients[0],
-		User:      suite.users[0],
+		ClientID:  suite.clients[0].ID,
+		UserID:    suite.users[0].ID,
 	}
 
 	suite.db.NewInsert().
@@ -392,15 +392,15 @@ func (suite *OauthTestSuite) TestGetValidRefreshToken() {
 		{
 			Token:     "test_expired_token",
 			ExpiresAt: time.Now().UTC().Add(-10 * time.Second),
-			Client:    suite.clients[0],
-			User:      suite.users[0],
+			ClientID:  suite.clients[0].ID,
+			UserID:    suite.users[0].ID,
 		},
 		// Refresh token
 		{
 			Token:     "test_token",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-			Client:    suite.clients[0],
-			User:      suite.users[0],
+			ClientID:  suite.clients[0].ID,
+			UserID:    suite.users[0].ID,
 		},
 	}
 

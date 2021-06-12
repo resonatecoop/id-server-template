@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/resonatecoop/id/util"
 	"github.com/resonatecoop/user-api/model"
 )
@@ -28,7 +29,7 @@ func (s *Service) GetOrCreateRefreshToken(client *model.Client, user *model.User
 
 	var err error
 
-	if user != nil && len(user.ID.String()) > 0 {
+	if user != nil && user.ID != uuid.Nil {
 		err = s.db.NewSelect().
 			Model(refreshToken).
 			Where("client_id = ?", client.ID).
@@ -39,7 +40,7 @@ func (s *Service) GetOrCreateRefreshToken(client *model.Client, user *model.User
 		err = s.db.NewSelect().
 			Model(refreshToken).
 			Where("client_id = ?", client.ID).
-			Where("user_id IS NULL").
+			Where("user_id = uuid_nil()").
 			Limit(1).
 			Scan(ctx)
 	}

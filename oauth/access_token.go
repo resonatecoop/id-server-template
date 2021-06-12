@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/resonatecoop/user-api/model"
 )
 
@@ -22,7 +23,7 @@ func (s *Service) GrantAccessToken(client *model.Client, user *model.User, expir
 	access_token := new(model.AccessToken)
 
 	// Delete expired access tokens
-	if user != nil && len(user.ID.String()) > 0 {
+	if user != nil && user.ID != uuid.Nil {
 		_, err = tx.NewDelete().
 			Model(access_token).
 			Where("user_id = ?", user.ID).
@@ -32,7 +33,7 @@ func (s *Service) GrantAccessToken(client *model.Client, user *model.User, expir
 	} else {
 		_, err = tx.NewDelete().
 			Model(access_token).
-			Where("user_id IS NULL").
+			Where("user_id = uuid_nil()").
 			Where("client_id = ?", client.ID).
 			Where("expires_at <= ?", time.Now()).
 			Exec(ctx)
@@ -58,8 +59,13 @@ func (s *Service) GrantAccessToken(client *model.Client, user *model.User, expir
 		tx.Rollback() // rollback the transaction
 		return nil, err
 	}
-	accessToken.Client = client
-	accessToken.User = user
+	accessToken.ClientID = client.ID
+
+	if user == nil {
+		accessToken.UserID = uuid.Nil
+	} else {
+		accessToken.UserID = user.ID
+	}
 
 	// Commit the transaction
 	err = tx.Commit()

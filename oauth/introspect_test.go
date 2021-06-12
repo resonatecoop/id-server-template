@@ -129,8 +129,8 @@ func (suite *OauthTestSuite) TestHandleIntrospectAccessToken() {
 	accessToken := &model.AccessToken{
 		Token:     "test_token_introspect_1",
 		ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-		Client:    suite.clients[0],
-		User:      suite.users[0],
+		ClientID:  suite.clients[0].ID,
+		UserID:    suite.users[0].ID,
 		Scope:     "read_write",
 	}
 
@@ -201,8 +201,8 @@ func (suite *OauthTestSuite) TestHandleIntrospectRefreshToken() {
 	refreshToken := &model.RefreshToken{
 		Token:     "test_token_introspect_1",
 		ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-		Client:    suite.clients[0],
-		User:      suite.users[0],
+		ClientID:  suite.clients[0].ID,
+		UserID:    suite.users[0].ID,
 		Scope:     "read_write",
 	}
 

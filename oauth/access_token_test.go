@@ -103,27 +103,27 @@ func (suite *OauthTestSuite) TestGrantAccessTokenDeletesExpiredTokens() {
 			{
 				Token:     "test_token_1",
 				ExpiresAt: time.Now().UTC().Add(-10 * time.Second),
-				Client:    suite.clients[0],
-				User:      suite.users[0],
+				ClientID:  suite.clients[0].ID,
+				UserID:    suite.users[0].ID,
 			},
 			// Expired access token without a user
 			{
 				Token:     "test_token_2",
 				ExpiresAt: time.Now().UTC().Add(-10 * time.Second),
-				Client:    suite.clients[0],
+				ClientID:  suite.clients[0].ID,
 			},
 			// Access token with a user
 			{
 				Token:     "test_token_3",
 				ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-				Client:    suite.clients[0],
-				User:      suite.users[0],
+				ClientID:  suite.clients[0].ID,
+				UserID:    suite.users[0].ID,
 			},
 			// Access token without a user
 			{
 				Token:     "test_token_4",
 				ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-				Client:    suite.clients[0],
+				ClientID:  suite.clients[0].ID,
 			},
 		}
 		err            error
