@@ -190,6 +190,7 @@ func (s *Service) sendEmailTokenCommon(
 
 	_, err = s.db.NewUpdate().
 		Model(newEmailToken).
+		WherePK().
 		Exec(ctx)
 
 	if err != nil {
@@ -237,6 +238,7 @@ func (s *Service) DeleteEmailToken(emailToken *model.EmailToken, soft bool) erro
 		_, err := s.db.NewUpdate().
 			Model(emailToken).
 			Set("deleted = ?", now).
+			WherePK().
 			Exec(ctx)
 
 		return err
@@ -244,6 +246,7 @@ func (s *Service) DeleteEmailToken(emailToken *model.EmailToken, soft bool) erro
 
 	_, err := s.db.NewDelete().
 		Model(emailToken).
+		WherePK().
 		Exec(ctx)
 
 	return err

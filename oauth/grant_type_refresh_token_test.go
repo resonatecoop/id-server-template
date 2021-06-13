@@ -65,6 +65,7 @@ func (suite *OauthTestSuite) TestRefreshTokenGrantExipired() {
 	ctx := context.Background()
 	// Insert a test refresh token
 	refreshtoken := &model.RefreshToken{
+		IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC()},
 		Token:     "test_token",
 		ExpiresAt: time.Now().UTC().Add(-10 * time.Second),
 		ClientID:  suite.clients[0].ID,
@@ -105,6 +106,7 @@ func (suite *OauthTestSuite) TestRefreshTokenGrantExipired() {
 func (suite *OauthTestSuite) TestRefreshTokenGrantScopeCannotBeGreater() {
 	// Insert a test refresh token
 	refreshtoken := &model.RefreshToken{
+		IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC()},
 		Token:     "test_token",
 		ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
 		ClientID:  suite.clients[0].ID,
@@ -147,6 +149,7 @@ func (suite *OauthTestSuite) TestRefreshTokenGrantScopeCannotBeGreater() {
 func (suite *OauthTestSuite) TestRefreshTokenGrantDefaultsToOriginalScope() {
 
 	refreshtoken := &model.RefreshToken{
+		IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC()},
 		Token:     "test_token",
 		ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
 		ClientID:  suite.clients[0].ID,
@@ -201,6 +204,7 @@ func (suite *OauthTestSuite) TestRefreshTokenGrantDefaultsToOriginalScope() {
 func (suite *OauthTestSuite) TestRefreshTokenGrant() {
 	// Insert a test refresh token
 	refreshToken := &model.RefreshToken{
+		IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC()},
 		Token:     "test_token",
 		ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
 		ClientID:  suite.clients[0].ID,

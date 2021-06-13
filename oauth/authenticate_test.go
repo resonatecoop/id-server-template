@@ -24,6 +24,7 @@ func (suite *OauthTestSuite) TestAuthenticate() {
 	testAccessTokens := []*model.AccessToken{
 		// Expired access token
 		{
+			IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC()},
 			Token:     "test_expired_token",
 			ExpiresAt: time.Now().UTC().Add(-10 * time.Second),
 			ClientID:  suite.clients[0].ID,
@@ -31,12 +32,14 @@ func (suite *OauthTestSuite) TestAuthenticate() {
 		},
 		// Access token without a user
 		{
+			IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC()},
 			Token:     "test_client_token_2",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
 			ClientID:  suite.clients[0].ID,
 		},
 		// Access token with a user
 		{
+			IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC()},
 			Token:     "test_user_token_3",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
 			ClientID:  suite.clients[0].ID,
@@ -127,17 +130,20 @@ func (suite *OauthTestSuite) TestAuthenticateRollingRefreshToken() {
 	// Insert some test access tokens
 	testAccessTokens = []*model.AccessToken{
 		{
+			IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC()},
 			Token:     "test_token_1",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
 			ClientID:  suite.clients[0].ID,
 			UserID:    suite.users[0].ID,
 		},
 		{
+			IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC()},
 			Token:     "test_token_2",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
 			ClientID:  suite.clients[0].ID,
 		},
 		{
+			IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC()},
 			Token:     "test_token_3",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
 			ClientID:  suite.clients[0].ID,
@@ -271,7 +277,7 @@ func (suite *OauthTestSuite) TestAuthenticateRollingRefreshToken() {
 	assert.Equal(
 		suite.T(),
 		//now2.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
-		refreshTokens[0].UpdatedAt.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
+		refreshTokens[1].UpdatedAt.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
 		refreshTokens[1].ExpiresAt.Unix(),
 	)
 	assert.Equal(suite.T(), "test_token_3", refreshTokens[2].Token)

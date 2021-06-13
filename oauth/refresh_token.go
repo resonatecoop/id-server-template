@@ -56,6 +56,7 @@ func (s *Service) GetOrCreateRefreshToken(client *model.Client, user *model.User
 	if expired {
 		_, dberr = s.db.NewDelete().
 			Model(refreshToken).
+			WherePK().
 			Exec(ctx)
 		//		s.db.Unscoped().Delete(refreshToken)
 	}

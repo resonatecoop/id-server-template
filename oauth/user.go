@@ -193,6 +193,7 @@ func (s *Service) ConfirmUserEmail(email string) error {
 	_, err = s.db.NewUpdate().
 		Model(user).
 		Set("email_confirmed = ?", true).
+		WherePK().
 		Exec(ctx)
 
 	return err
@@ -289,6 +290,7 @@ func (s *Service) deleteUserCommon(db *bun.DB, user *model.User, password string
 	_, err := db.NewUpdate().
 		Model(&user).
 		Set("DeletedAt", time.Now().UTC()).
+		WherePK().
 		Exec(ctx)
 
 	if err != nil {
@@ -431,6 +433,8 @@ func (s *Service) updateUsernameCommon(db *bun.DB, user *model.User, username st
 	_, err := db.NewUpdate().
 		Model(user).
 		Set("username", strings.ToLower(username)).
+		WherePK().
 		Exec(ctx)
+
 	return err
 }

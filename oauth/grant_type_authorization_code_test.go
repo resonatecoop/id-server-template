@@ -67,6 +67,7 @@ func (suite *OauthTestSuite) TestAuthorizationCodeGrantExpired() {
 	ctx := context.Background()
 
 	authorizationcode := &model.AuthorizationCode{
+		IDRecord:    model.IDRecord{CreatedAt: time.Now().UTC()},
 		Code:        "test_code",
 		ExpiresAt:   time.Now().UTC().Add(-10 * time.Second),
 		ClientID:    suite.clients[0].ID,
@@ -109,7 +110,8 @@ func (suite *OauthTestSuite) TestAuthorizationCodeGrantInvalidRedirectURI() {
 
 	ctx := context.Background()
 
-	authorizationcode := &model.AuthorizationCode{
+	authorizationCode := &model.AuthorizationCode{
+		IDRecord:    model.IDRecord{CreatedAt: time.Now().UTC()},
 		Code:        "test_code",
 		ExpiresAt:   time.Now().UTC().Add(+10 * time.Second),
 		ClientID:    suite.clients[0].ID,
@@ -119,7 +121,7 @@ func (suite *OauthTestSuite) TestAuthorizationCodeGrantInvalidRedirectURI() {
 	}
 
 	_, err := suite.db.NewInsert().
-		Model(authorizationcode).
+		Model(authorizationCode).
 		Exec(ctx)
 
 	assert.NoError(suite.T(), err, "Inserting test data failed")
@@ -151,6 +153,7 @@ func (suite *OauthTestSuite) TestAuthorizationCodeGrant() {
 	ctx := context.Background()
 	// Insert a test authorization code
 	authorizationcode := &model.AuthorizationCode{
+		IDRecord:    model.IDRecord{CreatedAt: time.Now().UTC()},
 		Code:        "test_code",
 		ExpiresAt:   time.Now().UTC().Add(+10 * time.Second),
 		ClientID:    suite.clients[0].ID,
@@ -184,6 +187,9 @@ func (suite *OauthTestSuite) TestAuthorizationCodeGrant() {
 
 	err = suite.db.NewSelect().
 		Model(accessToken).
+		Where("user_id = ?", authorizationcode.UserID).
+		Where("client_id = ?", authorizationcode.ClientID).
+		Order("created_at DESC").
 		Limit(1).
 		Scan(ctx)
 
@@ -191,6 +197,9 @@ func (suite *OauthTestSuite) TestAuthorizationCodeGrant() {
 
 	err = suite.db.NewSelect().
 		Model(refreshToken).
+		Where("user_id = ?", authorizationcode.UserID).
+		Where("client_id = ?", authorizationcode.ClientID).
+		Order("created_at DESC").
 		Limit(1).
 		Scan(ctx)
 

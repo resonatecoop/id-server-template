@@ -127,6 +127,7 @@ func (suite *OauthTestSuite) TestHandleIntrospectInvailidTokenHint() {
 func (suite *OauthTestSuite) TestHandleIntrospectAccessToken() {
 	// Insert a test access token with a user
 	accessToken := &model.AccessToken{
+		IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC()},
 		Token:     "test_token_introspect_1",
 		ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
 		ClientID:  suite.clients[0].ID,
@@ -199,6 +200,7 @@ func (suite *OauthTestSuite) TestHandleIntrospectAccessToken() {
 func (suite *OauthTestSuite) TestHandleIntrospectRefreshToken() {
 	// Insert a test refresh token with a user
 	refreshToken := &model.RefreshToken{
+		IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC()},
 		Token:     "test_token_introspect_1",
 		ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
 		ClientID:  suite.clients[0].ID,

@@ -163,6 +163,7 @@ func (suite *OauthTestSuite) TestGetOrCreateRefreshTokenReturnsExisting() {
 
 	// Insert an access token without a user
 	refreshToken = &model.RefreshToken{
+		IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC()},
 		Token:     "test_token",
 		ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
 		ClientID:  suite.clients[0].ID,
@@ -216,6 +217,7 @@ func (suite *OauthTestSuite) TestGetOrCreateRefreshTokenReturnsExisting() {
 	// Insert an access token with a user
 
 	refreshToken = &model.RefreshToken{
+		IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC()},
 		Token:     "test_token2",
 		ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
 		ClientID:  suite.clients[0].ID,
@@ -279,6 +281,7 @@ func (suite *OauthTestSuite) TestGetOrCreateRefreshTokenDeletesExpired() {
 
 	// Insert an expired client only test refresh token
 	refreshToken = &model.RefreshToken{
+		IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC()},
 		Token:     "test_token",
 		ExpiresAt: time.Now().UTC().Add(-10 * time.Second),
 		ClientID:  suite.clients[0].ID,
@@ -330,6 +333,7 @@ func (suite *OauthTestSuite) TestGetOrCreateRefreshTokenDeletesExpired() {
 
 	// Insert an expired user specific test refresh token
 	refreshToken = &model.RefreshToken{
+		IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC()},
 		Token:     "test_token",
 		ExpiresAt: time.Now().UTC().Add(-10 * time.Second),
 		ClientID:  suite.clients[0].ID,
@@ -390,6 +394,7 @@ func (suite *OauthTestSuite) TestGetValidRefreshToken() {
 	testRefreshTokens := []*model.RefreshToken{
 		// Expired test refresh token
 		{
+			IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC()},
 			Token:     "test_expired_token",
 			ExpiresAt: time.Now().UTC().Add(-10 * time.Second),
 			ClientID:  suite.clients[0].ID,
@@ -397,6 +402,7 @@ func (suite *OauthTestSuite) TestGetValidRefreshToken() {
 		},
 		// Refresh token
 		{
+			IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC()},
 			Token:     "test_token",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
 			ClientID:  suite.clients[0].ID,

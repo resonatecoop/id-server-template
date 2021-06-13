@@ -41,6 +41,7 @@ func (s *Service) authorizationCodeGrant(r *http.Request, client *model.Client) 
 
 	_, err = s.db.NewDelete().
 		Model(authorizationCode).
+		WherePK().
 		Exec(ctx)
 
 	if err != nil {

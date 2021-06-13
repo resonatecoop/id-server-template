@@ -40,6 +40,8 @@ func (s *Service) getValidAuthorizationCode(code, redirectURI string, client *mo
 
 	err := s.db.NewSelect().
 		Model(authorizationCode).
+		Relation("Client").
+		Relation("User").
 		Where("client_id = ?", client.ID).
 		Where("code = ?", code).
 		Limit(1).

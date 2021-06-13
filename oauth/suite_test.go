@@ -132,15 +132,15 @@ func (suite *OauthTestSuite) TearDownTest() {
 	// so there is no need to clear them after running a test
 	ctx := context.Background()
 
-	suite.db.NewDelete().
+	suite.db.NewTruncateTable().
 		Model(new(model.AuthorizationCode)).
 		Exec(ctx)
 
-	suite.db.NewDelete().
+	suite.db.NewTruncateTable().
 		Model(new(model.RefreshToken)).
 		Exec(ctx)
 
-	suite.db.NewDelete().
+	suite.db.NewTruncateTable().
 		Model(new(model.AccessToken)).
 		Exec(ctx)
 
@@ -151,7 +151,7 @@ func (suite *OauthTestSuite) TearDownTest() {
 		Where("id NOT IN (?)", bun.In(ids)).
 		Exec(ctx)
 
-	ids = []string{"785cb79c-e078-4b39-9b9d-acecffd620c9", "785cb79c-e078-4b39-9b9d-acecffd620c9"}
+	ids = []string{"3392e754-ba3e-424f-a687-add9a8ab39c9", "295be195-898c-4f0c-b6a0-8c62105f42de"}
 
 	suite.db.NewDelete().
 		Model(new(model.Client)).
