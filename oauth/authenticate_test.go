@@ -342,18 +342,21 @@ func (suite *OauthTestSuite) TestClearUserTokens() {
 	// Insert some test access tokens
 	testAccessTokens = []*model.AccessToken{
 		{
+			IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC()},
 			Token:     "test_token_1",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
 			ClientID:  suite.clients[0].ID,
 			UserID:    suite.users[0].ID,
 		},
 		{
+			IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC()},
 			Token:     "test_token_2",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
 			ClientID:  suite.clients[1].ID,
 			UserID:    suite.users[0].ID,
 		},
 		{
+			IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC()},
 			Token:     "test_token_3",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
 			ClientID:  suite.clients[0].ID,
@@ -368,24 +371,27 @@ func (suite *OauthTestSuite) TestClearUserTokens() {
 			Model(testAccessToken).
 			Exec(ctx)
 		assert.Nil(suite.T(), err)
-		//IMPROVE EQUIVALENCE: assert.NoError(suite.T(), err, "Inserting test data failed")
+		//TODO IMPROVE EQUIVALENCE: assert.NoError(suite.T(), err, "Inserting test data failed")
 	}
 
 	// Insert some test access tokens
 	testRefreshTokens = []*model.RefreshToken{
 		{
+			IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC()},
 			Token:     "test_token_1",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
 			ClientID:  suite.clients[0].ID,
 			UserID:    suite.users[0].ID,
 		},
 		{
+			IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC()},
 			Token:     "test_token_2",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
 			ClientID:  suite.clients[1].ID,
 			UserID:    suite.users[0].ID,
 		},
 		{
+			IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC()},
 			Token:     "test_token_3",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
 			ClientID:  suite.clients[0].ID,
@@ -397,6 +403,7 @@ func (suite *OauthTestSuite) TestClearUserTokens() {
 		_, err = suite.db.NewInsert().
 			Model(testRefreshToken).
 			Exec(ctx)
+
 		assert.Nil(suite.T(), err)
 		//IMPROVE EQUIVALENCE assert.NoError(suite.T(), err, "Inserting test data failed")
 	}
@@ -444,7 +451,7 @@ func (suite *OauthTestSuite) TestClearUserTokens() {
 		Limit(1).
 		Scan(ctx)
 
-	assert.NotNil(suite.T(), err)
+	assert.Nil(suite.T(), err)
 
 	err = suite.db.NewSelect().
 		Model(refreshToken).
@@ -452,7 +459,7 @@ func (suite *OauthTestSuite) TestClearUserTokens() {
 		Limit(1).
 		Scan(ctx)
 
-	assert.NotNil(suite.T(), err)
+	assert.Nil(suite.T(), err)
 
 	// Access tokens
 	err = suite.db.NewSelect().
@@ -461,7 +468,7 @@ func (suite *OauthTestSuite) TestClearUserTokens() {
 		Limit(1).
 		Scan(ctx)
 
-	assert.NotNil(suite.T(), err)
+	assert.Nil(suite.T(), err)
 
 	err = suite.db.NewSelect().
 		Model(accessToken).
@@ -469,5 +476,5 @@ func (suite *OauthTestSuite) TestClearUserTokens() {
 		Limit(1).
 		Scan(ctx)
 
-	assert.NotNil(suite.T(), err)
+	assert.Nil(suite.T(), err)
 }

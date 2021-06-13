@@ -49,7 +49,7 @@ func (suite *OauthTestSuite) TestClientCredentialsGrant() {
 	testutil.TestResponseObject(suite.T(), w, expected, 200)
 
 	// Client credentials grant does not produce refresh token
-	suite.db.NewSelect().
+	err = suite.db.NewSelect().
 		Model(new(model.RefreshToken)).
 		Limit(1).
 		Scan(ctx)

@@ -144,7 +144,13 @@ func (suite *OauthTestSuite) TearDownTest() {
 		Model(new(model.AccessToken)).
 		Exec(ctx)
 
-	ids := []string{"243b4178-6f98-4bf1-bbb1-46b57a901816", "5253747c-2b8c-40e2-8a70-bab91348a9bd", "90b26113-37e0-456a-9f75-01db0eb550f8", "feb4edb0-064a-40bc-9e4a-625f1a97a522"}
+	ids := []string{
+		"243b4178-6f98-4bf1-bbb1-46b57a901816",
+		"5253747c-2b8c-40e2-8a70-bab91348a9bd",
+		"90b26113-37e0-456a-9f75-01db0eb550f8",
+		"f40cf437-eef2-4659-8eb3-7ee93f6dfcea",
+		"046e7a23-a9f0-4fb8-a60f-861b2df05d95",
+		"953c3537-3149-4164-9c73-ec785a3c17c4"}
 
 	suite.db.NewDelete().
 		Model(new(model.User)).

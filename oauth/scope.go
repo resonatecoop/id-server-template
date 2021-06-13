@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/resonatecoop/user-api/model"
+	"github.com/uptrace/bun"
 )
 
 var (
@@ -74,11 +75,13 @@ func (s *Service) ScopeExists(requestedScope string) bool {
 	// Split the requested scope string
 	scopes := strings.Split(requestedScope, " ")
 
+	var available_scopes []model.Scope
+
 	// Count how many of requested scopes exist in the database
 	count, _ := s.db.NewSelect().
-		Model((*model.Scope)(nil)).
-		Where("scope in (?)", scopes).
-		Count(ctx)
+		Model(&available_scopes).
+		Where("name IN (?)", bun.In(scopes)).
+		ScanAndCount(ctx)
 
 	// Return true only if all requested scopes found
 	return count == len(scopes)

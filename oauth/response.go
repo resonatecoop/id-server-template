@@ -1,6 +1,7 @@
 package oauth
 
 import (
+	"github.com/google/uuid"
 	"github.com/resonatecoop/id/util"
 	"github.com/resonatecoop/user-api/model"
 )
@@ -33,7 +34,7 @@ func NewAccessTokenResponse(accessToken *model.AccessToken, refreshToken *model.
 		TokenType:   theTokenType,
 		Scope:       accessToken.Scope,
 	}
-	if util.IsValidUUID(accessToken.UserID.String()) {
+	if util.IsValidUUID(accessToken.UserID.String()) && accessToken.UserID != uuid.Nil {
 		response.UserID = accessToken.UserID.String()
 	}
 	if refreshToken != nil {
