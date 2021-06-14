@@ -31,6 +31,6 @@ func (suite *OauthTestSuite) TestFindRoleByID() {
 
 	// Correct role should be returned
 	if assert.NotNil(suite.T(), role) {
-		assert.Equal(suite.T(), int32(model.UserRole), role)
+		assert.Equal(suite.T(), model.UserRole, *role)
 	}
 }

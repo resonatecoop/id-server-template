@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/resonatecoop/id/oauth"
 	"github.com/resonatecoop/id/util"
 	"github.com/resonatecoop/user-api/model"
@@ -47,11 +48,11 @@ func (suite *OauthTestSuite) TestGetOrCreateRefreshTokenCreatesNew() {
 
 		// Client ID should be set
 		assert.True(suite.T(), util.IsValidUUID(tokens[0].ClientID.String()))
-		assert.Equal(suite.T(), suite.clients[0].ID, tokens[0].Client.ID)
+		assert.Equal(suite.T(), suite.clients[0].ID, tokens[0].ClientID)
 
 		// User ID should be set
 		assert.True(suite.T(), util.IsValidUUID(tokens[0].UserID.String()))
-		assert.Equal(suite.T(), suite.users[0].ID, tokens[0].User.ID)
+		assert.Equal(suite.T(), suite.users[0].ID, tokens[0].UserID)
 	}
 
 	// Valid user specific token exists, new one should NOT be created
@@ -80,11 +81,11 @@ func (suite *OauthTestSuite) TestGetOrCreateRefreshTokenCreatesNew() {
 
 		// Client ID should be set
 		assert.True(suite.T(), util.IsValidUUID(tokens[0].ClientID.String()))
-		assert.Equal(suite.T(), suite.clients[0].ID, tokens[0].Client.ID)
+		assert.Equal(suite.T(), suite.clients[0].ID, tokens[0].ClientID)
 
 		// User ID should be set
 		assert.True(suite.T(), util.IsValidUUID(tokens[0].UserID.String()))
-		assert.Equal(suite.T(), suite.users[0].ID, tokens[0].User.ID)
+		assert.Equal(suite.T(), suite.users[0].ID, tokens[0].UserID)
 	}
 
 	// Since there is no client only token,
@@ -114,10 +115,10 @@ func (suite *OauthTestSuite) TestGetOrCreateRefreshTokenCreatesNew() {
 
 		// Client ID should be set
 		assert.True(suite.T(), util.IsValidUUID(tokens[1].ClientID.String()))
-		assert.Equal(suite.T(), suite.clients[0].ID, tokens[1].Client.ID)
+		assert.Equal(suite.T(), suite.clients[0].ID, tokens[1].ClientID)
 
 		// User ID should be nil
-		assert.False(suite.T(), util.IsValidUUID(tokens[1].UserID.String()))
+		assert.Equal(suite.T(), tokens[1].UserID, uuid.Nil)
 	}
 
 	// Valid client only token exists, new one should NOT be created
@@ -146,10 +147,10 @@ func (suite *OauthTestSuite) TestGetOrCreateRefreshTokenCreatesNew() {
 
 		// Client ID should be set
 		assert.True(suite.T(), util.IsValidUUID(tokens[1].ClientID.String()))
-		assert.Equal(suite.T(), suite.clients[0].ID, tokens[1].Client.ID)
+		assert.Equal(suite.T(), suite.clients[0].ID, tokens[1].ClientID)
 
 		// User ID should be nil
-		assert.False(suite.T(), util.IsValidUUID(tokens[1].UserID.String()))
+		assert.Equal(suite.T(), tokens[1].UserID, uuid.Nil)
 	}
 }
 
@@ -211,7 +212,7 @@ func (suite *OauthTestSuite) TestGetOrCreateRefreshTokenReturnsExisting() {
 		assert.Equal(suite.T(), suite.clients[0].ID, tokens[0].ClientID)
 
 		// User ID should be nil
-		assert.False(suite.T(), util.IsValidUUID(tokens[0].UserID.String()))
+		assert.Equal(suite.T(), tokens[0].UserID, uuid.Nil)
 	}
 
 	// Insert an access token with a user
@@ -328,7 +329,7 @@ func (suite *OauthTestSuite) TestGetOrCreateRefreshTokenDeletesExpired() {
 		assert.Equal(suite.T(), suite.clients[0].ID, tokens[0].ClientID)
 
 		// User ID should be nil
-		assert.False(suite.T(), util.IsValidUUID(tokens[0].UserID.String()))
+		assert.Equal(suite.T(), tokens[0].UserID, uuid.Nil)
 	}
 
 	// Insert an expired user specific test refresh token

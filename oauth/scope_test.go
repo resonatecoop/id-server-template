@@ -30,7 +30,7 @@ func (suite *OauthTestSuite) TestGetScope() {
 }
 
 func (suite *OauthTestSuite) TestGetDefaultScope() {
-	assert.Equal(suite.T(), "read", suite.service.GetDefaultScope())
+	assert.Equal(suite.T(), "read user", suite.service.GetDefaultScope())
 }
 
 func (suite *OauthTestSuite) TestScopeExists() {
