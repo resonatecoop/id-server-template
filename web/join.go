@@ -93,7 +93,7 @@ func (s *Service) join(w http.ResponseWriter, r *http.Request) {
 	// }
 
 	message := fmt.Sprintf(
-		"A confirmation email will be sent to %s", user.Email,
+		"A confirmation email will be sent to %s", user.Username,
 	)
 
 	if r.Header.Get("Accept") == "application/json" {

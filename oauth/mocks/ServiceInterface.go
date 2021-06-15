@@ -41,7 +41,7 @@ func (_m *ServiceInterface) IsRoleAllowed(role model.AccessRole) bool {
 
 	var r0 bool
 	if rf, ok := ret.Get(0).(func(string) bool); ok {
-		r0 = rf(role)
+		r0 = rf(int32(role))
 	} else {
 		r0 = ret.Get(0).(bool)
 	}

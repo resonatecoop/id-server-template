@@ -30,7 +30,7 @@ func (s *Service) clientForm(w http.ResponseWriter, r *http.Request) {
 
 	profile := &Profile{
 		ID:             user.ID.String(),
-		Email:          user.Email,
+		Email:          user.Username,
 		DisplayName:    user.FullName,
 		EmailConfirmed: user.EmailConfirmed,
 	}
