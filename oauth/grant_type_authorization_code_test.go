@@ -187,8 +187,6 @@ func (suite *OauthTestSuite) TestAuthorizationCodeGrant() {
 
 	err = suite.db.NewSelect().
 		Model(accessToken).
-		Where("user_id = ?", authorizationcode.UserID).
-		Where("client_id = ?", authorizationcode.ClientID).
 		Order("created_at DESC").
 		Limit(1).
 		Scan(ctx)
@@ -197,8 +195,6 @@ func (suite *OauthTestSuite) TestAuthorizationCodeGrant() {
 
 	err = suite.db.NewSelect().
 		Model(refreshToken).
-		Where("user_id = ?", authorizationcode.UserID).
-		Where("client_id = ?", authorizationcode.ClientID).
 		Order("created_at DESC").
 		Limit(1).
 		Scan(ctx)

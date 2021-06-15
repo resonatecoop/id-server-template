@@ -353,18 +353,20 @@ func (s *Service) setPasswordCommon(db *bun.DB, user *model.User, password strin
 		return err
 	}
 
-	userUpdates := &model.User{
-		IDRecord: model.IDRecord{
-			ID:        user.IDRecord.ID,
-			UpdatedAt: time.Now().UTC(),
-		},
-		Password: util.StringOrNull(string(passwordHash)),
-	}
+	// userUpdates := &model.User{
+	// 	IDRecord: model.IDRecord{
+	// 		UpdatedAt: time.Now().UTC(),
+	// 	},
+	// 	Password: ,
+	// }
 
 	// Set the password on the user object
-	_, err = s.db.NewUpdate().
-		Model(userUpdates).
-		WherePK().
+	_, err = db.NewUpdate().
+		Model(user).
+		Set("updated_at = ?", time.Now().UTC()).
+		Set("last_password_change = ?", time.Now().UTC()).
+		Set("password = ?", string(passwordHash)).
+		Where("id = ?", user.IDRecord.ID).
 		Exec(ctx)
 
 	if err != nil {
@@ -430,10 +432,20 @@ func (s *Service) updateUsernameCommon(db *bun.DB, user *model.User, username st
 	if s.UserExists(username) {
 		return ErrUsernameTaken
 	}
-	_, err := db.NewUpdate().
+
+	err := db.NewSelect().
 		Model(user).
-		Set("username", strings.ToLower(username)).
-		WherePK().
+		Where("username = ?", user.Username).
+		Scan(ctx)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = db.NewUpdate().
+		Model(user).
+		Set("username = ?", strings.ToLower(username)).
+		Where("id = ?", user.ID).
 		Exec(ctx)
 
 	return err

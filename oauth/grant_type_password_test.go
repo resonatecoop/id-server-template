@@ -21,7 +21,7 @@ func (suite *OauthTestSuite) TestPasswordGrant() {
 	r.SetBasicAuth("test_client_1", "test_secret")
 	r.PostForm = url.Values{
 		"grant_type": {"password"},
-		"username":   {"test@user"},
+		"username":   {"test@user.com"},
 		"password":   {"test_password"},
 		"scope":      {"read_write"},
 	}
@@ -72,7 +72,7 @@ func (suite *OauthTestSuite) TestPasswordGrantWithRoleRestriction() {
 	r.SetBasicAuth("test_client_1", "test_secret")
 	r.PostForm = url.Values{
 		"grant_type": {"password"},
-		"username":   {"test@user"},
+		"username":   {"test@user.com"},
 		"password":   {"test_password"},
 		"scope":      {"read_write"},
 	}

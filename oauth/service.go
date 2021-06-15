@@ -11,7 +11,7 @@ import (
 type Service struct {
 	cnf          *config.Config
 	db           *bun.DB
-	allowedRoles []model.AccessRole
+	allowedRoles []int32
 }
 
 // NewService returns a new Service instance
@@ -19,7 +19,7 @@ func NewService(cnf *config.Config, db *bun.DB) *Service {
 	return &Service{
 		cnf:          cnf,
 		db:           db,
-		allowedRoles: []model.AccessRole{model.SuperAdminRole, model.AdminRole, model.TenantAdminRole, model.LabelRole, model.ArtistRole, model.UserRole},
+		allowedRoles: []int32{int32(model.SuperAdminRole), int32(model.AdminRole), int32(model.TenantAdminRole), int32(model.LabelRole), int32(model.ArtistRole), int32(model.UserRole)},
 	}
 }
 
@@ -30,15 +30,16 @@ func (s *Service) GetConfig() *config.Config {
 
 // RestrictToRoles restricts this service to only specified roles
 func (s *Service) RestrictToRoles(allowedRoles ...int32) {
-	for i := range s.allowedRoles {
-		s.allowedRoles[i] = model.AccessRole(allowedRoles[i])
-	}
+	s.allowedRoles = allowedRoles
+	// for i := range s.allowedRoles {
+	// 	s.allowedRoles[i] = model.AccessRole(allowedRoles[i])
+	// }
 }
 
 // IsRoleAllowed returns true if the role is allowed to use this service
 func (s *Service) IsRoleAllowed(role int32) bool {
 	for _, allowedRole := range s.allowedRoles {
-		if role == int32(allowedRole) {
+		if role == allowedRole {
 			return true
 		}
 	}

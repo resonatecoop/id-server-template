@@ -107,6 +107,8 @@ func (s *Service) GetValidRefreshToken(token string, client *model.Client) (*mod
 		return nil, ErrRefreshTokenExpired
 	}
 
+	refreshToken.Client = client
+
 	return refreshToken, nil
 }
 

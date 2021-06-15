@@ -15,7 +15,7 @@ func (suite *OauthTestSuite) TestGetScope() {
 	// the default scope should be returned
 	scope, err = suite.service.GetScope("")
 	assert.Nil(suite.T(), err)
-	assert.Equal(suite.T(), "read", scope)
+	assert.Equal(suite.T(), "read user", scope)
 
 	// When the requested scope is valid, it should be returned
 	scope, err = suite.service.GetScope("read read_write")

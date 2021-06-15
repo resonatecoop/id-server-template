@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/resonatecoop/id/util"
 
 	"github.com/resonatecoop/user-api/model"
@@ -12,10 +13,10 @@ import (
 
 func (suite *OauthTestSuite) TestGrantAccessToken() {
 	var (
-		ctx         context.Context
-		accessToken *model.AccessToken
-		err         error
-		tokens      []*model.AccessToken
+		ctx          context.Context
+		accessToken  *model.AccessToken
+		err          error
+		accessTokens []model.AccessToken
 	)
 
 	ctx = context.Background()
@@ -36,25 +37,27 @@ func (suite *OauthTestSuite) TestGrantAccessToken() {
 		// Fetch all access tokens
 		//	model.AccessTokenPreload(suite.db).Order("created_at").Find(&tokens)
 
-		suite.db.NewSelect().Model(&tokens).
-			Column("tokens.*").
+		err = suite.db.NewSelect().Model(&accessTokens).
+			Column("access_token.*").
 			Relation("Client").
-			Relation("User").
 			OrderExpr("created_at").
 			Scan(ctx)
 
+		// There should be no error
+		assert.Nil(suite.T(), err)
+
 		// There should be just one right now
-		assert.Equal(suite.T(), 1, len(tokens))
+		assert.Equal(suite.T(), 1, len(accessTokens))
 
 		// And the token should match the one returned by the grant method
-		assert.Equal(suite.T(), tokens[0].Token, accessToken.Token)
+		assert.Equal(suite.T(), accessTokens[0].Token, accessToken.Token)
 
 		// Client id should be set
-		assert.True(suite.T(), util.IsValidUUID(tokens[0].ClientID.String()))
-		assert.Equal(suite.T(), suite.clients[0].ID.String(), tokens[0].ClientID.String())
+		assert.True(suite.T(), util.IsValidUUID(accessTokens[0].ClientID.String()))
+		assert.Equal(suite.T(), suite.clients[0].ID.String(), accessTokens[0].ClientID.String())
 
 		// User id should be nil
-		assert.False(suite.T(), util.IsValidUUID(tokens[0].UserID.String()))
+		assert.Equal(suite.T(), accessTokens[0].UserID, uuid.Nil)
 	}
 
 	// Grant a user specific access token
@@ -76,21 +79,24 @@ func (suite *OauthTestSuite) TestGrantAccessToken() {
 		if err != nil {
 			panic(err)
 		}
-		err = suite.db.ScanRows(ctx, rows, &tokens)
+		err = suite.db.ScanRows(ctx, rows, &accessTokens)
+
+		// There should be no error
+		assert.Nil(suite.T(), err)
 
 		// There should be 2 tokens now
-		assert.Equal(suite.T(), 2, len(tokens))
+		assert.Equal(suite.T(), 2, len(accessTokens))
 
 		// And the second token should match the one returned by the grant method
-		assert.Equal(suite.T(), tokens[1].Token, accessToken.Token)
+		assert.Equal(suite.T(), accessTokens[1].Token, accessToken.Token)
 
 		// Client id should be set
-		assert.True(suite.T(), util.IsValidUUID(tokens[1].ClientID.String()))
-		assert.Equal(suite.T(), suite.clients[0].ID.String(), tokens[1].ClientID.String())
+		assert.True(suite.T(), util.IsValidUUID(accessTokens[1].ClientID.String()))
+		assert.Equal(suite.T(), suite.clients[0].ID.String(), accessTokens[1].ClientID.String())
 
 		// User id should be set
-		assert.True(suite.T(), util.IsValidUUID(tokens[1].UserID.String()))
-		assert.Equal(suite.T(), suite.users[0].ID.String(), tokens[1].UserID.String())
+		assert.True(suite.T(), util.IsValidUUID(accessTokens[1].UserID.String()))
+		assert.Equal(suite.T(), suite.users[0].ID.String(), accessTokens[1].UserID.String())
 	}
 }
 
@@ -157,12 +163,13 @@ func (suite *OauthTestSuite) TestGrantAccessTokenDeletesExpiredTokens() {
 
 	assert.NotNil(suite.T(), err)
 
-	// Check the other three tokens are still around
+	// Check the other two tokens are still around
 	existingTokens = []string{
 		"test_token_2",
-		"test_token_3",
+		//"test_token_3",
 		"test_token_4",
 	}
+
 	for _, token := range existingTokens {
 
 		err = suite.db.NewSelect().
@@ -190,7 +197,7 @@ func (suite *OauthTestSuite) TestGrantAccessTokenDeletesExpiredTokens() {
 		Limit(1).
 		Scan(ctx)
 
-	assert.Nil(suite.T(), err)
+	assert.NotNil(suite.T(), err)
 
 	// Check that last two tokens are still around
 	existingTokens = []string{

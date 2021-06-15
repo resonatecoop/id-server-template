@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/resonatecoop/id/oauth/tokentypes"
 	"github.com/resonatecoop/id/util"
 	"github.com/resonatecoop/user-api/model"
@@ -72,7 +73,7 @@ func (s *Service) NewIntrospectResponseFromAccessToken(accessToken *model.Access
 		ExpiresAt: int(accessToken.ExpiresAt.Unix()),
 	}
 
-	if util.IsValidUUID(accessToken.ClientID.String()) {
+	if util.IsValidUUID(accessToken.ClientID.String()) && accessToken.ClientID != uuid.Nil {
 		client := new(model.Client)
 		err := s.db.NewSelect().
 			Model(client).
@@ -86,7 +87,7 @@ func (s *Service) NewIntrospectResponseFromAccessToken(accessToken *model.Access
 		introspectResponse.ClientID = client.Key
 	}
 
-	if util.IsValidUUID(accessToken.UserID.String()) {
+	if util.IsValidUUID(accessToken.UserID.String()) && accessToken.UserID != uuid.Nil {
 		user := new(model.User)
 		err := s.db.NewSelect().
 			Model(user).
@@ -114,7 +115,7 @@ func (s *Service) NewIntrospectResponseFromRefreshToken(refreshToken *model.Refr
 		ExpiresAt: int(refreshToken.ExpiresAt.Unix()),
 	}
 
-	if util.IsValidUUID(refreshToken.ClientID.String()) {
+	if util.IsValidUUID(refreshToken.ClientID.String()) && refreshToken.ClientID != uuid.Nil {
 		client := new(model.Client)
 		err := s.db.NewSelect().
 			Model(client).
@@ -128,7 +129,7 @@ func (s *Service) NewIntrospectResponseFromRefreshToken(refreshToken *model.Refr
 		introspectResponse.ClientID = client.Key
 	}
 
-	if util.IsValidUUID(refreshToken.UserID.String()) {
+	if util.IsValidUUID(refreshToken.UserID.String()) && refreshToken.UserID != uuid.Nil {
 		user := new(model.User)
 		err := s.db.NewSelect().
 			Model(user).

@@ -184,19 +184,32 @@ func (suite *OauthTestSuite) TestRefreshTokenGrantDefaultsToOriginalScope() {
 
 	err = suite.db.NewSelect().
 		Model(accessToken).
+		Order("created_at DESC").
 		Limit(1).
 		Scan(ctx)
 
+	// record found
+	assert.Nil(suite.T(), err)
+
+	refreshToken := new(model.RefreshToken)
+
+	err = suite.db.NewSelect().
+		Model(refreshToken).
+		Order("created_at DESC").
+		Limit(1).
+		Scan(ctx)
+
+	// record found
 	assert.Nil(suite.T(), err)
 
 	// Check the response body
 	expected := &oauth.AccessTokenResponse{
-		UserID:       accessToken.UserID.String(),
+		//	UserID:       accessToken.UserID.String(),
 		AccessToken:  accessToken.Token,
 		ExpiresIn:    3600,
 		TokenType:    tokentypes.Bearer,
 		Scope:        "read_write",
-		RefreshToken: "test_token",
+		RefreshToken: refreshToken.Token,
 	}
 	testutil.TestResponseObject(suite.T(), w, expected, 200)
 }
@@ -239,6 +252,18 @@ func (suite *OauthTestSuite) TestRefreshTokenGrant() {
 
 	err = suite.db.NewSelect().
 		Model(accessToken).
+		Order("created_at DESC").
+		Limit(1).
+		Scan(ctx)
+
+	// record found
+	assert.Nil(suite.T(), err)
+
+	refreshToken = new(model.RefreshToken)
+
+	err = suite.db.NewSelect().
+		Model(refreshToken).
+		Order("created_at DESC").
 		Limit(1).
 		Scan(ctx)
 
@@ -247,12 +272,12 @@ func (suite *OauthTestSuite) TestRefreshTokenGrant() {
 
 	// Check the response
 	expected := &oauth.AccessTokenResponse{
-		UserID:       accessToken.UserID.String(),
+		//		UserID:       accessToken.UserID.String(),
 		AccessToken:  accessToken.Token,
 		ExpiresIn:    3600,
 		TokenType:    tokentypes.Bearer,
 		Scope:        "read_write",
-		RefreshToken: "test_token",
+		RefreshToken: refreshToken.Token,
 	}
 	testutil.TestResponseObject(suite.T(), w, expected, 200)
 }

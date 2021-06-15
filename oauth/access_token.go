@@ -12,7 +12,7 @@ import (
 func (s *Service) GrantAccessToken(client *model.Client, user *model.User, expiresIn int, scope string) (*model.AccessToken, error) {
 	// Begin a transaction
 	tx, err := s.db.Begin()
-	ctx := context.TODO()
+	ctx := context.Background()
 
 	//var result Sql.result
 
@@ -20,36 +20,32 @@ func (s *Service) GrantAccessToken(client *model.Client, user *model.User, expir
 		return nil, err
 	}
 
-	access_token := new(model.AccessToken)
+	accessToken := new(model.AccessToken)
 
 	// Delete expired access tokens
 	if user != nil && user.ID != uuid.Nil {
 		_, err = tx.NewDelete().
-			Model(access_token).
+			Model(accessToken).
 			Where("user_id = ?", user.ID).
 			Where("client_id = ?", client.ID).
 			Where("expires_at <= ?", time.Now()).
 			Exec(ctx)
 	} else {
 		_, err = tx.NewDelete().
-			Model(access_token).
+			Model(accessToken).
 			Where("user_id = uuid_nil()").
 			Where("client_id = ?", client.ID).
 			Where("expires_at <= ?", time.Now()).
 			Exec(ctx)
 	}
 
-	_, err = tx.NewDelete().
-		Model(access_token).
-		Where("expires_at <= ?", time.Now()).
-		Exec(ctx)
 	if err != nil {
 		tx.Rollback() // rollback the transaction
 		return nil, err
 	}
 
 	// Create a new access token
-	accessToken := model.NewOauthAccessToken(client, user, expiresIn, scope)
+	accessToken = model.NewOauthAccessToken(client, user, expiresIn, scope)
 
 	_, err = tx.NewInsert().
 		Model(accessToken).
