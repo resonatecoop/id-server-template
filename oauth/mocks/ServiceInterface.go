@@ -41,7 +41,7 @@ func (_m *ServiceInterface) IsRoleAllowed(role model.AccessRole) bool {
 
 	var r0 bool
 	if rf, ok := ret.Get(0).(func(string) bool); ok {
-		r0 = rf(int32(role))
+		r0 = rf(string(role))
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
@@ -70,7 +70,7 @@ func (_m *ServiceInterface) ClientExists(clientID uuid.UUID) bool {
 
 	var r0 bool
 	if rf, ok := ret.Get(0).(func(string) bool); ok {
-		r0 = rf(clientID)
+		r0 = rf(ClientID.String())
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
@@ -82,7 +82,7 @@ func (_m *ServiceInterface) FindClientByClientID(clientID uuid.UUID) (*model.Cli
 
 	var r0 *model.Client
 	if rf, ok := ret.Get(0).(func(string) *model.Client); ok {
-		r0 = rf(clientID)
+		r0 = rf(ClientID.String())
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*model.Client)
@@ -91,7 +91,7 @@ func (_m *ServiceInterface) FindClientByClientID(clientID uuid.UUID) (*model.Cli
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(clientID)
+		r1 = rf(ClientID.String())
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -103,7 +103,7 @@ func (_m *ServiceInterface) CreateClient(clientID uuid.UUID, secret string, redi
 
 	var r0 *model.Client
 	if rf, ok := ret.Get(0).(func(string, string, string) *model.Client); ok {
-		r0 = rf(clientID, secret, redirectURI)
+		r0 = rf(ClientID.String(), secret, redirectURI)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*model.Client)
@@ -112,7 +112,7 @@ func (_m *ServiceInterface) CreateClient(clientID uuid.UUID, secret string, redi
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
-		r1 = rf(clientID, secret, redirectURI)
+		r1 = rf(ClientID.String(), secret, redirectURI)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -145,7 +145,7 @@ func (_m *ServiceInterface) AuthClient(clientID uuid.UUID, secret string) (*mode
 
 	var r0 *model.Client
 	if rf, ok := ret.Get(0).(func(string, string) *model.Client); ok {
-		r0 = rf(clientID, secret)
+		r0 = rf(ClientID.String(), secret)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*model.Client)
@@ -154,7 +154,7 @@ func (_m *ServiceInterface) AuthClient(clientID uuid.UUID, secret string) (*mode
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(clientID, secret)
+		r1 = rf(ClientID.String(), secret)
 	} else {
 		r1 = ret.Error(1)
 	}
