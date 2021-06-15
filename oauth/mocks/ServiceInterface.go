@@ -70,7 +70,7 @@ func (_m *ServiceInterface) ClientExists(clientID uuid.UUID) bool {
 
 	var r0 bool
 	if rf, ok := ret.Get(0).(func(string) bool); ok {
-		r0 = rf(ClientID.String())
+		r0 = rf(clientID.String())
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
@@ -82,7 +82,7 @@ func (_m *ServiceInterface) FindClientByClientID(clientID uuid.UUID) (*model.Cli
 
 	var r0 *model.Client
 	if rf, ok := ret.Get(0).(func(string) *model.Client); ok {
-		r0 = rf(ClientID.String())
+		r0 = rf(clientID.String())
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*model.Client)
@@ -91,7 +91,7 @@ func (_m *ServiceInterface) FindClientByClientID(clientID uuid.UUID) (*model.Cli
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(ClientID.String())
+		r1 = rf(clientID.String())
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -99,11 +99,11 @@ func (_m *ServiceInterface) FindClientByClientID(clientID uuid.UUID) (*model.Cli
 	return r0, r1
 }
 func (_m *ServiceInterface) CreateClient(clientID uuid.UUID, secret string, redirectURI string) (*model.Client, error) {
-	ret := _m.Called(clientID, secret, redirectURI)
+	ret := _m.Called(clientID.String(), secret, redirectURI)
 
 	var r0 *model.Client
 	if rf, ok := ret.Get(0).(func(string, string, string) *model.Client); ok {
-		r0 = rf(ClientID.String(), secret, redirectURI)
+		r0 = rf(clientID.String(), secret, redirectURI)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*model.Client)
@@ -112,7 +112,7 @@ func (_m *ServiceInterface) CreateClient(clientID uuid.UUID, secret string, redi
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
-		r1 = rf(ClientID.String(), secret, redirectURI)
+		r1 = rf(clientID.String(), secret, redirectURI)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -120,11 +120,11 @@ func (_m *ServiceInterface) CreateClient(clientID uuid.UUID, secret string, redi
 	return r0, r1
 }
 func (_m *ServiceInterface) CreateClientTx(tx *bun.DB, clientID uuid.UUID, secret string, redirectURI string) (*model.Client, error) {
-	ret := _m.Called(tx, clientID, secret, redirectURI)
+	ret := _m.Called(tx, clientID.String(), secret, redirectURI)
 
 	var r0 *model.Client
 	if rf, ok := ret.Get(0).(func(*bun.DB, string, string, string) *model.Client); ok {
-		r0 = rf(tx, clientID, secret, redirectURI)
+		r0 = rf(tx, clientID.String(), secret, redirectURI)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*model.Client)
@@ -133,7 +133,7 @@ func (_m *ServiceInterface) CreateClientTx(tx *bun.DB, clientID uuid.UUID, secre
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(*bun.DB, string, string, string) error); ok {
-		r1 = rf(tx, clientID, secret, redirectURI)
+		r1 = rf(tx, clientID.String(), secret, redirectURI)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -141,11 +141,11 @@ func (_m *ServiceInterface) CreateClientTx(tx *bun.DB, clientID uuid.UUID, secre
 	return r0, r1
 }
 func (_m *ServiceInterface) AuthClient(clientID uuid.UUID, secret string) (*model.Client, error) {
-	ret := _m.Called(clientID, secret)
+	ret := _m.Called(clientID.String(), secret)
 
 	var r0 *model.Client
 	if rf, ok := ret.Get(0).(func(string, string) *model.Client); ok {
-		r0 = rf(ClientID.String(), secret)
+		r0 = rf(clientID.String(), secret)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*model.Client)
@@ -154,7 +154,7 @@ func (_m *ServiceInterface) AuthClient(clientID uuid.UUID, secret string) (*mode
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(ClientID.String(), secret)
+		r1 = rf(clientID.String(), secret)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -199,7 +199,7 @@ func (_m *ServiceInterface) CreateUser(roleID int32, username string, password s
 
 	var r0 *model.User
 	if rf, ok := ret.Get(0).(func(string, string, string) *model.User); ok {
-		r0 = rf(roleID, username, password)
+		r0 = rf(string(roleID), username, password)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*model.User)
@@ -208,7 +208,7 @@ func (_m *ServiceInterface) CreateUser(roleID int32, username string, password s
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
-		r1 = rf(roleID, username, password)
+		r1 = rf(string(roleID), username, password)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -220,7 +220,7 @@ func (_m *ServiceInterface) CreateUserTx(tx *bun.DB, roleID int32, username stri
 
 	var r0 *model.User
 	if rf, ok := ret.Get(0).(func(*bun.DB, string, string, string) *model.User); ok {
-		r0 = rf(tx, roleID, username, password)
+		r0 = rf(tx, string(roleID), username, password)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*model.User)
