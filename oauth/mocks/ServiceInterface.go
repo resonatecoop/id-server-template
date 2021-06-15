@@ -229,7 +229,7 @@ func (_m *ServiceInterface) CreateUserTx(tx *bun.DB, roleID int32, username stri
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(*bun.DB, string, string, string) error); ok {
-		r1 = rf(tx, roleID, username, password)
+		r1 = rf(tx, string(roleID), username, password)
 	} else {
 		r1 = ret.Error(1)
 	}
