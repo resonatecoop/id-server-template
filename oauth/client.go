@@ -53,7 +53,7 @@ func (s *Service) FindClientByApplicationURL(applicationURL string) (*model.Clie
 
 	err := s.db.NewSelect().
 		Model(client).
-		Where("application_url = ? AND application_hostname IN (?)", applicationURL, s.cnf.Origins).
+		Where("application_url = ? AND application_hostname IN (?)", applicationURL, bun.In(s.cnf.Origins)).
 		Limit(1).
 		Scan(ctx)
 
