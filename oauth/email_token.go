@@ -7,11 +7,11 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/RichardKnop/go-oauth2-server/models"
-	"github.com/RichardKnop/go-oauth2-server/util"
-	"github.com/form3tech-oss/jwt-go"
-	"github.com/jinzhu/gorm"
+	jwt "github.com/form3tech-oss/jwt-go"
 	"github.com/mailgun/mailgun-go/v4"
+	"github.com/resonatecoop/id/util"
+	"github.com/resonatecoop/user-api/model"
+	"github.com/uptrace/bun"
 )
 
 var (
@@ -21,8 +21,9 @@ var (
 )
 
 // GetValidEmailToken ...
-func (s *Service) GetValidEmailToken(token string) (*models.EmailTokenModel, string, error) {
-	claims := &models.EmailTokenClaimsModel{}
+func (s *Service) GetValidEmailToken(token string) (*model.EmailToken, string, error) {
+	ctx := context.Background()
+	claims := &model.EmailTokenClaims{}
 
 	jwtKey := []byte(s.cnf.EmailTokenSecretKey)
 
@@ -38,11 +39,16 @@ func (s *Service) GetValidEmailToken(token string) (*models.EmailTokenModel, str
 		return nil, "", ErrEmailTokenInvalid
 	}
 
-	emailToken := new(models.EmailTokenModel)
-	notFound := s.db.Where("reference = ?", claims.Reference).
-		First(emailToken).RecordNotFound()
+	emailToken := new(model.EmailToken)
 
-	if notFound {
+	err = s.db.NewSelect().
+		Model(emailToken).
+		Where("reference = ?", claims.Reference).
+		Limit(1).
+		Scan(ctx)
+
+	// Not Found!
+	if err != nil {
 		return nil, "", ErrEmailTokenNotFound
 	}
 
@@ -51,9 +57,9 @@ func (s *Service) GetValidEmailToken(token string) (*models.EmailTokenModel, str
 
 // SendEmailToken ...
 func (s *Service) SendEmailToken(
-	email *models.MailgunEmailModel,
+	email *model.Email,
 	emailTokenLink string,
-) (*models.EmailTokenModel, error) {
+) (*model.EmailToken, error) {
 	if !util.ValidateEmail(email.Recipient) {
 		return nil, ErrEmailInvalid
 	}
@@ -65,32 +71,28 @@ func (s *Service) SendEmailToken(
 		return nil, err
 	}
 
-	// Check if wp user is registered
-	_, err = s.FindWpUserByEmail(email.Recipient)
-
-	if err != nil {
-		return nil, err
-	}
-
 	return s.sendEmailTokenCommon(s.db, email, emailTokenLink)
 }
 
 // SendEmailTokenTx ...
 func (s *Service) SendEmailTokenTx(
-	tx *gorm.DB,
-	email *models.MailgunEmailModel,
+	tx *bun.DB,
+	email *model.Email,
 	emailTokenLink string,
-) (*models.EmailTokenModel, error) {
+) (*model.EmailToken, error) {
 	return s.sendEmailTokenCommon(tx, email, emailTokenLink)
 }
 
 // CreateEmailToken ...
-func (s *Service) CreateEmailToken(email string) (*models.EmailTokenModel, error) {
+func (s *Service) CreateEmailToken(email string) (*model.EmailToken, error) {
 	expiresIn := 10 * time.Minute // 10 minutes
 
-	emailToken := models.NewOauthEmailToken(&expiresIn)
+	emailToken := model.NewOauthEmailToken(&expiresIn)
 
-	if err := s.db.Create(emailToken).Error; err != nil {
+	ctx := context.Background()
+
+	_, err := s.db.NewInsert().Model(emailToken).Exec(ctx)
+	if err != nil {
 		return nil, err
 	}
 
@@ -99,7 +101,7 @@ func (s *Service) CreateEmailToken(email string) (*models.EmailTokenModel, error
 
 // createJwtTokenWithEmailTokenClaims ...
 func (s *Service) createJwtTokenWithEmailTokenClaims(
-	claims *models.EmailTokenClaimsModel,
+	claims *model.EmailTokenClaims,
 ) (string, error) {
 	jwtKey := []byte(s.cnf.EmailTokenSecretKey)
 
@@ -116,11 +118,11 @@ func (s *Service) createJwtTokenWithEmailTokenClaims(
 
 // sendEmailTokenCommon ...
 func (s *Service) sendEmailTokenCommon(
-	db *gorm.DB,
-	email *models.MailgunEmailModel,
+	db *bun.DB,
+	email *model.Email,
 	link string,
 ) (
-	*models.EmailTokenModel,
+	*model.EmailToken,
 	error,
 ) {
 	// Check if email token link is valid
@@ -139,7 +141,7 @@ func (s *Service) sendEmailTokenCommon(
 	}
 
 	// Create the JWT claims, which includes the username, expiry time and uuid reference
-	claims := models.NewOauthEmailTokenClaims(email.Recipient, emailToken)
+	claims := model.NewOauthEmailTokenClaims(email.Recipient, emailToken)
 
 	token, err := s.createJwtTokenWithEmailTokenClaims(claims)
 
@@ -179,34 +181,73 @@ func (s *Service) sendEmailTokenCommon(
 	}
 
 	now := time.Now().UTC()
+	// var res sql.Result
 
-	if err := db.Model(emailToken).Select("email_sent", "email_sent_at").UpdateColumns(
-		models.EmailTokenModel{
-			EmailSent:   true,
-			EmailSentAt: &now,
-		},
-	).Error; err != nil {
+	newEmailToken := &model.EmailToken{
+		EmailSent:   true,
+		EmailSentAt: &now,
+	}
+
+	_, err = s.db.NewUpdate().
+		Model(newEmailToken).
+		WherePK().
+		Exec(ctx)
+
+	if err != nil {
 		return nil, err
 	}
+
+	// if err := db.Model(emailToken).Select("email_sent", "email_sent_at").UpdateColumns(
+	// 	model.EmailTokenModel{
+	// 		EmailSent:   true,
+	// 		EmailSentAt: &now,
+	// 	},
+	// ).Error; err != nil {
+	// 	return nil, err
+	// }
 
 	return emailToken, nil
 }
 
 // ClearExpiredEmailTokens ...
 func (s *Service) ClearExpiredEmailTokens() error {
+	ctx := context.Background()
+
 	now := time.Now().UTC()
 
-	return s.db.Unscoped().Where(
-		"expires_at < ?",
-		now.AddDate(0, -30, 0), // 30 days ago
-	).Delete(&models.EmailTokenModel{}).Error
+	emailToken := new(model.EmailToken)
+
+	_, err := s.db.NewDelete().
+		Model(emailToken).
+		Where(
+			"expires_at < ?",
+			now.AddDate(0, -30, 0), // 30 days ago
+		).
+		Exec(ctx)
+
+	return err
 }
 
 // DeleteEmailToken ...
-func (s *Service) DeleteEmailToken(emailToken *models.EmailTokenModel, soft bool) error {
+func (s *Service) DeleteEmailToken(emailToken *model.EmailToken, soft bool) error {
+	ctx := context.Background()
+
 	if soft == true {
-		return s.db.Delete(emailToken).Error
+		now := time.Now().UTC()
+
+		_, err := s.db.NewUpdate().
+			Model(emailToken).
+			Set("deleted = ?", now).
+			WherePK().
+			Exec(ctx)
+
+		return err
 	}
 
-	return s.db.Unscoped().Delete(emailToken).Error
+	_, err := s.db.NewDelete().
+		Model(emailToken).
+		WherePK().
+		Exec(ctx)
+
+	return err
 }

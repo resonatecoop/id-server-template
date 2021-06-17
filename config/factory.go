@@ -4,7 +4,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/RichardKnop/go-oauth2-server/log"
+	"github.com/resonatecoop/id/log"
 )
 
 var (
@@ -28,22 +28,9 @@ var Cnf = &Config{
 		Domain: "mailgun.resonate.is",
 	},
 	Database: DatabaseConfig{
-		Type:         "postgres",
-		Host:         "postgres",
-		Port:         5432,
-		User:         "go_oauth2_server",
-		Password:     "",
-		DatabaseName: "go_oauth2_server",
+		PSN:          "postgres://resonate_dev_user:password@127.0.0.1:5432/resonate_dev?sslmode=disable",
 		MaxIdleConns: 5,
 		MaxOpenConns: 5,
-	},
-	Database2: DatabaseConfig{
-		Type:         "mysql",
-		Host:         "localhost",
-		Port:         5432,
-		User:         "resonate_is",
-		Password:     "",
-		DatabaseName: "resonate_is",
 	},
 	Oauth: OauthConfig{
 		AccessTokenLifetime:  3600,    // 1 hour

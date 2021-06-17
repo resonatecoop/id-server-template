@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/RichardKnop/go-oauth2-server/models"
-	"github.com/RichardKnop/go-oauth2-server/oauth"
-	"github.com/RichardKnop/go-oauth2-server/session"
-	"github.com/RichardKnop/go-oauth2-server/util/response"
 	"github.com/gorilla/csrf"
+	"github.com/resonatecoop/id/oauth"
+	"github.com/resonatecoop/id/session"
+	"github.com/resonatecoop/id/util/response"
+	"github.com/resonatecoop/user-api/model"
 )
 
 func (s *Service) passwordResetForm(w http.ResponseWriter, r *http.Request) {
@@ -125,7 +125,7 @@ func (s *Service) passwordReset(w http.ResponseWriter, r *http.Request) {
 
 	// send password reset token
 	_, err = s.oauthService.SendEmailToken(
-		models.NewOauthEmail(
+		model.NewOauthEmail(
 			r.Form.Get("email"),
 			"Reset your password",
 			"password-reset",
@@ -208,17 +208,17 @@ func (s *Service) passwordResetUpdatePassword(r *http.Request) error {
 		return err
 	}
 
-	wpuser, err := s.oauthService.FindWpUserByEmail(email)
+	// wpuser, err := s.oauthService.FindWpUserByEmail(email)
 
-	if err != nil {
-		return err
-	}
+	// if err != nil {
+	// 	return err
+	// }
 
-	err = s.oauthService.SetWpPassword(wpuser, r.Form.Get("password_new"))
+	// err = s.oauthService.SetWpPassword(wpuser, r.Form.Get("password_new"))
 
-	if err != nil {
-		return err
-	}
+	// if err != nil {
+	// 	return err
+	// }
 
 	softDelete := true
 	err = s.oauthService.DeleteEmailToken(emailToken, softDelete)

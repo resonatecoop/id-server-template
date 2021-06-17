@@ -1,69 +1,60 @@
 package oauth
 
 import (
-	"github.com/RichardKnop/go-oauth2-server/config"
-	"github.com/RichardKnop/go-oauth2-server/models"
-	"github.com/RichardKnop/go-oauth2-server/session"
-	"github.com/RichardKnop/go-oauth2-server/util/routes"
 	"github.com/gorilla/mux"
-	"github.com/jinzhu/gorm"
+	"github.com/resonatecoop/id/config"
+	"github.com/resonatecoop/id/session"
+	"github.com/resonatecoop/id/util/routes"
+	"github.com/resonatecoop/user-api/model"
+	"github.com/uptrace/bun"
 )
 
 // ServiceInterface defines exported methods
 type ServiceInterface interface {
 	// Exported methods
 	GetConfig() *config.Config
-	RestrictToRoles(allowedRoles ...string)
-	IsRoleAllowed(role string) bool
-	FindRoleByID(id string) (*models.OauthRole, error)
+	RestrictToRoles(allowedRoles ...int32)
+	IsRoleAllowed(role int32) bool
+	FindRoleByID(id int32) (*model.AccessRole, error)
 	GetRoutes() []routes.Route
 	RegisterRoutes(router *mux.Router, prefix string)
 	ClientExists(clientID string) bool
-	FindClientByClientID(clientID string) (*models.OauthClient, error)
-	FindClientByApplicationURL(applicationURL string) (*models.OauthClient, error)
-	CreateClient(clientID, secret, redirectURI, applicationName, applicationHostname, applicationURL string) (*models.OauthClient, error)
-	CreateClientTx(tx *gorm.DB, clientID, secret, redirectURI, applicationName, applicationHostname, applicationURL string) (*models.OauthClient, error)
-	AuthClient(clientID, secret string) (*models.OauthClient, error)
-	GetValidEmailToken(token string) (*models.EmailTokenModel, string, error)
+	FindClientByClientID(clientID string) (*model.Client, error)
+	FindClientByApplicationURL(applicationURL string) (*model.Client, error)
+	CreateClient(clientID, secret, redirectURI, applicationName, applicationHostname, applicationURL string) (*model.Client, error)
+	CreateClientTx(tx *bun.DB, clientID, secret, redirectURI, applicationName, applicationHostname, applicationURL string) (*model.Client, error)
+	AuthClient(clientID, secret string) (*model.Client, error)
+	GetValidEmailToken(token string) (*model.EmailToken, string, error)
 	ClearExpiredEmailTokens() error
-	DeleteEmailToken(*models.EmailTokenModel, bool) error
-	SendEmailToken(email *models.MailgunEmailModel, emailTokenLink string) (*models.EmailTokenModel, error)
-	SendEmailTokenTx(db *gorm.DB, email *models.MailgunEmailModel, emailTokenLink string) (*models.EmailTokenModel, error)
+	DeleteEmailToken(*model.EmailToken, bool) error
+	SendEmailToken(email *model.Email, emailTokenLink string) (*model.EmailToken, error)
+	SendEmailTokenTx(db *bun.DB, email *model.Email, emailTokenLink string) (*model.EmailToken, error)
 	UserExists(username string) bool
-	LoginTaken(login string) bool
-	FindUserByUsername(username string) (*models.OauthUser, error)
-	CreateUser(roleID, username, password string) (*models.OauthUser, error)
-	CreateUserTx(tx *gorm.DB, roleID, username, password string) (*models.OauthUser, error)
-	DeleteUser(user *models.OauthUser, password string) error
-	DeleteUserTx(tx *gorm.DB, user *models.OauthUser, password string) error
-	CreateWpUser(email, password, login, displayName string) (*models.WpUser, error)
-	CreateWpUserTx(tx *gorm.DB, username, password, login, displayName string) (*models.WpUser, error)
-	FindWpUserByLogin(login string) (*models.WpUser, error)
-	FindNicknameByWpUserID(id uint64) (string, error)
-	FindWpUserByEmail(email string) (*models.WpUser, error)
+	FindUserByUsername(username string) (*model.User, error)
+	FindUserByEmail(email string) (*model.User, error)
+	CreateUser(roleID int32, username, password string) (*model.User, error)
+	CreateUserTx(tx *bun.DB, roleID int32, username, password string) (*model.User, error)
+	DeleteUser(user *model.User, password string) error
+	DeleteUserTx(tx *bun.DB, user *model.User, password string) error
+	//FindNicknameByWpUserID(id uint64) (string, error)
 	ConfirmUserEmail(email string) error
-	SetPassword(user *models.OauthUser, password string) error
-	SetPasswordTx(tx *gorm.DB, user *models.OauthUser, password string) error
-	SetWpPassword(user *models.WpUser, password string) error
-	SetWpPasswordTx(tx *gorm.DB, wpuser *models.WpUser, password string) error
-	UpdateUsername(user *models.OauthUser, username string) error
-	UpdateUsernameTx(db *gorm.DB, user *models.OauthUser, username string) error
-	UpdateWpUserNickname(wpuser *models.WpUser, nickname string) error
-	UpdateWpUserCountry(wpuser *models.WpUser, country string) error
-	FindWpUserMetaValue(userId uint64, key string) (string, error)
-	UpdateWpUserMetaValue(userId uint64, key string, value string) error
-	AuthUser(username, thePassword string) (*models.OauthUser, error)
+	SetPassword(user *model.User, password string) error
+	SetPasswordTx(tx *bun.DB, user *model.User, password string) error
+	UpdateUsername(user *model.User, username string) error
+	UpdateUsernameTx(db *bun.DB, user *model.User, username string) error
+	// UpdateUserCountry(user *model.User, country string) error
+	AuthUser(username, thePassword string) (*model.User, error)
 	GetScope(requestedScope string) (string, error)
 	GetDefaultScope() string
 	ScopeExists(requestedScope string) bool
-	Login(client *models.OauthClient, user *models.OauthUser, scope string) (*models.OauthAccessToken, *models.OauthRefreshToken, error)
-	GrantAuthorizationCode(client *models.OauthClient, user *models.OauthUser, expiresIn int, redirectURI, scope string) (*models.OauthAuthorizationCode, error)
-	GrantAccessToken(client *models.OauthClient, user *models.OauthUser, expiresIn int, scope string) (*models.OauthAccessToken, error)
-	GetOrCreateRefreshToken(client *models.OauthClient, user *models.OauthUser, expiresIn int, scope string) (*models.OauthRefreshToken, error)
-	GetValidRefreshToken(token string, client *models.OauthClient) (*models.OauthRefreshToken, error)
-	Authenticate(token string) (*models.OauthAccessToken, error)
-	NewIntrospectResponseFromAccessToken(accessToken *models.OauthAccessToken) (*IntrospectResponse, error)
-	NewIntrospectResponseFromRefreshToken(refreshToken *models.OauthRefreshToken) (*IntrospectResponse, error)
+	Login(client *model.Client, user *model.User, scope string) (*model.AccessToken, *model.RefreshToken, error)
+	GrantAuthorizationCode(client *model.Client, user *model.User, expiresIn int, redirectURI, scope string) (*model.AuthorizationCode, error)
+	GrantAccessToken(client *model.Client, user *model.User, expiresIn int, scope string) (*model.AccessToken, error)
+	GetOrCreateRefreshToken(client *model.Client, user *model.User, expiresIn int, scope string) (*model.RefreshToken, error)
+	GetValidRefreshToken(token string, client *model.Client) (*model.RefreshToken, error)
+	Authenticate(token string) (*model.AccessToken, error)
+	NewIntrospectResponseFromAccessToken(accessToken *model.AccessToken) (*IntrospectResponse, error)
+	NewIntrospectResponseFromRefreshToken(refreshToken *model.RefreshToken) (*IntrospectResponse, error)
 	ClearUserTokens(userSession *session.UserSession)
 	Close()
 }

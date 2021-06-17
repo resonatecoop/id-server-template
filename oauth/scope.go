@@ -1,11 +1,13 @@
 package oauth
 
 import (
+	"context"
 	"errors"
 	"sort"
 	"strings"
 
-	"github.com/RichardKnop/go-oauth2-server/models"
+	"github.com/resonatecoop/user-api/model"
+	"github.com/uptrace/bun"
 )
 
 var (
@@ -32,9 +34,33 @@ func (s *Service) GetScope(requestedScope string) (string, error) {
 
 // GetDefaultScope returns the default scope
 func (s *Service) GetDefaultScope() string {
+	ctx := context.Background()
 	// Fetch default scopes
 	var scopes []string
-	s.db.Model(new(models.OauthScope)).Where("is_default = ?", true).Pluck("scope", &scopes)
+
+	rows, err := s.db.NewSelect().
+		Model((*model.Scope)(nil)).
+		Where("is_default = ?", true).
+		Rows(ctx)
+
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		scope := new(model.Scope)
+		if err := s.db.ScanRow(ctx, rows, scope); err != nil {
+			panic(err)
+		}
+		scopes = append(scopes, scope.Name)
+	}
+
+	if err := rows.Err(); err != nil {
+		panic(err)
+	}
+
+	// s.db.NewSelect().Model(new(model.Scope)).Where("is_default = ?", true).Pluck("scope", &scopes)
 
 	// Sort the scopes alphabetically
 	sort.Strings(scopes)
@@ -45,12 +71,17 @@ func (s *Service) GetDefaultScope() string {
 
 // ScopeExists checks if a scope exists
 func (s *Service) ScopeExists(requestedScope string) bool {
+	ctx := context.Background()
 	// Split the requested scope string
 	scopes := strings.Split(requestedScope, " ")
 
+	var available_scopes []model.Scope
+
 	// Count how many of requested scopes exist in the database
-	var count int
-	s.db.Model(new(models.OauthScope)).Where("scope in (?)", scopes).Count(&count)
+	count, _ := s.db.NewSelect().
+		Model(&available_scopes).
+		Where("name IN (?)", bun.In(scopes)).
+		ScanAndCount(ctx)
 
 	// Return true only if all requested scopes found
 	return count == len(scopes)

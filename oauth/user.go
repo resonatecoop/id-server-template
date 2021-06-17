@@ -7,14 +7,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/RichardKnop/go-oauth2-server/log"
-	"github.com/RichardKnop/go-oauth2-server/models"
-	"github.com/RichardKnop/go-oauth2-server/util"
-	pass "github.com/RichardKnop/go-oauth2-server/util/password"
-	"github.com/RichardKnop/uuid"
-	"github.com/jinzhu/gorm"
 	"github.com/mailgun/mailgun-go/v4"
+	"github.com/resonatecoop/id/log"
+	"github.com/resonatecoop/id/util"
+	pass "github.com/resonatecoop/id/util/password"
+	"github.com/resonatecoop/user-api/model"
 	"github.com/trustelem/zxcvbn"
+	"github.com/uptrace/bun"
 )
 
 var (
@@ -56,8 +55,6 @@ var (
 	ErrPasswordRequired = errors.New("Password is required")
 	// ErrUsernameRequired ...
 	ErrUsernameRequired = errors.New("Email is required")
-	// ErrLoginTaken ...
-	ErrLoginTaken = errors.New("Login taken")
 	// ErrUserNotFound ...
 	ErrUserNotFound = errors.New("User not found")
 	// ErrInvalidUserPassword ...
@@ -76,6 +73,10 @@ var (
 	ErrEmailNotFound = errors.New("We can't find an account registered with that address or username")
 	// ErrAccountDeletionFailed
 	ErrAccountDeletionFailed = errors.New("Account could not be deleted. Please reach to us now")
+	// ErrEmailAsLogin
+	ErrEmailAsLogin = errors.New("Username cannot be an email address")
+	// ErrCountryNotFound
+	ErrCountryNotFound = errors.New("Country cannot be found")
 )
 
 // UserExists returns true if user exists
@@ -84,19 +85,35 @@ func (s *Service) UserExists(username string) bool {
 	return err == nil
 }
 
-func (s *Service) LoginTaken(login string) bool {
-	_, err := s.FindWpUserByLogin(login)
-	return err == nil
+// FindUserByUsername looks up a user by username (email)
+func (s *Service) FindUserByUsername(username string) (*model.User, error) {
+	ctx := context.Background()
+	// Usernames are case insensitive
+	user := new(model.User)
+	err := s.db.NewSelect().
+		Model(user).
+		Where("username = LOWER(?)", username).
+		Limit(1).
+		Scan(ctx)
+
+	if err != nil {
+		return nil, ErrUserNotFound
+	}
+
+	return user, nil
 }
 
-// FindUserByUsername looks up a user by username (email)
-func (s *Service) FindUserByUsername(username string) (*models.OauthUser, error) {
-	// Usernames are case insensitive
-	user := new(models.OauthUser)
-	notFound := s.db.Where("username = LOWER(?)", username).
-		First(user).RecordNotFound()
+func (s *Service) FindUserByEmail(email string) (*model.User, error) {
+	ctx := context.Background()
+	user := new(model.User)
+	err := s.db.NewSelect().
+		Model(user).
+		Where("user_email = ?", email).
+		Limit(1).
+		Scan(ctx)
 
-	if notFound {
+	// Not found
+	if err != nil {
 		return nil, ErrUserNotFound
 	}
 
@@ -104,27 +121,27 @@ func (s *Service) FindUserByUsername(username string) (*models.OauthUser, error)
 }
 
 // CreateUser saves a new user to database
-func (s *Service) CreateUser(roleID, username, password string) (*models.OauthUser, error) {
+func (s *Service) CreateUser(roleID int32, username, password string) (*model.User, error) {
 	return s.createUserCommon(s.db, roleID, username, password)
 }
 
 // CreateUserTx saves a new user to database using injected db object
-func (s *Service) CreateUserTx(tx *gorm.DB, roleID, username, password string) (*models.OauthUser, error) {
+func (s *Service) CreateUserTx(tx *bun.DB, roleID int32, username, password string) (*model.User, error) {
 	return s.createUserCommon(tx, roleID, username, password)
 }
 
 // SetPassword sets a user password
-func (s *Service) SetPassword(user *models.OauthUser, password string) error {
+func (s *Service) SetPassword(user *model.User, password string) error {
 	return s.setPasswordCommon(s.db, user, password)
 }
 
 // SetPasswordTx sets a user password in a transaction
-func (s *Service) SetPasswordTx(tx *gorm.DB, user *models.OauthUser, password string) error {
+func (s *Service) SetPasswordTx(tx *bun.DB, user *model.User, password string) error {
 	return s.setPasswordCommon(tx, user, password)
 }
 
 // AuthUser authenticates user
-func (s *Service) AuthUser(username, password string) (*models.OauthUser, error) {
+func (s *Service) AuthUser(username, password string) (*model.User, error) {
 	// Fetch the user
 	user, err := s.FindUserByUsername(username)
 	if err != nil {
@@ -145,7 +162,7 @@ func (s *Service) AuthUser(username, password string) (*models.OauthUser, error)
 }
 
 // UpdateUsername ...
-func (s *Service) UpdateUsername(user *models.OauthUser, username string) error {
+func (s *Service) UpdateUsername(user *model.User, username string) error {
 	if username == "" {
 		return ErrCannotSetEmptyUsername
 	}
@@ -161,21 +178,30 @@ func (s *Service) UpdateUsername(user *models.OauthUser, username string) error 
 }
 
 // UpdateUsernameTx ...
-func (s *Service) UpdateUsernameTx(tx *gorm.DB, user *models.OauthUser, username string) error {
+func (s *Service) UpdateUsernameTx(tx *bun.DB, user *model.User, username string) error {
 	return s.updateUsernameCommon(tx, user, username)
 }
 
 func (s *Service) ConfirmUserEmail(email string) error {
+	ctx := context.Background()
 	user, err := s.FindUserByUsername(email)
 
 	if err != nil {
 		return err
 	}
 
-	return s.db.Model(user).UpdateColumn("email_confirmed", true).Error
+	_, err = s.db.NewUpdate().
+		Model(user).
+		Set("email_confirmed = ?", true).
+		WherePK().
+		Exec(ctx)
+
+	return err
 }
 
-func (s *Service) createUserCommon(db *gorm.DB, roleID, username, password string) (*models.OauthUser, error) {
+func (s *Service) createUserCommon(db *bun.DB, roleID int32, username, password string) (*model.User, error) {
+	ctx := context.Background()
+
 	if password == "" {
 		return nil, ErrPasswordRequired
 	}
@@ -184,12 +210,8 @@ func (s *Service) createUserCommon(db *gorm.DB, roleID, username, password strin
 		return nil, ErrUsernameRequired
 	}
 
-	user := &models.OauthUser{
-		MyGormModel: models.MyGormModel{
-			ID:        uuid.New(),
-			CreatedAt: time.Now().UTC(),
-		},
-		RoleID:   util.StringOrNull(roleID),
+	user := &model.User{
+		RoleID:   roleID,
 		Username: strings.ToLower(username),
 		Password: util.StringOrNull(""),
 	}
@@ -229,7 +251,11 @@ func (s *Service) createUserCommon(db *gorm.DB, roleID, username, password strin
 	}
 
 	// Create the user
-	if err := db.Create(user).Error; err != nil {
+	_, err = db.NewInsert().
+		Model(user).
+		Exec(ctx)
+
+	if err != nil {
 		return nil, err
 	}
 
@@ -237,16 +263,17 @@ func (s *Service) createUserCommon(db *gorm.DB, roleID, username, password strin
 }
 
 // Delete user will soft delete  user
-func (s *Service) DeleteUser(user *models.OauthUser, password string) error {
+func (s *Service) DeleteUser(user *model.User, password string) error {
 	return s.deleteUserCommon(s.db, user, password)
 }
 
 // DeleteUserTx deletes a user in a transaction
-func (s *Service) DeleteUserTx(tx *gorm.DB, user *models.OauthUser, password string) error {
+func (s *Service) DeleteUserTx(tx *bun.DB, user *model.User, password string) error {
 	return s.deleteUserCommon(tx, user, password)
 }
 
-func (s *Service) deleteUserCommon(db *gorm.DB, user *models.OauthUser, password string) error {
+func (s *Service) deleteUserCommon(db *bun.DB, user *model.User, password string) error {
+	ctx := context.Background()
 	// Check that the password is set
 	/*
 		if !user.Password.Valid {
@@ -260,7 +287,13 @@ func (s *Service) deleteUserCommon(db *gorm.DB, user *models.OauthUser, password
 	*/
 
 	// will set deleted_at to current time
-	if db.Delete(&user).Error != nil {
+	_, err := db.NewUpdate().
+		Model(&user).
+		Set("DeletedAt", time.Now().UTC()).
+		WherePK().
+		Exec(ctx)
+
+	if err != nil {
 		return ErrAccountDeletionFailed
 	}
 
@@ -268,7 +301,7 @@ func (s *Service) deleteUserCommon(db *gorm.DB, user *models.OauthUser, password
 	mg := mailgun.NewMailgun(s.cnf.Mailgun.Domain, s.cnf.Mailgun.Key)
 	sender := s.cnf.Mailgun.Sender
 	body := ""
-	email := models.NewOauthEmail(
+	email := model.NewOauthEmail(
 		user.Username,
 		"Account deleted",
 		"account-deleted",
@@ -277,7 +310,7 @@ func (s *Service) deleteUserCommon(db *gorm.DB, user *models.OauthUser, password
 	recipient := email.Recipient
 	message := mg.NewMessage(sender, subject, body, recipient)
 	message.SetTemplate(email.Template) // set mailgun template
-	err := message.AddTemplateVariable("email", recipient)
+	err = message.AddTemplateVariable("email", recipient)
 
 	if err != nil {
 		log.ERROR.Print(err)
@@ -296,7 +329,9 @@ func (s *Service) deleteUserCommon(db *gorm.DB, user *models.OauthUser, password
 	return nil
 }
 
-func (s *Service) setPasswordCommon(db *gorm.DB, user *models.OauthUser, password string) error {
+func (s *Service) setPasswordCommon(db *bun.DB, user *model.User, password string) error {
+	ctx := context.Background()
+
 	if len(password) < MinPasswordLength {
 		return ErrPasswordTooShort
 	}
@@ -318,11 +353,21 @@ func (s *Service) setPasswordCommon(db *gorm.DB, user *models.OauthUser, passwor
 		return err
 	}
 
+	// userUpdates := &model.User{
+	// 	IDRecord: model.IDRecord{
+	// 		UpdatedAt: time.Now().UTC(),
+	// 	},
+	// 	Password: ,
+	// }
+
 	// Set the password on the user object
-	err = db.Model(user).UpdateColumns(models.OauthUser{
-		Password:    util.StringOrNull(string(passwordHash)),
-		MyGormModel: models.MyGormModel{UpdatedAt: time.Now().UTC()},
-	}).Error
+	_, err = db.NewUpdate().
+		Model(user).
+		Set("updated_at = ?", time.Now().UTC()).
+		Set("last_password_change = ?", time.Now().UTC()).
+		Set("password = ?", string(passwordHash)).
+		Where("id = ?", user.IDRecord.ID).
+		Exec(ctx)
 
 	if err != nil {
 		return err
@@ -332,7 +377,7 @@ func (s *Service) setPasswordCommon(db *gorm.DB, user *models.OauthUser, passwor
 	mg := mailgun.NewMailgun(s.cnf.Mailgun.Domain, s.cnf.Mailgun.Key)
 	sender := s.cnf.Mailgun.Sender
 	body := ""
-	email := models.NewOauthEmail(
+	email := model.NewOauthEmail(
 		user.Username,
 		"Password changed",
 		"password-changed",
@@ -360,7 +405,26 @@ func (s *Service) setPasswordCommon(db *gorm.DB, user *models.OauthUser, passwor
 	return nil
 }
 
-func (s *Service) updateUsernameCommon(db *gorm.DB, user *models.OauthUser, username string) error {
+// // Update wp user country (resolve from common name and official name, fallback to alpha code otherwise)
+// func (s *Service) UpdateUserCountry(user *model.User, country string) error {
+// 	// validate country name
+// 	query := gountries.New()
+// 	_, err := query.FindCountryByName(strings.ToLower(country))
+
+// 	if err != nil {
+// 		// fallback to code
+// 		result, err := query.FindCountryByAlpha(strings.ToLower(country))
+// 		if err != nil {
+// 			return ErrCountryNotFound
+// 		}
+// 		country = result.Name.Common
+// 	}
+
+// 	return s.UpdateUserMetaValue(user.ID, "country", country)
+// }
+
+func (s *Service) updateUsernameCommon(db *bun.DB, user *model.User, username string) error {
+	ctx := context.Background()
 	if username == "" {
 		return ErrCannotSetEmptyUsername
 	}
@@ -368,5 +432,21 @@ func (s *Service) updateUsernameCommon(db *gorm.DB, user *models.OauthUser, user
 	if s.UserExists(username) {
 		return ErrUsernameTaken
 	}
-	return db.Model(user).UpdateColumn("username", strings.ToLower(username)).Error
+
+	err := db.NewSelect().
+		Model(user).
+		Where("username = ?", user.Username).
+		Scan(ctx)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = db.NewUpdate().
+		Model(user).
+		Set("username = ?", strings.ToLower(username)).
+		Where("id = ?", user.ID).
+		Exec(ctx)
+
+	return err
 }

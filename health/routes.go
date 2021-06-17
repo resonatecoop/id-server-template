@@ -1,8 +1,8 @@
 package health
 
 import (
-	"github.com/RichardKnop/go-oauth2-server/util/routes"
 	"github.com/gorilla/mux"
+	"github.com/resonatecoop/id/util/routes"
 )
 
 // RegisterRoutes registers route handlers for the health service

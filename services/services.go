@@ -3,13 +3,13 @@ package services
 import (
 	"reflect"
 
-	"github.com/RichardKnop/go-oauth2-server/config"
-	"github.com/RichardKnop/go-oauth2-server/health"
-	"github.com/RichardKnop/go-oauth2-server/oauth"
-	"github.com/RichardKnop/go-oauth2-server/session"
-	"github.com/RichardKnop/go-oauth2-server/web"
 	"github.com/gorilla/sessions"
-	"github.com/jinzhu/gorm"
+	"github.com/resonatecoop/id/config"
+	"github.com/resonatecoop/id/health"
+	"github.com/resonatecoop/id/oauth"
+	"github.com/resonatecoop/id/session"
+	"github.com/resonatecoop/id/web"
+	"github.com/uptrace/bun"
 )
 
 func init() {
@@ -51,13 +51,13 @@ func UseSessionService(s session.ServiceInterface) {
 }
 
 // Init starts up all services
-func Init(cnf *config.Config, db *gorm.DB, db2 *gorm.DB) error {
+func Init(cnf *config.Config, db *bun.DB) error {
 	if nil == reflect.TypeOf(HealthService) {
 		HealthService = health.NewService(db)
 	}
 
 	if nil == reflect.TypeOf(OauthService) {
-		OauthService = oauth.NewService(cnf, db, db2)
+		OauthService = oauth.NewService(cnf, db)
 	}
 
 	if nil == reflect.TypeOf(SessionService) {

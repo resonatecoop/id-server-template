@@ -1,14 +1,14 @@
 package oauth_test
 
 import (
-	"github.com/RichardKnop/go-oauth2-server/models"
-	"github.com/RichardKnop/go-oauth2-server/oauth"
+	"github.com/resonatecoop/id/oauth"
+	"github.com/resonatecoop/user-api/model"
 	"github.com/stretchr/testify/assert"
 )
 
 func (suite *OauthTestSuite) TestFindClientByClientID() {
 	var (
-		client *models.OauthClient
+		client *model.Client
 		err    error
 	)
 
@@ -37,11 +37,11 @@ func (suite *OauthTestSuite) TestFindClientByClientID() {
 
 func (suite *OauthTestSuite) TestCreateClient() {
 	var (
-		client *models.OauthClient
+		client *model.Client
 		err    error
 	)
 
-	// We try to insert a non uniqie client
+	// We try to insert a non unique client
 	client, err = suite.service.CreateClient(
 		"test_client_1",           // client ID
 		"test_secret",             // secret
@@ -80,7 +80,7 @@ func (suite *OauthTestSuite) TestCreateClient() {
 
 func (suite *OauthTestSuite) TestAuthClient() {
 	var (
-		client *models.OauthClient
+		client *model.Client
 		err    error
 	)
 

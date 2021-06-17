@@ -1,10 +1,10 @@
 package web
 
 import (
-	"github.com/RichardKnop/go-oauth2-server/util/routes"
 	"github.com/didip/tollbooth"
 	"github.com/didip/tollbooth_negroni"
 	"github.com/gorilla/mux"
+	"github.com/resonatecoop/id/util/routes"
 	"github.com/urfave/negroni"
 )
 
