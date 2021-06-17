@@ -9,16 +9,16 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/RichardKnop/go-oauth2-server/models"
-	"github.com/RichardKnop/go-oauth2-server/session"
 	"github.com/gorilla/csrf"
+	"github.com/resonatecoop/id/session"
+	"github.com/resonatecoop/user-api/model"
 )
 
 // ErrIncorrectResponseType a form value for response_type was not set to token or code
 var ErrIncorrectResponseType = errors.New("Response type not one of token or code")
 
 func (s *Service) authorizeForm(w http.ResponseWriter, r *http.Request) {
-	sessionService, client, user, wpuser, nickname, responseType, _, err := s.authorizeCommon(r)
+	sessionService, client, user, responseType, _, err := s.authorizeCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -34,9 +34,9 @@ func (s *Service) authorizeForm(w http.ResponseWriter, r *http.Request) {
 	query.Set("login_redirect_uri", r.URL.Path)
 
 	profile := &Profile{
-		ID:             wpuser.ID,
-		Email:          wpuser.Email,
-		DisplayName:    nickname,
+		ID:             user.ID.String(),
+		Email:          user.Username,
+		DisplayName:    user.FullName,
 		EmailConfirmed: user.EmailConfirmed,
 	}
 
@@ -74,7 +74,7 @@ func (s *Service) authorizeForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) authorize(w http.ResponseWriter, r *http.Request) {
-	_, client, user, _, _, responseType, redirectURI, err := s.authorizeCommon(r)
+	_, client, user, responseType, redirectURI, err := s.authorizeCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -162,10 +162,8 @@ func (s *Service) authorize(w http.ResponseWriter, r *http.Request) {
 
 func (s *Service) authorizeCommon(r *http.Request) (
 	session.ServiceInterface,
-	*models.OauthClient,
-	*models.OauthUser,
-	*models.WpUser,
-	string,
+	*model.Client,
+	*model.User,
 	string,
 	*url.URL,
 	error,
@@ -173,19 +171,19 @@ func (s *Service) authorizeCommon(r *http.Request) (
 	// Get the session service from the request context
 	sessionService, err := getSessionService(r)
 	if err != nil {
-		return nil, nil, nil, nil, "", "", nil, err
+		return nil, nil, nil, "", nil, err
 	}
 
 	// Get the client from the request context
 	client, err := getClient(r)
 	if err != nil {
-		return nil, nil, nil, nil, "", "", nil, err
+		return nil, nil, nil, "", nil, err
 	}
 
 	// Get the user session
 	userSession, err := sessionService.GetUserSession()
 	if err != nil {
-		return nil, nil, nil, nil, "", "", nil, err
+		return nil, nil, nil, "", nil, err
 	}
 
 	// Fetch the user
@@ -193,21 +191,21 @@ func (s *Service) authorizeCommon(r *http.Request) (
 		userSession.Username,
 	)
 	if err != nil {
-		return nil, nil, nil, nil, "", "", nil, err
+		return nil, nil, nil, "", nil, err
 	}
 
 	// Fetch the user
-	wpuser, err := s.oauthService.FindWpUserByEmail(
-		userSession.Username,
-	)
-	if err != nil {
-		return nil, nil, nil, nil, "", "", nil, err
-	}
+	// user, err := s.oauthService.FindUserByEmail(
+	// 	userSession.Username,
+	// )
+	// if err != nil {
+	// 	return nil, nil, nil, "", "", nil, err
+	// }
 
-	nickname, err := s.oauthService.FindNicknameByWpUserID(wpuser.ID)
-	if err != nil {
-		return nil, nil, nil, nil, "", "", nil, err
-	}
+	// nickname, err := s.oauthService.FindNicknameByWpUserID(wpuser.ID)
+	// if err != nil {
+	// 	return nil, nil, nil, "", "", nil, err
+	// }
 
 	// Set default response type
 	responseType := "code"
@@ -218,7 +216,7 @@ func (s *Service) authorizeCommon(r *http.Request) (
 	}
 
 	if responseType != "code" && responseType != "token" {
-		return nil, nil, nil, nil, "", "", nil, ErrIncorrectResponseType
+		return nil, nil, nil, "", nil, ErrIncorrectResponseType
 	}
 
 	// Fallback to the client redirect URI if not in query string
@@ -230,8 +228,8 @@ func (s *Service) authorizeCommon(r *http.Request) (
 	// // Parse the redirect URL
 	parsedRedirectURI, err := url.ParseRequestURI(redirectURI)
 	if err != nil {
-		return nil, nil, nil, nil, "", "", nil, err
+		return nil, nil, nil, "", nil, err
 	}
 
-	return sessionService, client, user, wpuser, nickname, responseType, parsedRedirectURI, nil
+	return sessionService, client, user, responseType, parsedRedirectURI, nil
 }

@@ -1,7 +1,7 @@
 package oauth_test
 
 import (
-	"github.com/RichardKnop/go-oauth2-server/oauth"
+	"github.com/resonatecoop/id/oauth"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -15,7 +15,7 @@ func (suite *OauthTestSuite) TestGetScope() {
 	// the default scope should be returned
 	scope, err = suite.service.GetScope("")
 	assert.Nil(suite.T(), err)
-	assert.Equal(suite.T(), "read", scope)
+	assert.Equal(suite.T(), "read user", scope)
 
 	// When the requested scope is valid, it should be returned
 	scope, err = suite.service.GetScope("read read_write")
@@ -30,7 +30,7 @@ func (suite *OauthTestSuite) TestGetScope() {
 }
 
 func (suite *OauthTestSuite) TestGetDefaultScope() {
-	assert.Equal(suite.T(), "read", suite.service.GetDefaultScope())
+	assert.Equal(suite.T(), "read user", suite.service.GetDefaultScope())
 }
 
 func (suite *OauthTestSuite) TestScopeExists() {

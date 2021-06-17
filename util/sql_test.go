@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/RichardKnop/go-oauth2-server/util"
 	"github.com/lib/pq"
+	"github.com/resonatecoop/id/util"
 	"github.com/stretchr/testify/assert"
 )
 

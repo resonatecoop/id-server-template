@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/RichardKnop/go-oauth2-server/models"
-	"github.com/RichardKnop/go-oauth2-server/session"
 	"github.com/gorilla/csrf"
+	"github.com/resonatecoop/id/session"
+	"github.com/resonatecoop/user-api/model"
 )
 
 var (
@@ -128,7 +128,7 @@ func (s *Service) resendEmailConfirmationToken(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	email := models.NewOauthEmail(
+	email := model.NewOauthEmail(
 		user.Username,
 		"Confirm your email",
 		"email-confirmation",

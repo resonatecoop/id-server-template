@@ -1,111 +1,52 @@
 package database
 
 import (
-	"fmt"
-	"time"
+	"database/sql"
 
-	"github.com/RichardKnop/go-oauth2-server/config"
-	"github.com/jinzhu/gorm"
+	_ "github.com/jackc/pgx/v4/stdlib"
+	"github.com/resonatecoop/id/config"
+	bun "github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/pgdialect"
+	bundebug "github.com/uptrace/bun/extra/bundebug"
 
 	// Drivers
-	_ "github.com/jinzhu/gorm/dialects/mysql"
 	_ "github.com/lib/pq"
+	//_ "github.com/uptrace/bun/dialects/mysql"
 )
 
 func init() {
-	gorm.NowFunc = func() time.Time {
-		return time.Now().UTC()
-	}
+	// sql.NowFunc = func() time.Time {
+	// 	return time.Now().UTC()
+	// }
 }
 
-// NewDatabase returns a gorm.DB struct, gorm.DB.DB() returns a database handle
-// see http://golang.org/pkg/database/sql/#DB
-func NewDatabase(cnf *config.Config) (*gorm.DB, error) {
+// NewDatabase returns a bun.DB struct
+func NewDatabase(cnf *config.Config) (*bun.DB, error) {
 	// Postgres
-	if cnf.Database.Type == "postgres" {
-		// Connection args
-		// see https://godoc.org/github.com/lib/pq#hdr-Connection_String_Parameters
-		args := fmt.Sprintf(
-			"sslmode=disable host=%s port=%d user=%s password='%s' dbname=%s",
-			cnf.Database.Host,
-			cnf.Database.Port,
-			cnf.Database.User,
-			cnf.Database.Password,
-			cnf.Database.DatabaseName,
-		)
+	sqldb, err := sql.Open("pgx", cnf.Database.PSN)
 
-		db, err := gorm.Open(cnf.Database.Type, args)
-		if err != nil {
-			return db, err
-		}
-
-		// Max idle connections
-		db.DB().SetMaxIdleConns(cnf.Database.MaxIdleConns)
-
-		// Max open connections
-		db.DB().SetMaxOpenConns(cnf.Database.MaxOpenConns)
-
-		// Database logging
-		db.LogMode(cnf.IsDevelopment)
-
-		return db, nil
+	if err != nil {
+		panic(err)
 	}
 
-	// Database type not supported
-	return nil, fmt.Errorf("Database type %s not suppported", cnf.Database.Type)
-}
+	db := bun.NewDB(sqldb, pgdialect.New())
 
-// NewDatabase2 returns a gorm.DB struct, gorm.DB.DB() returns a database handle
-// Alternate database config for mysql wordpress database and/or future posgres user-api db
-// see http://golang.org/pkg/database/sql/#DB
-func NewDatabase2(cnf *config.Config) (*gorm.DB, error) {
-	if cnf.Database2.Type == "postgres" {
-		// Connection args
-		// see https://godoc.org/github.com/lib/pq#hdr-Connection_String_Parameters
-		args := fmt.Sprintf(
-			"sslmode=disable host=%s port=%d user=%s password='%s' dbname=%s",
-			cnf.Database2.Host,
-			cnf.Database2.Port,
-			cnf.Database2.User,
-			cnf.Database2.Password,
-			cnf.Database2.DatabaseName,
-		)
+	db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose()))
 
-		db, err := gorm.Open(cnf.Database2.Type, args)
-		if err != nil {
-			return db, err
-		}
+	_, err = db.Exec("SELECT 1=1")
 
-		// Max idle connections
-		db.DB().SetMaxIdleConns(cnf.Database2.MaxIdleConns)
-
-		// Max open connections
-		db.DB().SetMaxOpenConns(cnf.Database2.MaxOpenConns)
-
-		// Database logging
-		db.LogMode(cnf.IsDevelopment)
-
-		return db, nil
+	if err != nil {
+		return db, err
 	}
 
-	if cnf.Database2.Type == "mysql" {
-		args := fmt.Sprintf(
-			"%s:%s@tcp(%s:%d)/%s?charset=utf8&parseTime=True",
-			cnf.Database2.User,
-			cnf.Database2.Password,
-			cnf.Database2.Host,
-			cnf.Database2.Port,
-			cnf.Database2.DatabaseName,
-		)
-		db, err := gorm.Open("mysql", args)
-		if err != nil {
-			return db, err
-		}
-		// Database logging
-		db.LogMode(cnf.IsDevelopment)
-		return db, nil
-	}
+	// Max idle connections
+	// db.DB().SetMaxIdleConns(cnf.Database.MaxIdleConns)
 
-	// Database type not supported
-	return nil, fmt.Errorf("Secondary database type %s not suppported", cnf.Database2.Type)
+	// // Max open connections
+	// db.DB().SetMaxOpenConns(cnf.Database.MaxOpenConns)
+
+	// // Database logging
+	// db.LogMode(cnf.IsDevelopment)
+
+	return db, err
 }

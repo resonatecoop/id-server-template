@@ -6,16 +6,16 @@ import (
 	"html/template"
 	"net/http"
 
-	"github.com/RichardKnop/go-oauth2-server/models"
-	"github.com/RichardKnop/go-oauth2-server/session"
-	"github.com/RichardKnop/go-oauth2-server/util/response"
 	"github.com/gorilla/csrf"
+	"github.com/resonatecoop/id/session"
+	"github.com/resonatecoop/id/util/response"
+	"github.com/resonatecoop/user-api/model"
 	"github.com/rs/xid"
 	"github.com/thanhpk/randstr"
 )
 
 func (s *Service) clientForm(w http.ResponseWriter, r *http.Request) {
-	sessionService, client, user, wpuser, nickname, err := s.clientCommon(r)
+	sessionService, client, user, err := s.clientCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -29,9 +29,9 @@ func (s *Service) clientForm(w http.ResponseWriter, r *http.Request) {
 	query.Set("login_redirect_uri", r.URL.Path)
 
 	profile := &Profile{
-		ID:             wpuser.ID,
-		Email:          wpuser.Email,
-		DisplayName:    nickname,
+		ID:             user.ID.String(),
+		Email:          user.Username,
+		DisplayName:    user.FullName,
 		EmailConfirmed: user.EmailConfirmed,
 	}
 
@@ -68,7 +68,7 @@ func (s *Service) clientForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) client(w http.ResponseWriter, r *http.Request) {
-	sessionService, _, _, _, _, err := s.clientCommon(r)
+	sessionService, _, _, err := s.clientCommon(r)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -137,7 +137,7 @@ func (s *Service) client(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) clientDelete(w http.ResponseWriter, r *http.Request) {
-	_, _, _, _, _, err := s.clientCommon(r)
+	_, _, _, err := s.clientCommon(r)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -151,28 +151,26 @@ func (s *Service) clientDelete(w http.ResponseWriter, r *http.Request) {
 
 func (s *Service) clientCommon(r *http.Request) (
 	session.ServiceInterface,
-	*models.OauthClient,
-	*models.OauthUser,
-	*models.WpUser,
-	string,
+	*model.Client,
+	*model.User,
 	error,
 ) {
 	// Get the session service from the request context
 	sessionService, err := getSessionService(r)
 	if err != nil {
-		return nil, nil, nil, nil, "", err
+		return nil, nil, nil, err
 	}
 
 	// Get the client from the request context
 	client, err := getClient(r)
 	if err != nil {
-		return nil, nil, nil, nil, "", err
+		return nil, nil, nil, err
 	}
 
 	// Get the user session
 	userSession, err := sessionService.GetUserSession()
 	if err != nil {
-		return nil, nil, nil, nil, "", err
+		return nil, nil, nil, err
 	}
 
 	// Fetch the user
@@ -180,21 +178,21 @@ func (s *Service) clientCommon(r *http.Request) (
 		userSession.Username,
 	)
 	if err != nil {
-		return nil, nil, nil, nil, "", err
+		return nil, nil, nil, err
 	}
 
 	// Fetch the wpuser
-	wpuser, err := s.oauthService.FindWpUserByEmail(
-		userSession.Username,
-	)
-	if err != nil {
-		return nil, nil, nil, nil, "", err
-	}
+	// wpuser, err := s.oauthService.FindUserByEmail(
+	// 	userSession.Username,
+	// )
+	// if err != nil {
+	// 	return nil, nil, nil, err
+	// }
 
-	nickname, err := s.oauthService.FindNicknameByWpUserID(wpuser.ID)
-	if err != nil {
-		return nil, nil, nil, nil, "", err
-	}
+	// nickname, err := s.oauthService.FindNicknameByWpUserID(wpuser.ID)
+	// if err != nil {
+	// 	return nil, nil, nil, err
+	// }
 
-	return sessionService, client, user, wpuser, nickname, nil
+	return sessionService, client, user, nil
 }
