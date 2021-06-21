@@ -23,7 +23,7 @@ func (suite *OauthTestSuite) TestPasswordGrant() {
 		"grant_type": {"password"},
 		"username":   {"test@user.com"},
 		"password":   {"test_password"},
-		"scope":      {"read_write"},
+		"scope":      {"read_write artist"},
 	}
 
 	// Serve the request
@@ -57,7 +57,7 @@ func (suite *OauthTestSuite) TestPasswordGrant() {
 		AccessToken:  accessToken.Token,
 		ExpiresIn:    3600,
 		TokenType:    tokentypes.Bearer,
-		Scope:        "read_write",
+		Scope:        "read_write artist",
 		RefreshToken: refreshToken.Token,
 	}
 	testutil.TestResponseObject(suite.T(), w, expected, 200)
@@ -74,7 +74,7 @@ func (suite *OauthTestSuite) TestPasswordGrantWithRoleRestriction() {
 		"grant_type": {"password"},
 		"username":   {"test@user.com"},
 		"password":   {"test_password"},
-		"scope":      {"read_write"},
+		"scope":      {"read_write artist"},
 	}
 
 	// Serve the request
@@ -89,5 +89,5 @@ func (suite *OauthTestSuite) TestPasswordGrantWithRoleRestriction() {
 		401,
 	)
 
-	suite.service.RestrictToRoles(int32(model.SuperAdminRole), int32(model.UserRole))
+	suite.service.RestrictToRoles(int32(model.SuperAdminRole), int32(model.AdminRole), int32(model.TenantAdminRole), int32(model.LabelRole), int32(model.ArtistRole), int32(model.UserRole))
 }

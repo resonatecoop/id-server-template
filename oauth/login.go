@@ -10,8 +10,13 @@ import (
 
 // Login creates an access token and refresh token for a user (logs him/her in)
 func (s *Service) Login(client *model.Client, user *model.User, scope string) (*model.AccessToken, *model.RefreshToken, error) {
+
+	if user == nil {
+		return nil, nil, errors.New("valid user must be supplied")
+	}
+
 	// Return error if user's role is not allowed to use this service
-	if user != nil && !s.IsRoleAllowed(user.RoleID) {
+	if !s.IsRoleAllowed(user.RoleID) {
 		// For security reasons, return a general error message
 		return nil, nil, ErrInvalidUsernameOrPassword
 	}
