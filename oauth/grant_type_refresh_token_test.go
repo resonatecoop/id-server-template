@@ -154,7 +154,7 @@ func (suite *OauthTestSuite) TestRefreshTokenGrantDefaultsToOriginalScope() {
 		ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
 		ClientID:  suite.clients[0].ID,
 		UserID:    suite.users[0].ID,
-		Scope:     "read_write",
+		Scope:     "read_write tenantadmin",
 	}
 
 	ctx := context.Background()
@@ -204,11 +204,11 @@ func (suite *OauthTestSuite) TestRefreshTokenGrantDefaultsToOriginalScope() {
 
 	// Check the response body
 	expected := &oauth.AccessTokenResponse{
-		//	UserID:       accessToken.UserID.String(),
+		UserID:       accessToken.UserID.String(),
 		AccessToken:  accessToken.Token,
 		ExpiresIn:    3600,
 		TokenType:    tokentypes.Bearer,
-		Scope:        "read_write",
+		Scope:        "read_write tenantadmin",
 		RefreshToken: refreshToken.Token,
 	}
 	testutil.TestResponseObject(suite.T(), w, expected, 200)
@@ -222,7 +222,7 @@ func (suite *OauthTestSuite) TestRefreshTokenGrant() {
 		ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
 		ClientID:  suite.clients[0].ID,
 		UserID:    suite.users[0].ID,
-		Scope:     "read_write",
+		Scope:     "read_write tenantadmin",
 	}
 
 	ctx := context.Background()
@@ -240,7 +240,7 @@ func (suite *OauthTestSuite) TestRefreshTokenGrant() {
 	r.PostForm = url.Values{
 		"grant_type":    {"refresh_token"},
 		"refresh_token": {"test_token"},
-		"scope":         {"read_write"},
+		"scope":         {"read_write tenantadmin"},
 	}
 
 	// Serve the request
@@ -272,11 +272,11 @@ func (suite *OauthTestSuite) TestRefreshTokenGrant() {
 
 	// Check the response
 	expected := &oauth.AccessTokenResponse{
-		//		UserID:       accessToken.UserID.String(),
+		UserID:       accessToken.UserID.String(),
 		AccessToken:  accessToken.Token,
 		ExpiresIn:    3600,
 		TokenType:    tokentypes.Bearer,
-		Scope:        "read_write",
+		Scope:        "read_write tenantadmin",
 		RefreshToken: refreshToken.Token,
 	}
 	testutil.TestResponseObject(suite.T(), w, expected, 200)
