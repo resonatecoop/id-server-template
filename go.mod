@@ -30,7 +30,7 @@ require (
 	github.com/thanhpk/randstr v1.0.4
 	github.com/trustelem/zxcvbn v1.0.1
 	github.com/unrolled/secure v1.0.9
-	github.com/uptrace/bun v0.1.17
+	github.com/uptrace/bun v0.2.4
 	github.com/uptrace/bun/dialect/pgdialect v0.1.17
 	github.com/uptrace/bun/extra/bundebug v0.1.17
 	github.com/urfave/cli v1.22.5
