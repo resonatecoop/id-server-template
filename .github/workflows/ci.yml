@@ -29,4 +29,4 @@ jobs:
       run: echo "this should pass when running go test -v ./..."
 
     - name: Run tests w.o. failing server build
-      run: go test -v $(go list ./... | grep -v github.com/RichardKnop/go-oauth2-server/oauth)
+      run: go test -v $(go list ./... | grep -v github.com/resonatecoop/id/oauth)
