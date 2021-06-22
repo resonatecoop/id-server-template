@@ -40,8 +40,6 @@ func (s *Service) getValidAuthorizationCode(code, redirectURI string, client *mo
 
 	err := s.db.NewSelect().
 		Model(authorizationCode).
-		Relation("Client").
-		Relation("User").
 		Where("client_id = ?", client.ID).
 		Where("code = ?", code).
 		Limit(1).
@@ -51,6 +49,23 @@ func (s *Service) getValidAuthorizationCode(code, redirectURI string, client *mo
 	if err != nil {
 		return nil, ErrAuthorizationCodeNotFound
 	}
+
+	authorizationCode.Client = client
+
+	user := new(model.User)
+
+	err = s.db.NewSelect().
+		Model(user).
+		Where("id = ?", authorizationCode.UserID).
+		Limit(1).
+		Scan(ctx)
+
+	// Not Found!
+	if err != nil {
+		return nil, errors.New("corresponding user for authorization code not found")
+	}
+
+	authorizationCode.User = user
 
 	// Redirect URI must match if it was used to obtain the authorization code
 	if redirectURI != authorizationCode.RedirectURI.String {
