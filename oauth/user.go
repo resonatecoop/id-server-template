@@ -286,10 +286,9 @@ func (s *Service) deleteUserCommon(db *bun.DB, user *model.User, password string
 		}
 	*/
 
-	// will set deleted_at to current time
-	_, err := db.NewUpdate().
+	// will set deleted_at to current time using soft delete
+	_, err := db.NewDelete().
 		Model(&user).
-		Set("DeletedAt", time.Now().UTC()).
 		WherePK().
 		Exec(ctx)
 
