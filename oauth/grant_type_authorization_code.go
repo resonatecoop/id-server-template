@@ -37,11 +37,11 @@ func (s *Service) authorizationCodeGrant(r *http.Request, client *model.Client) 
 	}
 
 	// Delete the authorization code
-	//s.db.Unscoped().Delete(&authorizationCode)
 
 	_, err = s.db.NewDelete().
 		Model(authorizationCode).
 		WherePK().
+		ForceDelete().
 		Exec(ctx)
 
 	if err != nil {

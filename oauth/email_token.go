@@ -223,6 +223,7 @@ func (s *Service) ClearExpiredEmailTokens() error {
 			"expires_at < ?",
 			now.AddDate(0, -30, 0), // 30 days ago
 		).
+		ForceDelete().
 		Exec(ctx)
 
 	return err
