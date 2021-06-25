@@ -82,15 +82,15 @@ func (s *Service) join(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// if r.Form.Get("country") != "" {
-	// 	// set user country but do not throw
-	// 	if s.oauthService.UpdateUserCountry(
-	// 		user,
-	// 		r.Form.Get("country"),
-	// 	); err != nil {
-	// 		log.ERROR.Print(err)
-	// 	}
-	// }
+	if r.Form.Get("country") != "" {
+		// set user country but do not throw
+		if err = s.oauthService.SetUserCountry(
+			user,
+			r.Form.Get("country"),
+		); err != nil {
+			log.ERROR.Print(err)
+		}
+	}
 
 	message := fmt.Sprintf(
 		"A confirmation email will be sent to %s", user.Username,

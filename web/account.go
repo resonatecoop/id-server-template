@@ -7,14 +7,14 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/RichardKnop/go-oauth2-server/session"
-	"github.com/RichardKnop/go-oauth2-server/util/response"
 	"github.com/gorilla/csrf"
 	"github.com/pariz/gountries"
+	"github.com/resonatecoop/id/session"
+	"github.com/resonatecoop/id/util/response"
 )
 
 func (s *Service) accountForm(w http.ResponseWriter, r *http.Request) {
-	sessionService, client, user, wpuser, nickname, country, role, err := s.profileCommon(r)
+	sessionService, client, user, userSession, err := s.profileCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -30,21 +30,12 @@ func (s *Service) accountForm(w http.ResponseWriter, r *http.Request) {
 	q := gountries.New()
 	countries := q.FindAllCountries()
 
-	gountry, _ := q.FindCountryByName(strings.ToLower(country))
-
-	profile := &Profile{
-		ID:             wpuser.ID,
-		Email:          wpuser.Email,
-		DisplayName:    nickname,
-		Country:        gountry.Codes.Alpha2,
-		Role:           role,
-		EmailConfirmed: user.EmailConfirmed,
-	}
-
 	initialState, err := json.Marshal(NewInitialState(
 		s.cnf,
 		client,
-		profile,
+		user,
+		userSession,
+		"",
 	))
 
 	if err != nil {
@@ -57,6 +48,15 @@ func (s *Service) accountForm(w http.ResponseWriter, r *http.Request) {
 		`<script>window.initialState=JSON.parse('%s')</script>`,
 		string(initialState),
 	)
+
+	profile := &Profile{
+		Email:          user.Username,
+		FullName:       user.FullName,
+		FirstName:      user.FirstName,
+		LastName:       user.LastName,
+		Country:        user.Country,
+		EmailConfirmed: user.EmailConfirmed,
+	}
 
 	err = renderTemplate(w, "account_settings.html", map[string]interface{}{
 		"flash":           flash,
@@ -75,7 +75,7 @@ func (s *Service) accountForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) account(w http.ResponseWriter, r *http.Request) {
-	sessionService, _, user, wpuser, _, _, _, err := s.profileCommon(r)
+	sessionService, _, user, userSession, err := s.profileCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -109,13 +109,23 @@ func (s *Service) account(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// Delete the access and refresh tokens
+		s.oauthService.ClearUserTokens(userSession)
+
+		// Delete the user session
+		err = sessionService.ClearUserSession()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		message = "Account is now scheduled for deletion"
 	}
 
 	if method == "put" || r.Method == http.MethodPut {
 		// username is always email
-		if r.Form.Get("email") != "" {
-			if s.oauthService.UpdateUsername(
+		if r.Form.Get("email") != "" && r.Form.Get("email") != user.Username {
+			if err = s.oauthService.UpdateUsername(
 				user,
 				r.Form.Get("email"),
 			); err != nil {
@@ -137,53 +147,29 @@ func (s *Service) account(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		if r.Form.Get("nickname") != "" {
-			// update wpuser nickname
-			if s.oauthService.UpdateWpUserMetaValue(
-				wpuser.ID,
-				"nickname",
-				r.Form.Get("nickname"),
-			); err != nil {
-				switch r.Header.Get("Accept") {
-				case "application/json":
-					response.Error(w, err.Error(), http.StatusBadRequest)
-				default:
-					err = sessionService.SetFlashMessage(&session.Flash{
-						Type:    "Error",
-						Message: err.Error(),
-					})
-					if err != nil {
-						http.Error(w, err.Error(), http.StatusInternalServerError)
-						return
-					}
-					http.Redirect(w, r, r.RequestURI, http.StatusFound)
+		// update user (all optional)
+		if err = s.oauthService.UpdateUser(
+			user,
+			r.Form.Get("full_name"),
+			r.Form.Get("first_name"),
+			r.Form.Get("last_name"),
+			r.Form.Get("country"),
+		); err != nil {
+			switch r.Header.Get("Accept") {
+			case "application/json":
+				response.Error(w, err.Error(), http.StatusBadRequest)
+			default:
+				err = sessionService.SetFlashMessage(&session.Flash{
+					Type:    "Error",
+					Message: err.Error(),
+				})
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
 				}
-				return
+				http.Redirect(w, r, r.RequestURI, http.StatusFound)
 			}
-		}
-
-		if r.Form.Get("country") != "" {
-			// update wpuser country
-			if s.oauthService.UpdateWpUserCountry(
-				wpuser,
-				r.Form.Get("country"),
-			); err != nil {
-				switch r.Header.Get("Accept") {
-				case "application/json":
-					response.Error(w, err.Error(), http.StatusBadRequest)
-				default:
-					err = sessionService.SetFlashMessage(&session.Flash{
-						Type:    "Error",
-						Message: err.Error(),
-					})
-					if err != nil {
-						http.Error(w, err.Error(), http.StatusInternalServerError)
-						return
-					}
-					http.Redirect(w, r, r.RequestURI, http.StatusFound)
-				}
-				return
-			}
+			return
 		}
 
 		message = "Profile updated"

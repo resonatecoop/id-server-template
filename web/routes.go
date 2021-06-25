@@ -252,48 +252,6 @@ func (s *Service) GetRoutes() []routes.Route {
 			},
 		},
 		{
-			Name:        "profile",
-			Method:      "POST",
-			Pattern:     "/profile",
-			HandlerFunc: s.profile,
-			Middlewares: []negroni.Handler{
-				tollbooth_negroni.LimitHandler(
-					tollbooth.NewLimiter(1, nil),
-				),
-				new(parseFormMiddleware),
-				newLoggedInMiddleware(s),
-				newClientMiddleware(s),
-			},
-		},
-		{
-			Name:        "profile_update",
-			Method:      "PUT",
-			Pattern:     "/profile",
-			HandlerFunc: s.profile,
-			Middlewares: []negroni.Handler{
-				tollbooth_negroni.LimitHandler(
-					tollbooth.NewLimiter(1, nil),
-				),
-				new(parseFormMiddleware),
-				newLoggedInMiddleware(s),
-				newClientMiddleware(s),
-			},
-		},
-		{
-			Name:        "profile_delete",
-			Method:      "POST",
-			Pattern:     "/profile/delete",
-			HandlerFunc: s.profile,
-			Middlewares: []negroni.Handler{
-				tollbooth_negroni.LimitHandler(
-					tollbooth.NewLimiter(1, nil),
-				),
-				new(parseFormMiddleware),
-				newLoggedInMiddleware(s),
-				newClientMiddleware(s),
-			},
-		},
-		{
 			Name:        "client_form",
 			Method:      "GET",
 			Pattern:     "/apps",
@@ -342,7 +300,8 @@ func (s *Service) GetRoutes() []routes.Route {
 					tollbooth.NewLimiter(1, nil),
 				),
 				new(parseFormMiddleware),
-				newGuestMiddleware(s),
+				newLoggedInMiddleware(s),
+				newClientMiddleware(s),
 			},
 		},
 		{

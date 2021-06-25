@@ -30,7 +30,6 @@ type ServiceInterface interface {
 	getEmailConfirmationToken(w http.ResponseWriter, r *http.Request)
 	resendEmailConfirmationToken(w http.ResponseWriter, r *http.Request)
 	profileForm(w http.ResponseWriter, r *http.Request)
-	profile(w http.ResponseWriter, r *http.Request)
 	accountForm(w http.ResponseWriter, r *http.Request)
 	account(w http.ResponseWriter, r *http.Request)
 	clientForm(w http.ResponseWriter, r *http.Request)

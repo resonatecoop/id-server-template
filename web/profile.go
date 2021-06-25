@@ -5,17 +5,15 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
-	"strings"
 
 	"github.com/gorilla/csrf"
 	"github.com/pariz/gountries"
 	"github.com/resonatecoop/id/session"
-	"github.com/resonatecoop/id/util/response"
 	"github.com/resonatecoop/user-api/model"
 )
 
 func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
-	sessionService, client, user, err := s.profileCommon(r)
+	sessionService, client, user, userSession, err := s.profileCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -31,20 +29,18 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 	q := gountries.New()
 	countries := q.FindAllCountries()
 
-	// gountry, _ := q.FindCountryByName(strings.ToLower(country))
+	usergroup := r.URL.Query().Get("usergroup")
 
-	profile := &Profile{
-		ID:             user.ID.String(),
-		Email:          user.Username,
-		DisplayName:    user.FullName,
-		Country:        user.Country,
-		EmailConfirmed: user.EmailConfirmed,
+	if usergroup == "" {
+		usergroup = s.getDefaultUserGroupType(user) // artist, label or user
 	}
 
 	initialState, err := json.Marshal(NewInitialState(
 		s.cnf,
 		client,
-		profile,
+		user,
+		userSession,
+		usergroup,
 	))
 
 	if err != nil {
@@ -58,7 +54,26 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 		string(initialState),
 	)
 
-	err = renderTemplate(w, "profile.html", map[string]interface{}{
+	// default template
+	templateName := "profile.html"
+
+	switch usergroup {
+	case "artist":
+		templateName = "profile_artist.html"
+	case "label":
+		templateName = "profile_label.html"
+	}
+
+	profile := &Profile{
+		Email:          user.Username,
+		FullName:       user.FullName,
+		FirstName:      user.FirstName,
+		LastName:       user.LastName,
+		Country:        user.Country,
+		EmailConfirmed: user.EmailConfirmed,
+	}
+
+	err = renderTemplate(w, templateName, map[string]interface{}{
 		"flash":           flash,
 		"clientID":        client.Key,
 		"countries":       countries,
@@ -74,162 +89,42 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Service) profile(w http.ResponseWriter, r *http.Request) {
-	sessionService, _, user, err := s.profileCommon(r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+func (s *Service) getDefaultUserGroupType(user *model.User) string {
+	var usergroup = "user"
+
+	switch (model.AccessRole)(user.RoleID) {
+	case model.ArtistRole:
+		usergroup = "artist"
+	case model.LabelRole:
+		usergroup = "label"
 	}
 
-	w.Header().Set("X-CSRF-Token", csrf.Token(r))
-
-	method := strings.ToLower(r.Form.Get("_method"))
-
-	message := "Profile not updated"
-
-	if method == "delete" || r.Method == http.MethodDelete {
-		if s.oauthService.DeleteUser(
-			user,
-			r.Form.Get("password"),
-		); err != nil {
-			switch r.Header.Get("Accept") {
-			case "application/json":
-				response.Error(w, err.Error(), http.StatusBadRequest)
-			default:
-				err = sessionService.SetFlashMessage(&session.Flash{
-					Type:    "Error",
-					Message: err.Error(),
-				})
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-				http.Redirect(w, r, r.RequestURI, http.StatusFound)
-			}
-			return
-		}
-
-		message = "Account is now scheduled for deletion"
-	}
-
-	if method == "put" || r.Method == http.MethodPut {
-		// username is always email
-		if r.Form.Get("email") != "" {
-			if s.oauthService.UpdateUsername(
-				user,
-				r.Form.Get("email"),
-			); err != nil {
-				switch r.Header.Get("Accept") {
-				case "application/json":
-					response.Error(w, err.Error(), http.StatusBadRequest)
-				default:
-					err = sessionService.SetFlashMessage(&session.Flash{
-						Type:    "Error",
-						Message: err.Error(),
-					})
-					if err != nil {
-						http.Error(w, err.Error(), http.StatusInternalServerError)
-						return
-					}
-					http.Redirect(w, r, r.RequestURI, http.StatusFound)
-				}
-				return
-			}
-		}
-
-		// if r.Form.Get("nickname") != "" {
-		// 	// update wpuser nickname
-		// 	if s.oauthService.UpdateWpUserMetaValue(
-		// 		wpuser.ID,
-		// 		"nickname",
-		// 		r.Form.Get("nickname"),
-		// 	); err != nil {
-		// 		switch r.Header.Get("Accept") {
-		// 		case "application/json":
-		// 			response.Error(w, err.Error(), http.StatusBadRequest)
-		// 		default:
-		// 			err = sessionService.SetFlashMessage(&session.Flash{
-		// 				Type:    "Error",
-		// 				Message: err.Error(),
-		// 			})
-		// 			if err != nil {
-		// 				http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 				return
-		// 			}
-		// 			http.Redirect(w, r, r.RequestURI, http.StatusFound)
-		// 		}
-		// 		return
-		// 	}
-		// }
-
-		// if r.Form.Get("country") != "" {
-		// 	// update wpuser country
-		// 	if s.oauthService.UpdateWpUserCountry(
-		// 		wpuser,
-		// 		r.Form.Get("country"),
-		// 	); err != nil {
-		// 		switch r.Header.Get("Accept") {
-		// 		case "application/json":
-		// 			response.Error(w, err.Error(), http.StatusBadRequest)
-		// 		default:
-		// 			err = sessionService.SetFlashMessage(&session.Flash{
-		// 				Type:    "Error",
-		// 				Message: err.Error(),
-		// 			})
-		// 			if err != nil {
-		// 				http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 				return
-		// 			}
-		// 			http.Redirect(w, r, r.RequestURI, http.StatusFound)
-		// 		}
-		// 		return
-		// 	}
-		// }
-
-		message = "Profile updated"
-	}
-
-	if r.Header.Get("Accept") == "application/json" {
-		response.WriteJSON(w, map[string]interface{}{
-			"message": message,
-			"status":  http.StatusOK,
-		}, http.StatusOK)
-		return
-	}
-
-	err = sessionService.SetFlashMessage(&session.Flash{
-		Type:    "Info",
-		Message: message,
-	})
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	http.Redirect(w, r, r.RequestURI, http.StatusFound)
+	return usergroup
 }
 
 func (s *Service) profileCommon(r *http.Request) (
 	session.ServiceInterface,
 	*model.Client,
 	*model.User,
+	*session.UserSession,
 	error,
 ) {
 	// Get the session service from the request context
 	sessionService, err := getSessionService(r)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
 	// Get the client from the request context
 	client, err := getClient(r)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
 	// Get the user session
 	userSession, err := sessionService.GetUserSession()
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
 	// Fetch the user
@@ -237,26 +132,8 @@ func (s *Service) profileCommon(r *http.Request) (
 		userSession.Username,
 	)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
-	// Fetch the wp user
-	// wpuser, err := s.oauthService.FindWpUserByEmail(
-	// 	userSession.Username,
-	// )
-	// if err != nil {
-	// 	return nil, nil, nil, "", "", err
-	// }
-
-	// nickname, err := s.oauthService.FindWpUserMetaValue(wpuser.ID, "nickname")
-	// if err != nil {
-	// 	return nil, nil, nil, "", "", err
-	// }
-
-	// country, err := s.oauthService.FindWpUserMetaValue(wpuser.ID, "country")
-	// if err != nil {
-	// 	return nil, nil, nil, "", "", err
-	// }
-
-	return sessionService, client, user, nil
+	return sessionService, client, user, userSession, nil
 }
