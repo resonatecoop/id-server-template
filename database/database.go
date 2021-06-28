@@ -1,8 +1,6 @@
 package database
 
 import (
-	"database/sql"
-
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/resonatecoop/id/config"
 	bun "github.com/uptrace/bun"
@@ -23,30 +21,31 @@ func init() {
 // NewDatabase returns a bun.DB struct
 func NewDatabase(cnf *config.Config) (*bun.DB, error) {
 	// Postgres
-	sqldb, err := sql.Open("pgx", cnf.Database.PSN)
+	dbconfig, err := pgx.ParseConfig(cnf.Database.PSN)
 
 	if err != nil {
 		panic(err)
 	}
 
+	dbconfig.PreferSimpleProtocol = true
+
+	sqldb := stdlib.OpenDB(*dbconfig)
+
 	db := bun.NewDB(sqldb, pgdialect.New())
 
-	db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose()))
+	if cnf.IsDevelopment {
+		db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose()))
+	}
+
+	if err != nil {
+		panic(err)
+	}
 
 	_, err = db.Exec("SELECT 1=1")
 
 	if err != nil {
 		return db, err
 	}
-
-	// Max idle connections
-	// db.DB().SetMaxIdleConns(cnf.Database.MaxIdleConns)
-
-	// // Max open connections
-	// db.DB().SetMaxOpenConns(cnf.Database.MaxOpenConns)
-
-	// // Database logging
-	// db.LogMode(cnf.IsDevelopment)
 
 	return db, err
 }
