@@ -67,7 +67,8 @@
                         </div>
                         <p class="ma0 mt1 lh-copy f7">Can be used to login to your profile</p>
                       </div>
-                      !-->
+                      -->
+                      <!--
                       <div class="flex flex-column mb3">
                         <div class="relative">
                           <input
@@ -83,12 +84,13 @@
                         </div>
                         <p class="ma0 mt1 lh-copy f7">Your artist name, nickname or label name</p>
                       </div>
+                      -->
                       <div class="flex flex-column mb3">
                         <label for="country" class="f6 b db mr2">Select a country</label>
                         <select id="country" name="country" class="bn bg-black white bg-white--dark black--dark bg-black--light white--light pa3">
                           <option value="" selected="selected" disabled="disabled">…</option>
                           {{ range .countries }}
-                          <option value="{{.Codes.Alpha3}}">{{.Name.Common}}</option>
+                          <option value="{{.Codes.Alpha2}}">{{.Name.Common}}</option>
                           {{end}}
                         </select>
                       </div>

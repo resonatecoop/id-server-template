@@ -30,7 +30,8 @@ type ServiceInterface interface {
 	getEmailConfirmationToken(w http.ResponseWriter, r *http.Request)
 	resendEmailConfirmationToken(w http.ResponseWriter, r *http.Request)
 	profileForm(w http.ResponseWriter, r *http.Request)
-	profile(w http.ResponseWriter, r *http.Request)
+	accountForm(w http.ResponseWriter, r *http.Request)
+	account(w http.ResponseWriter, r *http.Request)
 	clientForm(w http.ResponseWriter, r *http.Request)
 	client(w http.ResponseWriter, r *http.Request)
 	clientDelete(w http.ResponseWriter, r *http.Request)
@@ -39,4 +40,5 @@ type ServiceInterface interface {
 	logout(w http.ResponseWriter, r *http.Request)
 	joinForm(w http.ResponseWriter, r *http.Request)
 	join(w http.ResponseWriter, r *http.Request)
+	welcomeForm(w http.ResponseWriter, r *http.Request)
 }

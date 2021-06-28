@@ -36,13 +36,14 @@ type ServiceInterface interface {
 	CreateUserTx(tx *bun.DB, roleID int32, username, password string) (*model.User, error)
 	DeleteUser(user *model.User, password string) error
 	DeleteUserTx(tx *bun.DB, user *model.User, password string) error
-	//FindNicknameByWpUserID(id uint64) (string, error)
 	ConfirmUserEmail(email string) error
 	SetPassword(user *model.User, password string) error
 	SetPasswordTx(tx *bun.DB, user *model.User, password string) error
 	UpdateUsername(user *model.User, username string) error
 	UpdateUsernameTx(db *bun.DB, user *model.User, username string) error
-	// UpdateUserCountry(user *model.User, country string) error
+	UpdateUser(user *model.User, fullName, firstName, lastName, country string) error
+	SetUserCountry(user *model.User, country string) error
+	SetUserCountryTx(db *bun.DB, user *model.User, country string) error
 	AuthUser(username, thePassword string) (*model.User, error)
 	GetScope(requestedScope string) (string, error)
 	GetDefaultScope() string

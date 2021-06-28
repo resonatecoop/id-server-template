@@ -82,15 +82,15 @@ func (s *Service) join(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// if r.Form.Get("country") != "" {
-	// 	// set user country but do not throw
-	// 	if s.oauthService.UpdateUserCountry(
-	// 		user,
-	// 		r.Form.Get("country"),
-	// 	); err != nil {
-	// 		log.ERROR.Print(err)
-	// 	}
-	// }
+	if r.Form.Get("country") != "" {
+		// set user country but do not throw
+		if err = s.oauthService.SetUserCountry(
+			user,
+			r.Form.Get("country"),
+		); err != nil {
+			log.ERROR.Print(err)
+		}
+	}
 
 	message := fmt.Sprintf(
 		"A confirmation email will be sent to %s", user.Username,
@@ -103,15 +103,9 @@ func (s *Service) join(w http.ResponseWriter, r *http.Request) {
 		}
 		response.WriteJSON(w, obj, http.StatusCreated)
 	} else {
-		err = sessionService.SetFlashMessage(&session.Flash{
-			Type:    "Error",
-			Message: err.Error(),
-		})
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		redirectWithQueryString("/web/login", r.URL.Query(), w, r)
+		query := r.URL.Query()
+		query.Set("login_redirect_uri", "/web/welcome")
+		redirectWithQueryString("/web/login", query, w, r)
 	}
 
 	_, err = s.oauthService.SendEmailToken(
