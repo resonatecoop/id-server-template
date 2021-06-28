@@ -155,6 +155,7 @@ func (suite *OauthTestSuite) TearDownTest() {
 	suite.db.NewDelete().
 		Model(new(model.User)).
 		Where("id NOT IN (?)", bun.In(ids)).
+		ForceDelete().
 		Exec(ctx)
 
 	ids = []string{"3392e754-ba3e-424f-a687-add9a8ab39c9", "295be195-898c-4f0c-b6a0-8c62105f42de"}
@@ -162,6 +163,7 @@ func (suite *OauthTestSuite) TearDownTest() {
 	suite.db.NewDelete().
 		Model(new(model.Client)).
 		Where("id NOT IN (?)", bun.In(ids)).
+		ForceDelete().
 		Exec(ctx)
 }
 

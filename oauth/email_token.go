@@ -8,6 +8,7 @@ import (
 	"time"
 
 	jwt "github.com/form3tech-oss/jwt-go"
+	uuid "github.com/google/uuid"
 	"github.com/mailgun/mailgun-go/v4"
 	"github.com/resonatecoop/id/util"
 	"github.com/resonatecoop/user-api/model"
@@ -95,6 +96,20 @@ func (s *Service) CreateEmailToken(email string) (*model.EmailToken, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	reference := uuid.New()
+
+	_, err = s.db.NewUpdate().
+		Model(emailToken).
+		Set("reference = ?", reference).
+		WherePK().
+		Exec(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	emailToken.Reference = reference
 
 	return emailToken, nil
 }
@@ -208,6 +223,7 @@ func (s *Service) ClearExpiredEmailTokens() error {
 			"expires_at < ?",
 			now.AddDate(0, -30, 0), // 30 days ago
 		).
+		ForceDelete().
 		Exec(ctx)
 
 	return err

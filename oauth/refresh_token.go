@@ -57,6 +57,7 @@ func (s *Service) GetOrCreateRefreshToken(client *model.Client, user *model.User
 		_, dberr = s.db.NewDelete().
 			Model(refreshToken).
 			WherePK().
+			ForceDelete().
 			Exec(ctx)
 		//		s.db.Unscoped().Delete(refreshToken)
 	}
