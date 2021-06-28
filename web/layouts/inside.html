@@ -16,9 +16,9 @@
 
   <title>{{ template "title" . }} • Resonate ID</title>
 
-  <link href="/css/index-0fe947b7.css" rel="stylesheet">
+  <link href="/css/{{ .stylesheet }}" rel="stylesheet">
   
-  <script type="text/javascript" defer src="/js/main-20a31f92.js"></script>
+  <script type="text/javascript" defer src="/js/{{ .javascript }}"></script>
 </head>
 <body class="ff-no-fouc color-scheme--light">
   <header role="banner" style="height:3rem" class="sticky left-0 top-0 right-0 w-100 z-9999 flex items-center">
@@ -33,6 +33,12 @@
               </span>
             </button>
             <ul style="left:auto;width:100vw;max-width:16rem;top:100%;" class="bg-black white bg-white--dark black--dark bg-black--light white--light list ma0 pa2 absolute right-0 dropdown z-max">
+              <li>
+                <a href="../web/profile{{ .queryString }}" class="link db dim pa2 w-100">Profile</a>
+              </li>
+              <li>
+                <a href="../web/account-settings{{ .queryString }}" class="link db dim pa2 w-100">Account Settings</a>
+              </li>
               <li>
                 <a href="../web/logout{{ .queryString }}" class="link db dim pa2 w-100">Log Out</a>
               </li>

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/mailgun/mailgun-go/v4"
+	"github.com/pariz/gountries"
 	"github.com/resonatecoop/id/log"
 	"github.com/resonatecoop/id/util"
 	pass "github.com/resonatecoop/id/util/password"
@@ -163,17 +164,6 @@ func (s *Service) AuthUser(username, password string) (*model.User, error) {
 
 // UpdateUsername ...
 func (s *Service) UpdateUsername(user *model.User, username string) error {
-	if username == "" {
-		return ErrCannotSetEmptyUsername
-	}
-	if user.Username == username {
-		return ErrUsernameTaken
-	}
-	// Check the email/username is available
-	if s.UserExists(username) {
-		return ErrUsernameTaken
-	}
-
 	return s.updateUsernameCommon(s.db, user, username)
 }
 
@@ -197,6 +187,21 @@ func (s *Service) ConfirmUserEmail(email string) error {
 		Exec(ctx)
 
 	return err
+}
+
+// UpdateUser ...
+func (s *Service) UpdateUser(user *model.User, fullName, firstName, lastName, country string) error {
+	return s.updateUserCommon(s.db, user, fullName, firstName, lastName, country)
+}
+
+// SetUserCountry ...
+func (s *Service) SetUserCountry(user *model.User, country string) error {
+	return s.setUserCountryCommon(s.db, user, country)
+}
+
+// SetUserCountryTx
+func (s *Service) SetUserCountryTx(tx *bun.DB, user *model.User, country string) error {
+	return s.setUserCountryCommon(tx, user, country)
 }
 
 func (s *Service) createUserCommon(db *bun.DB, roleID int32, username, password string) (*model.User, error) {
@@ -286,10 +291,9 @@ func (s *Service) deleteUserCommon(db *bun.DB, user *model.User, password string
 		}
 	*/
 
-	// will set deleted_at to current time
-	_, err := db.NewUpdate().
-		Model(&user).
-		Set("DeletedAt", time.Now().UTC()).
+	// will set deleted_at to current time using soft delete
+	_, err := db.NewDelete().
+		Model(user).
 		WherePK().
 		Exec(ctx)
 
@@ -405,23 +409,76 @@ func (s *Service) setPasswordCommon(db *bun.DB, user *model.User, password strin
 	return nil
 }
 
-// // Update wp user country (resolve from common name and official name, fallback to alpha code otherwise)
-// func (s *Service) UpdateUserCountry(user *model.User, country string) error {
-// 	// validate country name
-// 	query := gountries.New()
-// 	_, err := query.FindCountryByName(strings.ToLower(country))
+// updateUserCommon
+func (s *Service) updateUserCommon(db *bun.DB, user *model.User, fullName, firstName, lastName, country string) error {
+	ctx := context.Background()
 
-// 	if err != nil {
-// 		// fallback to code
-// 		result, err := query.FindCountryByAlpha(strings.ToLower(country))
-// 		if err != nil {
-// 			return ErrCountryNotFound
-// 		}
-// 		country = result.Name.Common
-// 	}
+	update := db.NewUpdate().Model(user)
 
-// 	return s.UpdateUserMetaValue(user.ID, "country", country)
-// }
+	if country != "" {
+		// validate country code
+		query := gountries.New()
+		_, err := query.FindCountryByAlpha(strings.ToLower(country))
+
+		if err != nil {
+			// fallback to name
+			result, err := query.FindCountryByName(strings.ToLower(country))
+			if err != nil {
+				return ErrCountryNotFound
+			}
+			country = result.Codes.Alpha2
+		}
+
+		if country != user.Country {
+			update.Set("country = ?", country)
+		}
+	}
+
+	if fullName != user.FullName {
+		update.Set("full_name = ?", fullName)
+	}
+
+	if firstName != user.FirstName {
+		update.Set("first_name = ?", firstName)
+	}
+
+	if lastName != user.LastName {
+		update.Set("last_name = ?", lastName)
+	}
+
+	_, err := update.Where("id = ?", user.ID).
+		Exec(ctx)
+
+	return err
+}
+
+// updateUserCountryCommon Update wp user country (resolve from alpha2 or alpha3 code, fallback to common name otherwise)
+func (s *Service) setUserCountryCommon(db *bun.DB, user *model.User, country string) error {
+	ctx := context.Background()
+
+	// validate country code
+
+	query := gountries.New()
+	gountry, err := query.FindCountryByAlpha(strings.ToLower(country))
+
+	if err != nil {
+		// fallback to name
+		gountry, err = query.FindCountryByName(strings.ToLower(country))
+		if err != nil {
+			return ErrCountryNotFound
+		}
+	}
+
+	countryCode := gountry.Codes.Alpha2
+
+	_, err = db.NewUpdate().
+		Model(user).
+		Set("country = ?", countryCode).
+		Where("id = ?", user.ID).
+		Exec(ctx)
+
+	return err
+}
 
 func (s *Service) updateUsernameCommon(db *bun.DB, user *model.User, username string) error {
 	ctx := context.Background()

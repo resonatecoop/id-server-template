@@ -37,7 +37,7 @@ func (s *Service) getEmailConfirmationToken(w http.ResponseWriter, r *http.Reque
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		redirectWithQueryString("/web/profile", query, w, r)
+		redirectWithQueryString("/web/account-settings", query, w, r)
 		return
 	}
 
@@ -50,15 +50,15 @@ func (s *Service) getEmailConfirmationToken(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	redirectWithQueryString("/web/profile", query, w, r)
+	redirectWithQueryString("/web/account-settings", query, w, r)
 }
 
 func (s *Service) emailConfirm(r *http.Request) error {
-	if r.Form.Get("token") == "" {
+	token := r.URL.Query().Get("token")
+
+	if token == "" {
 		return ErrTokenMissing
 	}
-
-	token := r.Form.Get("token")
 
 	emailToken, email, err := s.oauthService.GetValidEmailToken(token)
 
@@ -154,7 +154,16 @@ func (s *Service) resendEmailConfirmationToken(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	redirectWithQueryString("/web/profile", r.URL.Query(), w, r)
+	err = sessionService.SetFlashMessage(&session.Flash{
+		Type:    "Info",
+		Message: "An email is on its way",
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	redirectWithQueryString("/web/account-settings", r.URL.Query(), w, r)
 }
 
 func (s *Service) emailConfirmationCommon(r *http.Request) (

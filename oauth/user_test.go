@@ -372,3 +372,37 @@ func (suite *OauthTestSuite) TestBlankPassword() {
 	// 	assert.Equal(suite.T(), oauth.ErrUserPasswordNotSet, err)
 	// }
 }
+
+func (suite *OauthTestSuite) TestDeleteUser() {
+	var (
+		user *model.User
+		err  error
+	)
+
+	// We try to insert a unique user
+	user, err = suite.service.CreateUser(
+		int32(model.UserRole),   // role ID
+		"temporary@newuser.com", // username
+		"C0mpl3xPa$$w0rdAr3U5",  // password
+	)
+
+	// Error should be nil
+	assert.Nil(suite.T(), err)
+
+	// Correct user object should be returned
+	if assert.NotNil(suite.T(), user) {
+		assert.Equal(suite.T(), "temporary@newuser.com", user.Username)
+	}
+
+	// Delete the user
+	err = suite.service.DeleteUser(user, "C0mpl3xPa$$w0rdAr3U5")
+
+	// Error should be nil
+	assert.Nil(suite.T(), err)
+
+	// Check it exists but has been soft deleted
+	exists := suite.service.UserExists("temporary@newuser.com")
+
+	// Error should be nil
+	assert.False(suite.T(), exists)
+}

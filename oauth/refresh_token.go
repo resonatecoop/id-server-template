@@ -57,6 +57,7 @@ func (s *Service) GetOrCreateRefreshToken(client *model.Client, user *model.User
 		_, dberr = s.db.NewDelete().
 			Model(refreshToken).
 			WherePK().
+			ForceDelete().
 			Exec(ctx)
 		//		s.db.Unscoped().Delete(refreshToken)
 	}
@@ -107,7 +108,21 @@ func (s *Service) GetValidRefreshToken(token string, client *model.Client) (*mod
 		return nil, ErrRefreshTokenExpired
 	}
 
+	user := new(model.User)
+
+	err = s.db.NewSelect().
+		Model(user).
+		Where("id = ?", refreshToken.UserID).
+		Limit(1).
+		Scan(ctx)
+
+	// Not found
+	if err != nil {
+		return nil, errors.New("refresh token does not have valid user")
+	}
+
 	refreshToken.Client = client
+	refreshToken.User = user
 
 	return refreshToken, nil
 }

@@ -33,17 +33,12 @@ func (s *Service) authorizeForm(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	query.Set("login_redirect_uri", r.URL.Path)
 
-	profile := &Profile{
-		ID:             user.ID.String(),
-		Email:          user.Username,
-		DisplayName:    user.FullName,
-		EmailConfirmed: user.EmailConfirmed,
-	}
-
 	initialState, err := json.Marshal(NewInitialState(
 		s.cnf,
 		client,
-		profile,
+		user,
+		nil,
+		"",
 	))
 
 	if err != nil {
@@ -56,6 +51,10 @@ func (s *Service) authorizeForm(w http.ResponseWriter, r *http.Request) {
 		`<script>window.initialState=JSON.parse('%s')</script>`,
 		string(initialState),
 	)
+
+	profile := &Profile{
+		EmailConfirmed: user.EmailConfirmed,
+	}
 
 	err = renderTemplate(w, "authorize.html", map[string]interface{}{
 		"flash":           flash,

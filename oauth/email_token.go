@@ -8,6 +8,7 @@ import (
 	"time"
 
 	jwt "github.com/form3tech-oss/jwt-go"
+	uuid "github.com/google/uuid"
 	"github.com/mailgun/mailgun-go/v4"
 	"github.com/resonatecoop/id/util"
 	"github.com/resonatecoop/user-api/model"
@@ -15,9 +16,9 @@ import (
 )
 
 var (
-	ErrEmailTokenNotFound    = errors.New("This token was not found")
-	ErrEmailTokenInvalid     = errors.New("This token is invalid or has expired")
-	ErrInvalidEmailTokenLink = errors.New("Email token link is invalid")
+	ErrEmailTokenNotFound    = errors.New("this token was not found")
+	ErrEmailTokenInvalid     = errors.New("this token is invalid or has expired")
+	ErrInvalidEmailTokenLink = errors.New("email token link is invalid")
 )
 
 // GetValidEmailToken ...
@@ -95,6 +96,20 @@ func (s *Service) CreateEmailToken(email string) (*model.EmailToken, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	reference := uuid.New()
+
+	_, err = s.db.NewUpdate().
+		Model(emailToken).
+		Set("reference = ?", reference).
+		WherePK().
+		Exec(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	emailToken.Reference = reference
 
 	return emailToken, nil
 }
@@ -180,31 +195,16 @@ func (s *Service) sendEmailTokenCommon(
 		return nil, err
 	}
 
-	now := time.Now().UTC()
-	// var res sql.Result
-
-	newEmailToken := &model.EmailToken{
-		EmailSent:   true,
-		EmailSentAt: &now,
-	}
-
 	_, err = s.db.NewUpdate().
-		Model(newEmailToken).
+		Model(emailToken).
+		Set("email_sent = ?", true).
+		Set("email_sent_at = ?", time.Now().UTC()).
 		WherePK().
 		Exec(ctx)
 
 	if err != nil {
 		return nil, err
 	}
-
-	// if err := db.Model(emailToken).Select("email_sent", "email_sent_at").UpdateColumns(
-	// 	model.EmailTokenModel{
-	// 		EmailSent:   true,
-	// 		EmailSentAt: &now,
-	// 	},
-	// ).Error; err != nil {
-	// 	return nil, err
-	// }
 
 	return emailToken, nil
 }
@@ -223,6 +223,7 @@ func (s *Service) ClearExpiredEmailTokens() error {
 			"expires_at < ?",
 			now.AddDate(0, -30, 0), // 30 days ago
 		).
+		ForceDelete().
 		Exec(ctx)
 
 	return err
@@ -232,12 +233,10 @@ func (s *Service) ClearExpiredEmailTokens() error {
 func (s *Service) DeleteEmailToken(emailToken *model.EmailToken, soft bool) error {
 	ctx := context.Background()
 
-	if soft == true {
-		now := time.Now().UTC()
+	if soft {
 
-		_, err := s.db.NewUpdate().
+		_, err := s.db.NewDelete().
 			Model(emailToken).
-			Set("deleted = ?", now).
 			WherePK().
 			Exec(ctx)
 
@@ -247,6 +246,7 @@ func (s *Service) DeleteEmailToken(emailToken *model.EmailToken, soft bool) erro
 	_, err := s.db.NewDelete().
 		Model(emailToken).
 		WherePK().
+		ForceDelete().
 		Exec(ctx)
 
 	return err

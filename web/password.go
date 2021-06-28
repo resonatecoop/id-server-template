@@ -39,10 +39,10 @@ func (s *Service) passwordUpdate(w http.ResponseWriter, r *http.Request) {
 			Message: "Invalid password",
 		})
 		if err != nil {
-			http.Error(w, ErrInvalidPassword.Error(), http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		redirectWithQueryString("/web/profile", r.URL.Query(), w, r)
+		redirectWithQueryString("/web/account-settings", r.URL.Query(), w, r)
 		return
 	}
 
@@ -60,7 +60,7 @@ func (s *Service) passwordUpdate(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		redirectWithQueryString("/web/profile", r.URL.Query(), w, r)
+		redirectWithQueryString("/web/account-settings", r.URL.Query(), w, r)
 		return
 	}
 
@@ -80,7 +80,7 @@ func (s *Service) passwordUpdate(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		redirectWithQueryString("/web/profile", r.URL.Query(), w, r)
+		redirectWithQueryString("/web/account-settings", r.URL.Query(), w, r)
 		return
 	}
 
@@ -103,7 +103,7 @@ func (s *Service) passwordUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	redirectWithQueryString("/web/profile", r.URL.Query(), w, r)
+	redirectWithQueryString("/web/account-settings", r.URL.Query(), w, r)
 }
 
 func (s *Service) passwordCommon(r *http.Request) (
@@ -137,13 +137,6 @@ func (s *Service) passwordCommon(r *http.Request) (
 	if err != nil {
 		return nil, nil, nil, err
 	}
-
-	// wpuser, err := s.oauthService.FindWpUserByEmail(
-	// 	userSession.Username,
-	// )
-	// if err != nil {
-	// 	return nil, nil, nil, err
-	// }
 
 	return sessionService, client, user, nil
 }

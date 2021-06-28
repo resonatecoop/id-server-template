@@ -159,7 +159,7 @@ func (suite *OauthTestSuite) TestAuthorizationCodeGrant() {
 		ClientID:    suite.clients[0].ID,
 		UserID:      suite.users[0].ID,
 		RedirectURI: util.StringOrNull("https://www.example.com"),
-		Scope:       "read_write",
+		Scope:       "read_write tenantadmin",
 	}
 
 	_, err := suite.db.NewInsert().
@@ -207,7 +207,7 @@ func (suite *OauthTestSuite) TestAuthorizationCodeGrant() {
 		AccessToken:  accessToken.Token,
 		ExpiresIn:    3600,
 		TokenType:    tokentypes.Bearer,
-		Scope:        "read_write",
+		Scope:        "read_write tenantadmin",
 		RefreshToken: refreshToken.Token,
 	}
 	testutil.TestResponseObject(suite.T(), w, expected, 200)
