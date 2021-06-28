@@ -1,11 +1,13 @@
 package database
 
 import (
-	_ "github.com/jackc/pgx/v4/stdlib"
+	"github.com/jackc/pgx/v4"
+	stdlib "github.com/jackc/pgx/v4/stdlib"
 	"github.com/resonatecoop/id/config"
 	bun "github.com/uptrace/bun"
+
 	"github.com/uptrace/bun/dialect/pgdialect"
-	bundebug "github.com/uptrace/bun/extra/bundebug"
+	"github.com/uptrace/bun/extra/bundebug"
 
 	// Drivers
 	_ "github.com/lib/pq"
