@@ -77,8 +77,10 @@ class ProfileForm extends Component {
             'X-CSRF-Token': csrfToken
           },
           body: new URLSearchParams({
-            email: this.local.data.email,
-            nickname: this.local.data.displayName
+            email: this.local.data.email || '',
+            fullName: this.local.data.fullName || '',
+            firstName: this.local.data.firstName || '',
+            lastName: this.local.data.lastName || ''
           })
         })
 
@@ -171,9 +173,21 @@ class ProfileForm extends Component {
             },
             {
               type: 'text',
-              name: 'displayName',
-              placeholder: 'Display name',
-              help: html`<p class="ma0 mt1 lh-copy f7">Your artist name, nickname or label name</p>`
+              name: 'fullName',
+              required: false,
+              placeholder: 'Full name'
+            },
+            {
+              type: 'text',
+              name: 'firstName',
+              required: false,
+              placeholder: 'First name'
+            },
+            {
+              type: 'text',
+              name: 'lastName',
+              required: false,
+              placeholder: 'Last name'
             }
           ]
         })}
@@ -186,8 +200,14 @@ class ProfileForm extends Component {
       if (isEmpty(data)) return new Error('Email is required')
       if (!isEmail(data)) return new Error('Email is invalid')
     })
-    this.validator.field('displayName', (data) => {
-      if (isEmpty(data)) return new Error('Display name is required')
+    this.validator.field('fullName', { required: false }, (data) => {
+      if (isEmpty(data)) return new Error('Full name is required')
+    })
+    this.validator.field('firstName', { required: false }, (data) => {
+      if (isEmpty(data)) return new Error('First name is required')
+    })
+    this.validator.field('lastName', { required: false }, (data) => {
+      if (isEmpty(data)) return new Error('Last name is required')
     })
   }
 
