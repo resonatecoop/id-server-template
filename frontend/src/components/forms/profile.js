@@ -149,7 +149,7 @@ class ProfileForm extends Component {
           id: 'profile-form',
           method: 'POST',
           action: '',
-          buttonText: 'Update my profile',
+          buttonText: 'Update',
           validate: (props) => {
             this.local.data[props.name] = props.value
             this.validator.validate(props.name, props.value)
