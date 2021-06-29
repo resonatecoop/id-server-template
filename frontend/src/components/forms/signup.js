@@ -109,20 +109,6 @@ class Signup extends Component {
                 })
               }
             },
-            /*
-            {
-              type: 'text',
-              name: 'login',
-              placeholder: 'Username',
-              help: html`<p class="ma0 mt1 lh-copy f7">Can be used to login to your profile</p>`
-            },
-            */
-            {
-              type: 'text',
-              name: 'display_name',
-              placeholder: 'Display name',
-              help: html`<p class="ma0 mt1 lh-copy f7">Your artist name, nickname or label name</p>`
-            },
             {
               component: this.state.cache(CountrySelect, 'join-country-select').render({
                 validator: this.validator,
@@ -167,8 +153,6 @@ class Signup extends Component {
                 body: new URLSearchParams({
                   email: data.email.value,
                   password: data.password.value,
-                  display_name: data.display_name.value,
-                  // login: data.login.value,
                   country: data.country.value
                 })
               })
@@ -244,27 +228,6 @@ class Signup extends Component {
         return new Error('Password length should not be more than 72 characters')
       }
     })
-    this.validator.field('display_name', (data) => {
-      if (isEmpty(data)) {
-        return new Error('What is your name?')
-      }
-      if (!isLength(data, { max: 50 })) {
-        return new Error('The name can\'t be longer than 50 characters')
-      }
-    })
-    /*
-    this.validator.field('login', (data) => {
-      if (isEmpty(data)) {
-        return new Error('An username is required')
-      }
-      if (!isLength(data, { max: 60 })) {
-        return new Error('Username name is too long')
-      }
-      if (isEmail(data)) {
-        return new Error('Username cannot be an email')
-      }
-    })
-    */
   }
 
   update () {
