@@ -35,10 +35,10 @@ ENV PATH /go/bin:$PATH
 RUN useradd --user-group --shell /bin/false app
 
 # Cd into the api code directory
-WORKDIR /go/src/github.com/RichardKnop/go-oauth2-server
+WORKDIR /go/src/github.com/resonatecoop/id
 
 # Copy the local package files to the container's workspace.
-ADD . /go/src/github.com/RichardKnop/go-oauth2-server
+ADD . /go/src/github.com/resonatecoop/id
 
 RUN mkdir -p /home/app/.cache/go-build
 
@@ -48,7 +48,7 @@ RUN chown -R app:app /home/app/.cache/go-build
 ENV GO111MODULE on
 
 # Chown the application directory to app user
-RUN chown -R app:app /go/src/github.com/RichardKnop/go-oauth2-server/
+RUN chown -R app:app /go/src/github.com/resonatecoop/id/
 
 # Create user's home directory
 RUN mkdir -p /home/app
@@ -58,10 +58,10 @@ RUN chown app /home/app
 USER app
 
 # Install the api program
-RUN go install github.com/RichardKnop/go-oauth2-server
+RUN go install github.com/resonatecoop/id
 
-COPY --from=builder /var/www/app/public /go/src/github.com/RichardKnop/go-oauth2-server/public/
-COPY --from=builder /var/www/app/web/layouts /go/src/github.com/RichardKnop/go-oauth2-server/web/layouts/
+COPY --from=builder /var/www/app/public /go/src/github.com/resonatecoop/id/public/
+COPY --from=builder /var/www/app/web/layouts /go/src/github.com/resonatecoop/id/web/layouts/
 
 # User docker-entrypoint.sh script as entrypoint
 ENTRYPOINT ["./docker-entrypoint.sh"]
