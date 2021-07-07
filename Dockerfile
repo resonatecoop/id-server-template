@@ -5,7 +5,6 @@ RUN apk --no-cache add git
 WORKDIR /var/www/app
 
 COPY ./package* ./
-COPY .env ./
 COPY ./gulpfile.js ./
 COPY ./data ./data
 COPY ./web/layouts ./web/layouts
