@@ -2,7 +2,4 @@
 
 set -e
 
-executable="go-oauth2-server"
-cmd="$@"
-
-exec $executable $cmd
+go run go-oauth2-server.go runserver
