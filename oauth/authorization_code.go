@@ -1,10 +1,11 @@
 package oauth
 
 import (
+	"context"
 	"errors"
 	"time"
 
-	"github.com/RichardKnop/go-oauth2-server/models"
+	"github.com/resonatecoop/user-api/model"
 )
 
 var (
@@ -15,10 +16,14 @@ var (
 )
 
 // GrantAuthorizationCode grants a new authorization code
-func (s *Service) GrantAuthorizationCode(client *models.OauthClient, user *models.OauthUser, expiresIn int, redirectURI, scope string) (*models.OauthAuthorizationCode, error) {
+func (s *Service) GrantAuthorizationCode(client *model.Client, user *model.User, expiresIn int, redirectURI, scope string) (*model.AuthorizationCode, error) {
 	// Create a new authorization code
-	authorizationCode := models.NewOauthAuthorizationCode(client, user, expiresIn, redirectURI, scope)
-	if err := s.db.Create(authorizationCode).Error; err != nil {
+	authorizationCode := model.NewOauthAuthorizationCode(client, user, expiresIn, redirectURI, scope)
+
+	ctx := context.Background()
+
+	_, err := s.db.NewInsert().Model(authorizationCode).Exec(ctx)
+	if err != nil {
 		return nil, err
 	}
 	authorizationCode.Client = client
@@ -28,16 +33,39 @@ func (s *Service) GrantAuthorizationCode(client *models.OauthClient, user *model
 }
 
 // getValidAuthorizationCode returns a valid non expired authorization code
-func (s *Service) getValidAuthorizationCode(code, redirectURI string, client *models.OauthClient) (*models.OauthAuthorizationCode, error) {
+func (s *Service) getValidAuthorizationCode(code, redirectURI string, client *model.Client) (*model.AuthorizationCode, error) {
 	// Fetch the auth code from the database
-	authorizationCode := new(models.OauthAuthorizationCode)
-	notFound := models.OauthAuthorizationCodePreload(s.db).Where("client_id = ?", client.ID).
-		Where("code = ?", code).First(authorizationCode).RecordNotFound()
+	ctx := context.Background()
+	authorizationCode := new(model.AuthorizationCode)
 
-	// Not found
-	if notFound {
+	err := s.db.NewSelect().
+		Model(authorizationCode).
+		Where("client_id = ?", client.ID).
+		Where("code = ?", code).
+		Limit(1).
+		Scan(ctx)
+
+	// Not Found!
+	if err != nil {
 		return nil, ErrAuthorizationCodeNotFound
 	}
+
+	authorizationCode.Client = client
+
+	user := new(model.User)
+
+	err = s.db.NewSelect().
+		Model(user).
+		Where("id = ?", authorizationCode.UserID).
+		Limit(1).
+		Scan(ctx)
+
+	// Not Found!
+	if err != nil {
+		return nil, errors.New("corresponding user for authorization code not found")
+	}
+
+	authorizationCode.User = user
 
 	// Redirect URI must match if it was used to obtain the authorization code
 	if redirectURI != authorizationCode.RedirectURI.String {

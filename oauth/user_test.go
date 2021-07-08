@@ -1,14 +1,13 @@
 package oauth_test
 
 import (
-	"time"
+	"context"
+	"database/sql"
 
-	"github.com/RichardKnop/go-oauth2-server/models"
-	"github.com/RichardKnop/go-oauth2-server/oauth"
-	"github.com/RichardKnop/go-oauth2-server/oauth/roles"
-	"github.com/RichardKnop/go-oauth2-server/util"
-	pass "github.com/RichardKnop/go-oauth2-server/util/password"
-	"github.com/RichardKnop/uuid"
+	"github.com/resonatecoop/id/oauth"
+	"github.com/resonatecoop/id/util"
+	pass "github.com/resonatecoop/id/util/password"
+	"github.com/resonatecoop/user-api/model"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,19 +22,28 @@ func (suite *OauthTestSuite) TestUserExistsDoesntFindInvalidUser() {
 }
 
 func (suite *OauthTestSuite) TestUpdateUsernameWorksWithValidEntry() {
+	ctx := context.Background()
+
 	user, err := suite.service.CreateUser(
-		roles.User,      // role ID
-		"test@newuser",  // username
-		"test_password", // password
+		int32(model.UserRole),  // role ID
+		"test@newuser.com",     // username
+		"C0mpl3xPa$$w0rdAr3U5", // password
 	)
 
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), user)
-	assert.Equal(suite.T(), "test@newuser", user.Username)
+	assert.Equal(suite.T(), "test@newuser.com", user.Username)
 
-	newUsername := "mynew@email"
+	newUsername := "mynew@email.com"
 
 	err = suite.service.UpdateUsername(user, newUsername)
+
+	assert.NoError(suite.T(), err)
+
+	err = suite.db.NewSelect().
+		Model(user).
+		WherePK().
+		Scan(ctx)
 
 	assert.NoError(suite.T(), err)
 
@@ -43,19 +51,28 @@ func (suite *OauthTestSuite) TestUpdateUsernameWorksWithValidEntry() {
 }
 
 func (suite *OauthTestSuite) TestUpdateUsernameTxWorksWithValidEntry() {
+	ctx := context.Background()
+
 	user, err := suite.service.CreateUser(
-		roles.User,      // role ID
-		"test@newuser",  // username
-		"test_password", // password
+		int32(model.UserRole),  // role ID
+		"test@newuser.com",     // username
+		"C0mpl3xPa$$w0rdAr3U5", // password
 	)
 
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), user)
-	assert.Equal(suite.T(), "test@newuser", user.Username)
+	assert.Equal(suite.T(), "test@newuser.com", user.Username)
 
-	newUsername := "mynew@email"
+	newUsername := "mynew@email.com"
 
 	err = suite.service.UpdateUsernameTx(suite.db, user, newUsername)
+
+	assert.NoError(suite.T(), err)
+
+	err = suite.db.NewSelect().
+		Model(user).
+		WherePK().
+		Scan(ctx)
 
 	assert.NoError(suite.T(), err)
 
@@ -64,14 +81,14 @@ func (suite *OauthTestSuite) TestUpdateUsernameTxWorksWithValidEntry() {
 
 func (suite *OauthTestSuite) TestUpdateUsernameFailsWithABlankEntry() {
 	user, err := suite.service.CreateUser(
-		roles.User,      // role ID
-		"test@newuser",  // username
-		"test_password", // password
+		int32(model.UserRole),  // role ID
+		"test@newuser.com",     // username
+		"C0mpl3xPa$$w0rdAr3U5", // password
 	)
 
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), user)
-	assert.Equal(suite.T(), "test@newuser", user.Username)
+	assert.Equal(suite.T(), "test@newuser.com", user.Username)
 
 	newUsername := ""
 
@@ -84,7 +101,7 @@ func (suite *OauthTestSuite) TestUpdateUsernameFailsWithABlankEntry() {
 
 func (suite *OauthTestSuite) TestFindUserByUsername() {
 	var (
-		user *models.OauthUser
+		user *model.User
 		err  error
 	)
 
@@ -100,39 +117,39 @@ func (suite *OauthTestSuite) TestFindUserByUsername() {
 	}
 
 	// When we try to find a user with a valid username
-	user, err = suite.service.FindUserByUsername("test@user")
+	user, err = suite.service.FindUserByUsername("test@user.com")
 
 	// Error should be nil
 	assert.Nil(suite.T(), err)
 
 	// Correct user object should be returned
 	if assert.NotNil(suite.T(), user) {
-		assert.Equal(suite.T(), "test@user", user.Username)
+		assert.Equal(suite.T(), "test@user.com", user.Username)
 	}
 
 	// Test username case insensitiviness
-	user, err = suite.service.FindUserByUsername("TeSt@UsEr")
+	user, err = suite.service.FindUserByUsername("TeSt@UsEr.CoM")
 
 	// Error should be nil
 	assert.Nil(suite.T(), err)
 
 	// Correct user object should be returned
 	if assert.NotNil(suite.T(), user) {
-		assert.Equal(suite.T(), "test@user", user.Username)
+		assert.Equal(suite.T(), "test@user.com", user.Username)
 	}
 }
 
 func (suite *OauthTestSuite) TestCreateUser() {
 	var (
-		user *models.OauthUser
+		user *model.User
 		err  error
 	)
 
 	// We try to insert a non unique user
 	user, err = suite.service.CreateUser(
-		roles.User,      // role ID
-		"test@user",     // username
-		"test_password", // password
+		int32(model.UserRole),  // role ID
+		"test@user.com",        // username
+		"C0mpl3xPa$$w0rdAr3U5", // password
 	)
 
 	// User object should be nil
@@ -145,9 +162,9 @@ func (suite *OauthTestSuite) TestCreateUser() {
 
 	// We try to insert a unique user
 	user, err = suite.service.CreateUser(
-		roles.User,      // role ID
-		"test@newuser",  // username
-		"test_password", // password
+		int32(model.UserRole),  // role ID
+		"test@newuser.com",     // username
+		"C0mpl3xPa$$w0rdAr3U5", // password
 	)
 
 	// Error should be nil
@@ -155,14 +172,14 @@ func (suite *OauthTestSuite) TestCreateUser() {
 
 	// Correct user object should be returned
 	if assert.NotNil(suite.T(), user) {
-		assert.Equal(suite.T(), "test@newuser", user.Username)
+		assert.Equal(suite.T(), "test@newuser.com", user.Username)
 	}
 
 	// Test username case insensitivity
 	user, err = suite.service.CreateUser(
-		roles.User,      // role ID
-		"TeSt@NeWuSeR2", // username
-		"test_password", // password
+		int32(model.UserRole),  // role ID
+		"TeStinG@hOtMaIl.com",  // username
+		"C0mpl3xPa$$w0rdAr3U5", // password
 	)
 
 	// Error should be nil
@@ -170,28 +187,31 @@ func (suite *OauthTestSuite) TestCreateUser() {
 
 	// Correct user object should be returned
 	if assert.NotNil(suite.T(), user) {
-		assert.Equal(suite.T(), "test@newuser2", user.Username)
+		assert.Equal(suite.T(), "testing@hotmail.com", user.Username)
 	}
 }
 
 func (suite *OauthTestSuite) TestSetPassword() {
 	var (
-		user *models.OauthUser
+		ctx  context.Context
+		user *model.User
 		err  error
 	)
 
 	// Insert a test user without a password
-	user = &models.OauthUser{
-		MyGormModel: models.MyGormModel{
-			ID:        uuid.New(),
-			CreatedAt: time.Now().UTC(),
-		},
-		RoleID:   util.StringOrNull(roles.User),
-		Username: "test@user_nopass",
+	user = &model.User{
+		RoleID:   int32(model.UserRole),
+		Username: "test@user_nopass.com",
 		Password: util.StringOrNull(""),
 	}
-	err = suite.db.Create(user).Error
-	assert.NoError(suite.T(), err, "Inserting test data failed")
+
+	ctx = context.Background()
+
+	_, err = suite.db.NewInsert().
+		Model(user).
+		Exec(ctx)
+
+	assert.Nil(suite.T(), err)
 
 	// Try to set an empty password
 	err = suite.service.SetPassword(user, "")
@@ -202,33 +222,42 @@ func (suite *OauthTestSuite) TestSetPassword() {
 	}
 
 	// Try changing the password
-	err = suite.service.SetPassword(user, "test_password")
+	err = suite.service.SetPassword(user, "C0mpl3xPa$$w0rdAr3U5")
 
 	// Error should be nil
 	assert.Nil(suite.T(), err)
 
+	suite.db.NewSelect().
+		Model(user).
+		WherePK().
+		Scan(ctx)
+
 	// User object should have been updated
-	assert.Equal(suite.T(), "test@user_nopass", user.Username)
-	assert.Nil(suite.T(), pass.VerifyPassword(user.Password.String, "test_password"))
+	assert.Equal(suite.T(), "test@user_nopass.com", user.Username)
+	assert.Nil(suite.T(), pass.VerifyPassword(user.Password.String, "C0mpl3xPa$$w0rdAr3U5"))
 }
 
 func (suite *OauthTestSuite) TestAuthUser() {
 	var (
-		user *models.OauthUser
+		ctx  context.Context
+		user *model.User
 		err  error
 	)
 
 	// Insert a test user without a password
-	err = suite.db.Create(&models.OauthUser{
-		MyGormModel: models.MyGormModel{
-			ID:        uuid.New(),
-			CreatedAt: time.Now().UTC(),
-		},
-		RoleID:   util.StringOrNull(roles.User),
+	user = &model.User{
+		RoleID:   int32(model.UserRole),
 		Username: "test@user_nopass",
 		Password: util.StringOrNull(""),
-	}).Error
-	assert.NoError(suite.T(), err, "Inserting test data failed")
+	}
+
+	ctx = context.Background()
+
+	_, err = suite.db.NewInsert().
+		Model(user).
+		Exec(ctx)
+
+	assert.Nil(suite.T(), err)
 
 	// When we try to authenticate a user without a password
 	user, err = suite.service.AuthUser("test@user_nopass", "bogus")
@@ -251,6 +280,21 @@ func (suite *OauthTestSuite) TestAuthUser() {
 	if assert.NotNil(suite.T(), err) {
 		assert.Equal(suite.T(), oauth.ErrUserNotFound, err)
 	}
+
+	// Insert a test user without a password
+	user = &model.User{
+		RoleID:   int32(model.UserRole),
+		Username: "test@user",
+		Password: sql.NullString{String: "$2a$10$4J4t9xuWhOKhfjN0bOKNReS9sL3BVSN9zxIr2.VaWWQfRBWh1dQIS", Valid: true},
+	}
+
+	ctx = context.Background()
+
+	_, err = suite.db.NewInsert().
+		Model(user).
+		Exec(ctx)
+
+	assert.Nil(suite.T(), err)
 
 	// When we try to authenticate with an invalid password
 	user, err = suite.service.AuthUser("test@user", "bogus")
@@ -288,14 +332,58 @@ func (suite *OauthTestSuite) TestAuthUser() {
 
 func (suite *OauthTestSuite) TestBlankPassword() {
 	var (
-		user *models.OauthUser
+		//user *model.User
+		err error
+	)
+
+	_, err = suite.service.CreateUser(
+		int32(model.UserRole), // role ID
+		"test@user_nopass",    // username
+		"",                    // password,  "Password is required" ErrPasswordRequired
+	)
+
+	// Error should be nil
+	//assert.Nil(suite.T(), err)
+
+	// Actually, password is required
+	if assert.NotNil(suite.T(), err) {
+		assert.Equal(suite.T(), oauth.ErrPasswordRequired, err)
+	}
+
+	// user, _ = suite.service.CreateUser(
+	// 	int32(model.UserRole), // role ID
+	// 	"test@user_somepass",  // username
+	// 	"somepassword",        // password,
+	// )
+
+	// // Correct user object should be returned
+	// if assert.NotNil(suite.T(), user) {
+	// 	assert.Equal(suite.T(), "test@user_somepass", user.Username)
+	// }
+
+	// // When we try to authenticate
+	// user, err = suite.service.AuthUser("test@user_nopass", "")
+
+	// // User object should be nil
+	// assert.Nil(suite.T(), user)
+
+	// // Correct error should be returned
+	// if assert.NotNil(suite.T(), err) {
+	// 	assert.Equal(suite.T(), oauth.ErrUserPasswordNotSet, err)
+	// }
+}
+
+func (suite *OauthTestSuite) TestDeleteUser() {
+	var (
+		user *model.User
 		err  error
 	)
 
+	// We try to insert a unique user
 	user, err = suite.service.CreateUser(
-		roles.User,         // role ID
-		"test@user_nopass", // username
-		"",                 // password
+		int32(model.UserRole),   // role ID
+		"temporary@newuser.com", // username
+		"C0mpl3xPa$$w0rdAr3U5",  // password
 	)
 
 	// Error should be nil
@@ -303,17 +391,18 @@ func (suite *OauthTestSuite) TestBlankPassword() {
 
 	// Correct user object should be returned
 	if assert.NotNil(suite.T(), user) {
-		assert.Equal(suite.T(), "test@user_nopass", user.Username)
+		assert.Equal(suite.T(), "temporary@newuser.com", user.Username)
 	}
 
-	// When we try to authenticate
-	user, err = suite.service.AuthUser("test@user_nopass", "")
+	// Delete the user
+	err = suite.service.DeleteUser(user, "C0mpl3xPa$$w0rdAr3U5")
 
-	// User object should be nil
-	assert.Nil(suite.T(), user)
+	// Error should be nil
+	assert.Nil(suite.T(), err)
 
-	// Correct error should be returned
-	if assert.NotNil(suite.T(), err) {
-		assert.Equal(suite.T(), oauth.ErrUserPasswordNotSet, err)
-	}
+	// Check it exists but has been soft deleted
+	exists := suite.service.UserExists("temporary@newuser.com")
+
+	// Error should be nil
+	assert.False(suite.T(), exists)
 }

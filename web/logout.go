@@ -23,7 +23,11 @@ func (s *Service) logout(w http.ResponseWriter, r *http.Request) {
 	s.oauthService.ClearUserTokens(userSession)
 
 	// Delete the user session
-	sessionService.ClearUserSession()
+	err = sessionService.ClearUserSession()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	// Redirect back to the login page
 	redirectWithQueryString("/web/login", r.URL.Query(), w, r)

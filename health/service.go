@@ -1,16 +1,16 @@
 package health
 
 import (
-	"github.com/jinzhu/gorm"
+	"github.com/uptrace/bun"
 )
 
 // Service struct keeps db object to avoid passing it around
 type Service struct {
-	db *gorm.DB
+	db *bun.DB
 }
 
 // NewService returns a new Service instance
-func NewService(db *gorm.DB) *Service {
+func NewService(db *bun.DB) *Service {
 	return &Service{db: db}
 }
 

@@ -3,13 +3,13 @@ package services
 import (
 	"reflect"
 
-	"github.com/RichardKnop/go-oauth2-server/config"
-	"github.com/RichardKnop/go-oauth2-server/health"
-	"github.com/RichardKnop/go-oauth2-server/oauth"
-	"github.com/RichardKnop/go-oauth2-server/session"
-	"github.com/RichardKnop/go-oauth2-server/web"
 	"github.com/gorilla/sessions"
-	"github.com/jinzhu/gorm"
+	"github.com/resonatecoop/id/config"
+	"github.com/resonatecoop/id/health"
+	"github.com/resonatecoop/id/oauth"
+	"github.com/resonatecoop/id/session"
+	"github.com/resonatecoop/id/web"
+	"github.com/uptrace/bun"
 )
 
 func init() {
@@ -51,7 +51,7 @@ func UseSessionService(s session.ServiceInterface) {
 }
 
 // Init starts up all services
-func Init(cnf *config.Config, db *gorm.DB) error {
+func Init(cnf *config.Config, db *bun.DB) error {
 	if nil == reflect.TypeOf(HealthService) {
 		HealthService = health.NewService(db)
 	}
@@ -62,7 +62,16 @@ func Init(cnf *config.Config, db *gorm.DB) error {
 
 	if nil == reflect.TypeOf(SessionService) {
 		// note: default session store is CookieStore
-		SessionService = session.NewService(cnf, sessions.NewCookieStore([]byte(cnf.Session.Secret)))
+		store := sessions.NewCookieStore([]byte(cnf.Session.Secret))
+
+		store.Options = &sessions.Options{
+			Path:     cnf.Session.Path,
+			MaxAge:   cnf.Session.MaxAge,
+			Secure:   cnf.Session.Secure,
+			HttpOnly: cnf.Session.HTTPOnly,
+		}
+
+		SessionService = session.NewService(cnf, store)
 	}
 
 	if nil == reflect.TypeOf(WebService) {

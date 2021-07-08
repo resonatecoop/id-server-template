@@ -14,7 +14,6 @@ var (
 		ErrRefreshTokenNotFound:          http.StatusNotFound,
 		ErrRefreshTokenExpired:           http.StatusBadRequest,
 		ErrRequestedScopeCannotBeGreater: http.StatusBadRequest,
-		ErrTokenMissing:                  http.StatusNotFound,
 		ErrTokenHintInvalid:              http.StatusBadRequest,
 		ErrAccessTokenNotFound:           http.StatusNotFound,
 		ErrRefreshTokenNotFound:          http.StatusNotFound,

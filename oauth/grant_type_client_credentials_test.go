@@ -1,14 +1,15 @@
 package oauth_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 
-	"github.com/RichardKnop/go-oauth2-server/models"
-	"github.com/RichardKnop/go-oauth2-server/oauth"
-	"github.com/RichardKnop/go-oauth2-server/oauth/tokentypes"
-	"github.com/RichardKnop/go-oauth2-server/test-util"
+	"github.com/resonatecoop/id/oauth"
+	"github.com/resonatecoop/id/oauth/tokentypes"
+	testutil "github.com/resonatecoop/id/test-util"
+	"github.com/resonatecoop/user-api/model"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,9 +28,16 @@ func (suite *OauthTestSuite) TestClientCredentialsGrant() {
 	suite.router.ServeHTTP(w, r)
 
 	// Fetch data
-	accessToken := new(models.OauthAccessToken)
-	assert.False(suite.T(), models.OauthAccessTokenPreload(suite.db).
-		Last(accessToken).RecordNotFound())
+	ctx := context.Background()
+	accessToken := new(model.AccessToken)
+
+	err = suite.db.NewSelect().
+		Model(accessToken).
+		Limit(1).
+		Scan(ctx)
+
+	// A record is found
+	assert.Nil(suite.T(), err)
 
 	// Check the response
 	expected := &oauth.AccessTokenResponse{
@@ -41,6 +49,11 @@ func (suite *OauthTestSuite) TestClientCredentialsGrant() {
 	testutil.TestResponseObject(suite.T(), w, expected, 200)
 
 	// Client credentials grant does not produce refresh token
-	assert.True(suite.T(), models.OauthRefreshTokenPreload(suite.db).
-		First(new(models.OauthRefreshToken)).RecordNotFound())
+	err = suite.db.NewSelect().
+		Model(new(model.RefreshToken)).
+		Limit(1).
+		Scan(ctx)
+
+	// Error raised as no record found
+	assert.NotNil(suite.T(), err)
 }

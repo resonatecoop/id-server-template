@@ -6,10 +6,13 @@ import (
 	"os"
 	"strings"
 
-	"github.com/RichardKnop/go-oauth2-server/log"
-	"github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/etcdserver/api/v3rpc/rpctypes"
-	"github.com/coreos/etcd/pkg/transport"
+	//"github.com/etcd-io/etcdetcd/etcdserver/api/v3rpc/rpctypes"
+	//"github.com/etcd-io/etcdetcd/pkg/transport"
+
+	"github.com/resonatecoop/id/log"
+	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
+	clientv3 "go.etcd.io/etcd/client/v3"
+	transport "go.etcd.io/etcd/pkg/transport"
 	"golang.org/x/net/context"
 )
 

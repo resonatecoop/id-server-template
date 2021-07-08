@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/RichardKnop/go-oauth2-server/cmd"
+	"github.com/resonatecoop/id/cmd"
 	"github.com/urfave/cli"
 )
 
@@ -33,20 +33,6 @@ func init() {
 func main() {
 	// Set the CLI app commands
 	cliApp.Commands = []cli.Command{
-		{
-			Name:  "migrate",
-			Usage: "run migrations",
-			Action: func(c *cli.Context) error {
-				return cmd.Migrate(configBackend)
-			},
-		},
-		{
-			Name:  "loaddata",
-			Usage: "load data from fixture",
-			Action: func(c *cli.Context) error {
-				return cmd.LoadData(c.Args(), configBackend)
-			},
-		},
 		{
 			Name:  "runserver",
 			Usage: "run web server",

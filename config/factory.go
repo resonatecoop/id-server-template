@@ -4,7 +4,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/RichardKnop/go-oauth2-server/log"
+	"github.com/resonatecoop/id/log"
 )
 
 var (
@@ -17,13 +17,18 @@ var (
 // Cnf ...
 // Let's start with some sensible defaults
 var Cnf = &Config{
+	Hostname: "id.resonate.coop",
+	CSRF: CSRFConfig{
+		Key:     "",
+		Origins: "upload.resonate.is",
+	},
+	Mailgun: MailgunConfig{
+		Sender: "members@resonate.is",
+		Key:    "",
+		Domain: "mailgun.resonate.is",
+	},
 	Database: DatabaseConfig{
-		Type:         "postgres",
-		Host:         "postgres",
-		Port:         5432,
-		User:         "go_oauth2_server",
-		Password:     "",
-		DatabaseName: "go_oauth2_server",
+		PSN:          "postgres://resonate_dev_user:password@127.0.0.1:5432/resonate_dev?sslmode=disable",
 		MaxIdleConns: 5,
 		MaxOpenConns: 5,
 	},
@@ -38,7 +43,18 @@ var Cnf = &Config{
 		MaxAge:   86400 * 7, // 7 days
 		HTTPOnly: true,
 	},
-	IsDevelopment: true,
+	Clients: []ClientConfig{
+		{
+			ConnectUrl:  "https://upload.resonate.is/api/user/connect/resonate",
+			Name:        "Upload Tool",
+			Description: "for creators",
+		},
+	},
+	IsDevelopment:       true,
+	Port:                ":8080",
+	ApplicationURL:      "https://upload.resonate.is",
+	Origins:             []string{"upload.resonate.is", "beta.stream.resonate.is"},
+	EmailTokenSecretKey: "super secret key",
 }
 
 // NewConfig loads configuration from etcd and returns *Config struct

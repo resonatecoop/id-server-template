@@ -1,40 +1,43 @@
 {{ define "title"}}Authorize{{ end }}
 
 {{ define "content" }}
-<div class="container">
-  <div class="page-header">
-    <h1>Authorize</h1>
-  </div>
-  {{ if .error }}
-  <div class="alert alert-danger" role="alert">{{ .error }}div>
-  {{ else }}
-  <form action="" method="post">
-    <div class="form-group">
-      <p><b>{{ .clientID }}</b> would like to perform actions on your behalf.</p>
-      {{ if .token }}
-      <p>How long do you want to authorize <b>{{ .clientID }}</b> for?</p>
-      <div class="radio">
-        <label class="radio-inline">
-          <input type="radio" name="lifetime" value="3600"> 1 hour
-        </label>
-        <label class="radio-inline">
-          <input type="radio" name="lifetime" value="86400"> 1 day
-        </label>
-        <label class="radio-inline">
-          <input type="radio" name="lifetime" value="604800" checked> 1 week
-        </label>
+<div id="app">
+  <main class="flex flex-auto relative">
+    <div class="flex flex-column flex-auto w-100">
+      <div class="flex flex-column flex-auto items-center justify-center min-vh-100 mh3 pt6 pb6">
+        <div class="bg-white black bg-black--dark white--dark bg-white--light black--light z-1 w-100 w-auto-l ph4 pt4 pb3">
+          <div class="flex flex-column flex-auto">
+            <svg viewBox="0 0 16 16" class="icon icon-logo icon--sm icon icon--lg fill-black fill-white--dark fill-black--light">
+              <use xlink:href="#icon-logo"></use>
+            </svg>
+            <div class="flex flex-column">
+              <h2 class="f3 fw1 mt3 near-black near-black--light light-gray--dark lh-title">Authorize</h2>
+              {{ if .flash }}
+              <div>
+                <p{{ if eq .flash.Type "Error" }} class="red"{{ end }}>{{ .flash.Message }}</p>
+              </div>
+              {{ end }}
+              <div class="flex flex-column flex-auto" id="ncid-f21a" data-nanocomponent="ncid-f21a">
+                <form action="" method="POST" class="flex flex-column flex-auto ma0 pa0">
+                  {{ .csrfField }}
+                  <div class="flex flex-column">
+                    <p>To continue to the <b>{{ .applicationName }}</b>, please confirm the action.</p>
+                  </div>
+                  <div class="flex">
+                    <div class="mr2">
+                      <input type="submit" name="continue" value="Continue" class="bg-white black ba bw b--dark-gray f5 b pv3 ph3 grow" />
+                    </div>
+                    <div>
+                      <input type="submit" name="cancel" value="Cancel" class="bg-transparent white bn f5 b pv3 ph3 grow" />
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      {{ end }}
     </div>
-    <div class="row">
-      <div class="col-md-3 col-sm-4 col-xs-6">
-        <input type="submit" class="btn btn-lg btn-block btn-primary" name="allow" value="Allow">
-      </div>
-      <div class="col-md-3 col-sm-4 col-xs-6">
-        <input type="submit" class="btn btn-lg btn-block btn-danger" name="deny" value="Deny">
-      </div>
-    </div>
-  </form>
-  {{ end }}
+  </main>
 </div>
 {{ end }}

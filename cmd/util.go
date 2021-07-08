@@ -1,13 +1,15 @@
 package cmd
 
 import (
-	"github.com/RichardKnop/go-oauth2-server/config"
-	"github.com/RichardKnop/go-oauth2-server/database"
-	"github.com/jinzhu/gorm"
+	"github.com/resonatecoop/id/config"
+	"github.com/resonatecoop/id/database"
+
+	//	"github.com/resonatecoop/id/database"
+	"github.com/uptrace/bun"
 )
 
 // initConfigDB loads the configuration and connects to the database
-func initConfigDB(mustLoadOnce, keepReloading bool, configBackend string) (*config.Config, *gorm.DB, error) {
+func initConfigDB(mustLoadOnce, keepReloading bool, configBackend string) (*config.Config, *bun.DB, error) {
 	// Config
 	cnf := config.NewConfig(mustLoadOnce, keepReloading, configBackend)
 

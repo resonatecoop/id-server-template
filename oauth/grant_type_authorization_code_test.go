@@ -1,17 +1,17 @@
 package oauth_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"time"
 
-	"github.com/RichardKnop/go-oauth2-server/models"
-	"github.com/RichardKnop/go-oauth2-server/oauth"
-	"github.com/RichardKnop/go-oauth2-server/oauth/tokentypes"
-	"github.com/RichardKnop/go-oauth2-server/test-util"
-	"github.com/RichardKnop/go-oauth2-server/util"
-	"github.com/RichardKnop/uuid"
+	"github.com/resonatecoop/id/oauth"
+	"github.com/resonatecoop/id/oauth/tokentypes"
+	testutil "github.com/resonatecoop/id/test-util"
+	"github.com/resonatecoop/id/util"
+	"github.com/resonatecoop/user-api/model"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -63,18 +63,23 @@ func (suite *OauthTestSuite) TestAuthorizationCodeGrantBogusNotFound() {
 
 func (suite *OauthTestSuite) TestAuthorizationCodeGrantExpired() {
 	// Insert a test authorization code
-	err := suite.db.Create(&models.OauthAuthorizationCode{
-		MyGormModel: models.MyGormModel{
-			ID:        uuid.New(),
-			CreatedAt: time.Now().UTC(),
-		},
+
+	ctx := context.Background()
+
+	authorizationcode := &model.AuthorizationCode{
+		IDRecord:    model.IDRecord{CreatedAt: time.Now().UTC()},
 		Code:        "test_code",
 		ExpiresAt:   time.Now().UTC().Add(-10 * time.Second),
-		Client:      suite.clients[0],
-		User:        suite.users[0],
+		ClientID:    suite.clients[0].ID,
+		UserID:      suite.users[0].ID,
 		RedirectURI: util.StringOrNull("https://www.example.com"),
 		Scope:       "read_write",
-	}).Error
+	}
+
+	_, err := suite.db.NewInsert().
+		Model(authorizationcode).
+		Exec(ctx)
+
 	assert.NoError(suite.T(), err, "Inserting test data failed")
 
 	// Prepare a request
@@ -102,18 +107,23 @@ func (suite *OauthTestSuite) TestAuthorizationCodeGrantExpired() {
 
 func (suite *OauthTestSuite) TestAuthorizationCodeGrantInvalidRedirectURI() {
 	// Insert a test authorization code
-	err := suite.db.Create(&models.OauthAuthorizationCode{
-		MyGormModel: models.MyGormModel{
-			ID:        uuid.New(),
-			CreatedAt: time.Now().UTC(),
-		},
+
+	ctx := context.Background()
+
+	authorizationCode := &model.AuthorizationCode{
+		IDRecord:    model.IDRecord{CreatedAt: time.Now().UTC()},
 		Code:        "test_code",
 		ExpiresAt:   time.Now().UTC().Add(+10 * time.Second),
-		Client:      suite.clients[0],
-		User:        suite.users[0],
+		ClientID:    suite.clients[0].ID,
+		UserID:      suite.users[0].ID,
 		RedirectURI: util.StringOrNull("https://www.example.com"),
 		Scope:       "read_write",
-	}).Error
+	}
+
+	_, err := suite.db.NewInsert().
+		Model(authorizationCode).
+		Exec(ctx)
+
 	assert.NoError(suite.T(), err, "Inserting test data failed")
 
 	// Prepare a request
@@ -140,19 +150,22 @@ func (suite *OauthTestSuite) TestAuthorizationCodeGrantInvalidRedirectURI() {
 }
 
 func (suite *OauthTestSuite) TestAuthorizationCodeGrant() {
+	ctx := context.Background()
 	// Insert a test authorization code
-	err := suite.db.Create(&models.OauthAuthorizationCode{
-		MyGormModel: models.MyGormModel{
-			ID:        uuid.New(),
-			CreatedAt: time.Now().UTC(),
-		},
+	authorizationcode := &model.AuthorizationCode{
+		IDRecord:    model.IDRecord{CreatedAt: time.Now().UTC()},
 		Code:        "test_code",
 		ExpiresAt:   time.Now().UTC().Add(+10 * time.Second),
-		Client:      suite.clients[0],
-		User:        suite.users[0],
+		ClientID:    suite.clients[0].ID,
+		UserID:      suite.users[0].ID,
 		RedirectURI: util.StringOrNull("https://www.example.com"),
-		Scope:       "read_write",
-	}).Error
+		Scope:       "read_write tenantadmin",
+	}
+
+	_, err := suite.db.NewInsert().
+		Model(authorizationcode).
+		Exec(ctx)
+
 	assert.NoError(suite.T(), err, "Inserting test data failed")
 
 	// Prepare a request
@@ -170,24 +183,41 @@ func (suite *OauthTestSuite) TestAuthorizationCodeGrant() {
 	suite.router.ServeHTTP(w, r)
 
 	// Fetch data
-	accessToken, refreshToken := new(models.OauthAccessToken), new(models.OauthRefreshToken)
-	assert.False(suite.T(), models.OauthAccessTokenPreload(suite.db).
-		Last(accessToken).RecordNotFound())
-	assert.False(suite.T(), models.OauthRefreshTokenPreload(suite.db).
-		Last(refreshToken).RecordNotFound())
+	accessToken, refreshToken := new(model.AccessToken), new(model.RefreshToken)
+
+	err = suite.db.NewSelect().
+		Model(accessToken).
+		Order("created_at DESC").
+		Limit(1).
+		Scan(ctx)
+
+	assert.Nil(suite.T(), err)
+
+	err = suite.db.NewSelect().
+		Model(refreshToken).
+		Order("created_at DESC").
+		Limit(1).
+		Scan(ctx)
+
+	assert.Nil(suite.T(), err)
 
 	// Check the response
 	expected := &oauth.AccessTokenResponse{
-		UserID:       accessToken.UserID.String,
+		UserID:       accessToken.UserID.String(),
 		AccessToken:  accessToken.Token,
 		ExpiresIn:    3600,
 		TokenType:    tokentypes.Bearer,
-		Scope:        "read_write",
+		Scope:        "read_write tenantadmin",
 		RefreshToken: refreshToken.Token,
 	}
 	testutil.TestResponseObject(suite.T(), w, expected, 200)
 
 	// The authorization code should get deleted after use
-	assert.True(suite.T(), suite.db.Unscoped().
-		First(new(models.OauthAuthorizationCode)).RecordNotFound())
+
+	err = suite.db.NewSelect().
+		Model(new(model.AuthorizationCode)).
+		Limit(1).
+		Scan(ctx)
+
+	assert.NotNil(suite.T(), err)
 }

@@ -3,8 +3,8 @@ package web
 import (
 	"net/http"
 
-	"github.com/RichardKnop/go-oauth2-server/session"
 	"github.com/gorilla/context"
+	"github.com/resonatecoop/id/session"
 )
 
 // parseFormMiddleware parses the form so r.Form becomes available
@@ -43,6 +43,19 @@ func (m *guestMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next
 	}
 
 	context.Set(r, sessionServiceKey, sessionService)
+
+	// Try to get a user session
+	_, err := sessionService.GetUserSession()
+	if err == nil {
+		query := r.URL.Query()
+		query.Set("login_redirect_uri", r.URL.Path)
+		sessionService.SetFlashMessage(&session.Flash{
+			Type:    "Info",
+			Message: "You are already logged in",
+		})
+		redirectWithQueryString("/web/profile", query, w, r)
+		return
+	}
 
 	next(w, r)
 }
@@ -89,7 +102,11 @@ func (m *loggedInMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, n
 	}
 
 	// Update the user session
-	sessionService.SetUserSession(userSession)
+	err = sessionService.SetUserSession(userSession)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	next(w, r)
 }
@@ -149,16 +166,37 @@ func newClientMiddleware(service ServiceInterface) *clientMiddleware {
 
 // ServeHTTP as per the negroni.Handler interface
 func (m *clientMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	// Fetch the client
-	client, err := m.service.GetOauthService().FindClientByClientID(
-		r.Form.Get("client_id"), // client ID
-	)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+	cnf := m.service.GetConfig()
+	redirect := cnf.ApplicationURL // get default application URL
+
+	if r.Form.Get("redirect") != "" {
+		redirect = r.Form.Get("redirect")
 	}
 
-	context.Set(r, clientKey, client)
+	if r.Form.Get("client_id") != "" {
+		// Fetch the client
+		client, err := m.service.GetOauthService().FindClientByClientID(
+			r.Form.Get("client_id"), // client ID
+		)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		context.Set(r, clientKey, client)
+	} else {
+		// fallback to default application uri
+		client, err := m.service.GetOauthService().FindClientByApplicationURL(
+			redirect,
+		)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		context.Set(r, clientKey, client)
+	}
 
 	next(w, r)
 }

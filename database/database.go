@@ -1,55 +1,53 @@
 package database
 
 import (
-	"fmt"
-	"time"
+	"github.com/jackc/pgx/v4"
+	stdlib "github.com/jackc/pgx/v4/stdlib"
+	"github.com/resonatecoop/id/config"
+	bun "github.com/uptrace/bun"
 
-	"github.com/RichardKnop/go-oauth2-server/config"
-	"github.com/jinzhu/gorm"
+	"github.com/uptrace/bun/dialect/pgdialect"
+	"github.com/uptrace/bun/extra/bundebug"
 
 	// Drivers
 	_ "github.com/lib/pq"
+	//_ "github.com/uptrace/bun/dialects/mysql"
 )
 
 func init() {
-	gorm.NowFunc = func() time.Time {
-		return time.Now().UTC()
-	}
+	// sql.NowFunc = func() time.Time {
+	// 	return time.Now().UTC()
+	// }
 }
 
-// NewDatabase returns a gorm.DB struct, gorm.DB.DB() returns a database handle
-// see http://golang.org/pkg/database/sql/#DB
-func NewDatabase(cnf *config.Config) (*gorm.DB, error) {
+// NewDatabase returns a bun.DB struct
+func NewDatabase(cnf *config.Config) (*bun.DB, error) {
 	// Postgres
-	if cnf.Database.Type == "postgres" {
-		// Connection args
-		// see https://godoc.org/github.com/lib/pq#hdr-Connection_String_Parameters
-		args := fmt.Sprintf(
-			"sslmode=disable host=%s port=%d user=%s password='%s' dbname=%s",
-			cnf.Database.Host,
-			cnf.Database.Port,
-			cnf.Database.User,
-			cnf.Database.Password,
-			cnf.Database.DatabaseName,
-		)
+	dbconfig, err := pgx.ParseConfig(cnf.Database.PSN)
 
-		db, err := gorm.Open(cnf.Database.Type, args)
-		if err != nil {
-			return db, err
-		}
-
-		// Max idle connections
-		db.DB().SetMaxIdleConns(cnf.Database.MaxIdleConns)
-
-		// Max open connections
-		db.DB().SetMaxOpenConns(cnf.Database.MaxOpenConns)
-
-		// Database logging
-		db.LogMode(cnf.IsDevelopment)
-
-		return db, nil
+	if err != nil {
+		panic(err)
 	}
 
-	// Database type not supported
-	return nil, fmt.Errorf("Database type %s not suppported", cnf.Database.Type)
+	dbconfig.PreferSimpleProtocol = true
+
+	sqldb := stdlib.OpenDB(*dbconfig)
+
+	db := bun.NewDB(sqldb, pgdialect.New())
+
+	if cnf.IsDevelopment {
+		db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose()))
+	}
+
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = db.Exec("SELECT 1=1")
+
+	if err != nil {
+		return db, err
+	}
+
+	return db, err
 }

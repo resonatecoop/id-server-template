@@ -1,59 +1,59 @@
 package oauth_test
 
 import (
+	"context"
 	"time"
 
-	"github.com/RichardKnop/go-oauth2-server/models"
-	"github.com/RichardKnop/go-oauth2-server/oauth"
-	"github.com/RichardKnop/go-oauth2-server/session"
-	"github.com/RichardKnop/uuid"
-	"github.com/jinzhu/gorm"
+	"github.com/resonatecoop/id/oauth"
+	"github.com/resonatecoop/id/session"
+	"github.com/resonatecoop/user-api/model"
+
+	"github.com/google/uuid"
+
 	"github.com/stretchr/testify/assert"
 )
 
 func (suite *OauthTestSuite) TestAuthenticate() {
 	var (
-		accessToken *models.OauthAccessToken
+		ctx         context.Context
+		accessToken *model.AccessToken
 		err         error
 	)
 
 	// Insert some test access tokens
-	testAccessTokens := []*models.OauthAccessToken{
+	testAccessTokens := []*model.AccessToken{
 		// Expired access token
 		{
-			MyGormModel: models.MyGormModel{
-				ID:        uuid.New(),
-				CreatedAt: time.Now().UTC(),
-			},
+			IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC()},
 			Token:     "test_expired_token",
 			ExpiresAt: time.Now().UTC().Add(-10 * time.Second),
-			Client:    suite.clients[0],
-			User:      suite.users[0],
+			ClientID:  suite.clients[0].ID,
+			UserID:    suite.users[0].ID,
 		},
 		// Access token without a user
 		{
-			MyGormModel: models.MyGormModel{
-				ID:        uuid.New(),
-				CreatedAt: time.Now().UTC(),
-			},
-			Token:     "test_client_token",
+			IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC()},
+			Token:     "test_client_token_2",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-			Client:    suite.clients[0],
+			ClientID:  suite.clients[0].ID,
 		},
 		// Access token with a user
 		{
-			MyGormModel: models.MyGormModel{
-				ID:        uuid.New(),
-				CreatedAt: time.Now().UTC(),
-			},
-			Token:     "test_user_token",
+			IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC()},
+			Token:     "test_user_token_3",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-			Client:    suite.clients[0],
-			User:      suite.users[0],
+			ClientID:  suite.clients[0].ID,
+			UserID:    suite.users[0].ID,
 		},
 	}
+
+	ctx = context.Background()
 	for _, testAccessToken := range testAccessTokens {
-		err := suite.db.Create(testAccessToken).Error
+
+		_, err := suite.db.NewInsert().
+			Model(testAccessToken).
+			Exec(ctx)
+
 		assert.NoError(suite.T(), err, "Inserting test data failed")
 	}
 
@@ -91,26 +91,26 @@ func (suite *OauthTestSuite) TestAuthenticate() {
 	}
 
 	// Test passing a valid client token
-	accessToken, err = suite.service.Authenticate("test_client_token")
+	accessToken, err = suite.service.Authenticate("test_client_token_2")
 
 	// Correct access token should be returned
 	if assert.NotNil(suite.T(), accessToken) {
-		assert.Equal(suite.T(), "test_client_token", accessToken.Token)
-		assert.EqualValues(suite.T(), suite.clients[0].ID, accessToken.ClientID.String)
-		assert.False(suite.T(), accessToken.UserID.Valid)
+		assert.Equal(suite.T(), "test_client_token_2", accessToken.Token)
+		assert.EqualValues(suite.T(), suite.clients[0].ID, accessToken.ClientID)
+		assert.EqualValues(suite.T(), accessToken.UserID, uuid.Nil)
 	}
 
 	// Error should be nil
 	assert.Nil(suite.T(), err)
 
 	// Test passing a valid user token
-	accessToken, err = suite.service.Authenticate("test_user_token")
+	accessToken, err = suite.service.Authenticate("test_user_token_3")
 
 	// Correct access token should be returned
 	if assert.NotNil(suite.T(), accessToken) {
-		assert.Equal(suite.T(), "test_user_token", accessToken.Token)
-		assert.EqualValues(suite.T(), suite.clients[0].ID, accessToken.ClientID.String)
-		assert.EqualValues(suite.T(), suite.users[0].ID, accessToken.UserID.String)
+		assert.Equal(suite.T(), "test_user_token_3", accessToken.Token)
+		assert.EqualValues(suite.T(), suite.clients[0].ID, accessToken.ClientID)
+		assert.EqualValues(suite.T(), suite.users[0].ID, accessToken.UserID)
 	}
 
 	// Error should be nil
@@ -119,108 +119,113 @@ func (suite *OauthTestSuite) TestAuthenticate() {
 
 func (suite *OauthTestSuite) TestAuthenticateRollingRefreshToken() {
 	var (
-		testAccessTokens  []*models.OauthAccessToken
-		testRefreshTokens []*models.OauthRefreshToken
-		accessToken       *models.OauthAccessToken
+		ctx               context.Context
+		testAccessTokens  []*model.AccessToken
+		testRefreshTokens []*model.RefreshToken
+		accessToken       *model.AccessToken
 		err               error
-		refreshTokens     []*models.OauthRefreshToken
+		refreshTokens     []*model.RefreshToken
 	)
 
 	// Insert some test access tokens
-	testAccessTokens = []*models.OauthAccessToken{
+	testAccessTokens = []*model.AccessToken{
 		{
-			MyGormModel: models.MyGormModel{
-				ID:        uuid.New(),
-				CreatedAt: time.Now().UTC(),
-			},
+			IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC()},
 			Token:     "test_token_1",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-			Client:    suite.clients[0],
-			User:      suite.users[0],
+			ClientID:  suite.clients[0].ID,
+			UserID:    suite.users[0].ID,
 		},
 		{
-			MyGormModel: models.MyGormModel{
-				ID:        uuid.New(),
-				CreatedAt: time.Now().UTC(),
-			},
+			IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC()},
 			Token:     "test_token_2",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-			Client:    suite.clients[0],
+			ClientID:  suite.clients[0].ID,
 		},
 		{
-			MyGormModel: models.MyGormModel{
-				ID:        uuid.New(),
-				CreatedAt: time.Now().UTC(),
-			},
+			IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC()},
 			Token:     "test_token_3",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-			Client:    suite.clients[0],
-			User:      suite.users[1],
+			ClientID:  suite.clients[0].ID,
+			UserID:    suite.users[1].ID,
 		},
 	}
+
+	ctx = context.Background()
+
 	for _, testAccessToken := range testAccessTokens {
-		err = suite.db.Create(testAccessToken).Error
+
+		_, err := suite.db.NewInsert().
+			Model(testAccessToken).
+			Exec(ctx)
+
 		assert.NoError(suite.T(), err, "Inserting test data failed")
 	}
 
 	// Insert some test access tokens
-	testRefreshTokens = []*models.OauthRefreshToken{
+	testRefreshTokens = []*model.RefreshToken{
 		{
-			MyGormModel: models.MyGormModel{
-				ID:        uuid.New(),
-				CreatedAt: time.Now().UTC(),
-			},
+			IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC().Add(+1 * time.Second)},
 			Token:     "test_token_1",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-			Client:    suite.clients[0],
-			User:      suite.users[0],
+			ClientID:  suite.clients[0].ID,
+			UserID:    suite.users[0].ID,
 		},
 		{
-			MyGormModel: models.MyGormModel{
-				ID:        uuid.New(),
-				CreatedAt: time.Now().UTC(),
-			},
+			IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC().Add(+2 * time.Second)},
 			Token:     "test_token_2",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-			Client:    suite.clients[0],
+			ClientID:  suite.clients[0].ID,
 		},
 		{
-			MyGormModel: models.MyGormModel{
-				ID:        uuid.New(),
-				CreatedAt: time.Now().UTC(),
-			},
+			IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC().Add(+3 * time.Second)},
 			Token:     "test_token_3",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-			Client:    suite.clients[0],
-			User:      suite.users[1],
+			ClientID:  suite.clients[0].ID,
+			UserID:    suite.users[1].ID,
 		},
 	}
 	for _, testRefreshToken := range testRefreshTokens {
-		err = suite.db.Create(testRefreshToken).Error
+
+		_, err := suite.db.NewInsert().
+			Model(testRefreshToken).
+			Exec(ctx)
+
 		assert.NoError(suite.T(), err, "Inserting test data failed")
 	}
 
 	// Authenticate with the first access token
-	now1 := time.Now().UTC()
-	gorm.NowFunc = func() time.Time {
-		return now1
-	}
+	//	now1 := time.Now().UTC()
+	// gorm.NowFunc = func() time.Time {
+	// 	return now1
+	// }
 	accessToken, err = suite.service.Authenticate("test_token_1")
 	assert.Nil(suite.T(), err)
 	assert.Equal(suite.T(), "test_token_1", accessToken.Token)
-	assert.EqualValues(suite.T(), suite.clients[0].ID, accessToken.ClientID.String)
-	assert.EqualValues(suite.T(), suite.users[0].ID, accessToken.UserID.String)
+	assert.EqualValues(suite.T(), suite.clients[0].ID, accessToken.ClientID)
+	assert.EqualValues(suite.T(), suite.users[0].ID, accessToken.UserID)
 
 	// First refresh token expiration date should be extended
-	refreshTokens = make([]*models.OauthRefreshToken, len(testRefreshTokens))
-	err = suite.db.Where(
-		"token IN ('test_token_1', 'test_token_2', 'test_token_3')",
-	).Order("created_at").Find(&refreshTokens).Error
+	refreshTokens = make([]*model.RefreshToken, len(testRefreshTokens))
+	// err = suite.db.NewSelect().
+	// 	Model
+
+	rows, err := suite.db.QueryContext(ctx, "SELECT * FROM refresh_tokens WHERE token IN ('test_token_1', 'test_token_2', 'test_token_3') ORDER BY created_at")
+	if err != nil {
+		panic(err)
+	}
+
+	err = suite.db.ScanRows(ctx, rows, &refreshTokens)
+
+	// err = suite.db.Where(
+	// 	"token IN ('test_token_1', 'test_token_2', 'test_token_3')",
+	// ).Order("created_at").Find(&refreshTokens).Error
 	assert.Nil(suite.T(), err)
 	assert.Equal(suite.T(), "test_token_1", refreshTokens[0].Token)
 	assert.Equal(
 		suite.T(),
-		now1.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
+		//now1.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
+		refreshTokens[0].UpdatedAt.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
 		refreshTokens[0].ExpiresAt.Unix(),
 	)
 	assert.Equal(suite.T(), "test_token_2", refreshTokens[1].Token)
@@ -237,32 +242,42 @@ func (suite *OauthTestSuite) TestAuthenticateRollingRefreshToken() {
 	)
 
 	// Authenticate with the second access token
-	now2 := time.Now().UTC()
-	gorm.NowFunc = func() time.Time {
-		return now2
-	}
+	// now2 := time.Now().UTC()
+	// gorm.NowFunc = func() time.Time {
+	// 	return now2
+	// }
 	accessToken, err = suite.service.Authenticate("test_token_2")
 	assert.Nil(suite.T(), err)
 	assert.Equal(suite.T(), "test_token_2", accessToken.Token)
-	assert.EqualValues(suite.T(), suite.clients[0].ID, accessToken.ClientID.String)
-	assert.False(suite.T(), accessToken.UserID.Valid)
+	assert.EqualValues(suite.T(), suite.clients[0].ID, accessToken.ClientID)
+	assert.EqualValues(suite.T(), accessToken.UserID, uuid.Nil)
 
 	// Second refresh token expiration date should be extended
-	refreshTokens = make([]*models.OauthRefreshToken, len(testRefreshTokens))
-	err = suite.db.Where(
-		"token IN ('test_token_1', 'test_token_2', 'test_token_3')",
-	).Order("created_at").Find(&refreshTokens).Error
+	refreshTokens = make([]*model.RefreshToken, len(testRefreshTokens))
+
+	rows, err = suite.db.QueryContext(ctx, "SELECT * FROM refresh_tokens WHERE token IN ('test_token_1', 'test_token_2', 'test_token_3') ORDER BY created_at")
+	if err != nil {
+		panic(err)
+	}
+
+	err = suite.db.ScanRows(ctx, rows, &refreshTokens)
+
+	// err = suite.db.Where(
+	// 	"token IN ('test_token_1', 'test_token_2', 'test_token_3')",
+	// ).Order("created_at").Find(&refreshTokens).Error
 	assert.Nil(suite.T(), err)
 	assert.Equal(suite.T(), "test_token_1", refreshTokens[0].Token)
 	assert.Equal(
 		suite.T(),
-		now1.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
+		//now1.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
+		refreshTokens[0].UpdatedAt.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
 		refreshTokens[0].ExpiresAt.Unix(),
 	)
 	assert.Equal(suite.T(), "test_token_2", refreshTokens[1].Token)
 	assert.Equal(
 		suite.T(),
-		now2.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
+		//now2.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
+		refreshTokens[1].UpdatedAt.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
 		refreshTokens[1].ExpiresAt.Unix(),
 	)
 	assert.Equal(suite.T(), "test_token_3", refreshTokens[2].Token)
@@ -273,124 +288,124 @@ func (suite *OauthTestSuite) TestAuthenticateRollingRefreshToken() {
 	)
 
 	// Authenticate with the third access token
-	now3 := time.Now().UTC()
-	gorm.NowFunc = func() time.Time {
-		return now3
-	}
+	//now3 := time.Now().UTC()
+	// gorm.NowFunc = func() time.Time {
+	// 	return now3
+	// }
 	accessToken, err = suite.service.Authenticate("test_token_3")
 	assert.Nil(suite.T(), err)
 	assert.Equal(suite.T(), "test_token_3", accessToken.Token)
-	assert.EqualValues(suite.T(), suite.clients[0].ID, accessToken.ClientID.String)
-	assert.EqualValues(suite.T(), suite.users[1].ID, accessToken.UserID.String)
+	assert.EqualValues(suite.T(), suite.clients[0].ID, accessToken.ClientID)
+	assert.EqualValues(suite.T(), suite.users[1].ID, accessToken.UserID)
 
 	// First refresh token expiration date should be extended
-	refreshTokens = make([]*models.OauthRefreshToken, len(testRefreshTokens))
-	err = suite.db.Where(
-		"token IN ('test_token_1', 'test_token_2', 'test_token_3')",
-	).Order("created_at").Find(&refreshTokens).Error
+	refreshTokens = make([]*model.RefreshToken, len(testRefreshTokens))
+	rows, err = suite.db.QueryContext(ctx, "SELECT * FROM refresh_tokens WHERE token IN ('test_token_1', 'test_token_2', 'test_token_3') ORDER BY created_at")
+	if err != nil {
+		panic(err)
+	}
+
+	err = suite.db.ScanRows(ctx, rows, &refreshTokens)
 	assert.Nil(suite.T(), err)
 	assert.Equal(suite.T(), "test_token_1", refreshTokens[0].Token)
 	assert.Equal(
 		suite.T(),
-		now1.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
+		//now1.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
+		refreshTokens[0].UpdatedAt.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
 		refreshTokens[0].ExpiresAt.Unix(),
 	)
 	assert.Equal(suite.T(), "test_token_2", refreshTokens[1].Token)
 	assert.Equal(
 		suite.T(),
-		now2.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
+		//now2.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
+		refreshTokens[1].UpdatedAt.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
 		refreshTokens[1].ExpiresAt.Unix(),
 	)
 	assert.Equal(suite.T(), "test_token_3", refreshTokens[2].Token)
 	assert.Equal(
 		suite.T(),
-		now3.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
+		//now3.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
+		refreshTokens[2].UpdatedAt.Unix()+int64(suite.cnf.Oauth.RefreshTokenLifetime),
 		refreshTokens[2].ExpiresAt.Unix(),
 	)
 }
 
 func (suite *OauthTestSuite) TestClearUserTokens() {
 	var (
-		testAccessTokens  []*models.OauthAccessToken
-		testRefreshTokens []*models.OauthRefreshToken
+		ctx               context.Context
+		testAccessTokens  []*model.AccessToken
+		testRefreshTokens []*model.RefreshToken
 		err               error
 		testUserSession   *session.UserSession
 	)
 
 	// Insert some test access tokens
-	testAccessTokens = []*models.OauthAccessToken{
+	testAccessTokens = []*model.AccessToken{
 		{
-			MyGormModel: models.MyGormModel{
-				ID:        uuid.New(),
-				CreatedAt: time.Now().UTC(),
-			},
+			IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC()},
 			Token:     "test_token_1",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-			Client:    suite.clients[0],
-			User:      suite.users[0],
+			ClientID:  suite.clients[0].ID,
+			UserID:    suite.users[0].ID,
 		},
 		{
-			MyGormModel: models.MyGormModel{
-				ID:        uuid.New(),
-				CreatedAt: time.Now().UTC(),
-			},
+			IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC()},
 			Token:     "test_token_2",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-			Client:    suite.clients[1],
-			User:      suite.users[0],
+			ClientID:  suite.clients[1].ID,
+			UserID:    suite.users[0].ID,
 		},
 		{
-			MyGormModel: models.MyGormModel{
-				ID:        uuid.New(),
-				CreatedAt: time.Now().UTC(),
-			},
+			IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC()},
 			Token:     "test_token_3",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-			Client:    suite.clients[0],
-			User:      suite.users[1],
+			ClientID:  suite.clients[0].ID,
+			UserID:    suite.users[1].ID,
 		},
 	}
+
+	ctx = context.Background()
+
 	for _, testAccessToken := range testAccessTokens {
-		err = suite.db.Create(testAccessToken).Error
-		assert.NoError(suite.T(), err, "Inserting test data failed")
+		_, err = suite.db.NewInsert().
+			Model(testAccessToken).
+			Exec(ctx)
+		assert.Nil(suite.T(), err)
+		//TODO IMPROVE EQUIVALENCE: assert.NoError(suite.T(), err, "Inserting test data failed")
 	}
 
 	// Insert some test access tokens
-	testRefreshTokens = []*models.OauthRefreshToken{
+	testRefreshTokens = []*model.RefreshToken{
 		{
-			MyGormModel: models.MyGormModel{
-				ID:        uuid.New(),
-				CreatedAt: time.Now().UTC(),
-			},
+			IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC()},
 			Token:     "test_token_1",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-			Client:    suite.clients[0],
-			User:      suite.users[0],
+			ClientID:  suite.clients[0].ID,
+			UserID:    suite.users[0].ID,
 		},
 		{
-			MyGormModel: models.MyGormModel{
-				ID:        uuid.New(),
-				CreatedAt: time.Now().UTC(),
-			},
+			IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC()},
 			Token:     "test_token_2",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-			Client:    suite.clients[1],
-			User:      suite.users[0],
+			ClientID:  suite.clients[1].ID,
+			UserID:    suite.users[0].ID,
 		},
 		{
-			MyGormModel: models.MyGormModel{
-				ID:        uuid.New(),
-				CreatedAt: time.Now().UTC(),
-			},
+			IDRecord:  model.IDRecord{CreatedAt: time.Now().UTC()},
 			Token:     "test_token_3",
 			ExpiresAt: time.Now().UTC().Add(+10 * time.Second),
-			Client:    suite.clients[0],
-			User:      suite.users[1],
+			ClientID:  suite.clients[0].ID,
+			UserID:    suite.users[1].ID,
 		},
 	}
+
 	for _, testRefreshToken := range testRefreshTokens {
-		err = suite.db.Create(testRefreshToken).Error
-		assert.NoError(suite.T(), err, "Inserting test data failed")
+		_, err = suite.db.NewInsert().
+			Model(testRefreshToken).
+			Exec(ctx)
+
+		assert.Nil(suite.T(), err)
+		//IMPROVE EQUIVALENCE assert.NoError(suite.T(), err, "Inserting test data failed")
 	}
 
 	testUserSession = &session.UserSession{
@@ -404,24 +419,62 @@ func (suite *OauthTestSuite) TestClearUserTokens() {
 	suite.service.ClearUserTokens(testUserSession)
 
 	// Assert that the refresh token was removed
-	found := !models.OauthRefreshTokenPreload(suite.db).Where("token = ?", testUserSession.RefreshToken).First(&models.OauthRefreshToken{}).RecordNotFound()
-	assert.Equal(suite.T(), false, found)
+
+	refreshToken := new(model.RefreshToken)
+
+	err = suite.db.NewSelect().
+		Model(refreshToken).
+		Where("token = ?", testUserSession.RefreshToken).
+		Limit(1).
+		Scan(ctx)
+
+	assert.NotNil(suite.T(), err)
+	//TODO Improve assertion to be specific about scan error?
 
 	// Assert that the access token was removed
-	found = !models.OauthAccessTokenPreload(suite.db).Where("token = ?", testUserSession.AccessToken).First(&models.OauthAccessToken{}).RecordNotFound()
-	assert.Equal(suite.T(), false, found)
+	accessToken := new(model.AccessToken)
+
+	err = suite.db.NewSelect().
+		Model(accessToken).
+		Where("token = ?", testUserSession.AccessToken).
+		Limit(1).
+		Scan(ctx)
+
+	assert.NotNil(suite.T(), err)
+	//TODO Improve assertion to be specific about scan error?
 
 	// Assert that the other two tokens are still there
 	// Refresh tokens
-	found = !models.OauthRefreshTokenPreload(suite.db).Where("token = ?", "test_token_2").First(&models.OauthRefreshToken{}).RecordNotFound()
-	assert.Equal(suite.T(), true, found)
-	found = !models.OauthRefreshTokenPreload(suite.db).Where("token = ?", "test_token_3").First(&models.OauthRefreshToken{}).RecordNotFound()
-	assert.Equal(suite.T(), true, found)
+	err = suite.db.NewSelect().
+		Model(refreshToken).
+		Where("token = ?", "test_token_2").
+		Limit(1).
+		Scan(ctx)
+
+	assert.Nil(suite.T(), err)
+
+	err = suite.db.NewSelect().
+		Model(refreshToken).
+		Where("token = ?", "test_token_3").
+		Limit(1).
+		Scan(ctx)
+
+	assert.Nil(suite.T(), err)
 
 	// Access tokens
-	found = !models.OauthAccessTokenPreload(suite.db).Where("token = ?", "test_token_2").First(&models.OauthAccessToken{}).RecordNotFound()
-	assert.Equal(suite.T(), true, found)
-	found = !models.OauthAccessTokenPreload(suite.db).Where("token = ?", "test_token_3").First(&models.OauthAccessToken{}).RecordNotFound()
-	assert.Equal(suite.T(), true, found)
+	err = suite.db.NewSelect().
+		Model(accessToken).
+		Where("token = ?", "test_token_2").
+		Limit(1).
+		Scan(ctx)
 
+	assert.Nil(suite.T(), err)
+
+	err = suite.db.NewSelect().
+		Model(accessToken).
+		Where("token = ?", "test_token_3").
+		Limit(1).
+		Scan(ctx)
+
+	assert.Nil(suite.T(), err)
 }

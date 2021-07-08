@@ -1,0 +1,28 @@
+{
+  "CSRF": {
+    "Key": "my-secure-csrf-key",
+    "Origins": "resonid.merefield.technology,upload.resonate.localhost,beta.resonate.localhost, merefield.technology"
+  },
+  "Mailgun": {
+    "Sender": "postmaster@sandboxXXXX.mailgun.org",
+    "Key": "key-xxx",
+    "Domain": "sandboxxxxxxx.mailgun.org"
+  },
+  "Database": {
+    "PSN": "postgres://resonate_dev_user:password@127.0.0.1:5432/resonate_dev?sslmode=disable"
+  },
+  "Oauth": {
+    "AccessTokenLifetime": 3600,
+    "RefreshTokenLifetime": 1209600,
+    "AuthCodeLifetime": 3600
+  },
+  "Session": {
+    "Secret": "test_secret",
+    "Path": "/",
+    "MaxAge": 604800,
+    "Secure": true,
+    "HTTPOnly": true
+  },
+  "IsDevelopment": true,
+  "Port": ":8080"
+}

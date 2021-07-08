@@ -1,7 +1,9 @@
 package oauth
 
 import (
-	"github.com/RichardKnop/go-oauth2-server/models"
+	"github.com/google/uuid"
+	"github.com/resonatecoop/id/util"
+	"github.com/resonatecoop/user-api/model"
 )
 
 // AccessTokenResponse ...
@@ -25,15 +27,15 @@ type IntrospectResponse struct {
 }
 
 // NewAccessTokenResponse ...
-func NewAccessTokenResponse(accessToken *models.OauthAccessToken, refreshToken *models.OauthRefreshToken, lifetime int, theTokenType string) (*AccessTokenResponse, error) {
+func NewAccessTokenResponse(accessToken *model.AccessToken, refreshToken *model.RefreshToken, lifetime int, theTokenType string) (*AccessTokenResponse, error) {
 	response := &AccessTokenResponse{
 		AccessToken: accessToken.Token,
 		ExpiresIn:   lifetime,
 		TokenType:   theTokenType,
 		Scope:       accessToken.Scope,
 	}
-	if accessToken.UserID.Valid {
-		response.UserID = accessToken.UserID.String
+	if util.IsValidUUID(accessToken.UserID.String()) && accessToken.UserID != uuid.Nil {
+		response.UserID = accessToken.UserID.String()
 	}
 	if refreshToken != nil {
 		response.RefreshToken = refreshToken.Token

@@ -5,9 +5,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/RichardKnop/go-oauth2-server/config"
-	"github.com/RichardKnop/go-oauth2-server/session"
 	"github.com/gorilla/sessions"
+	"github.com/resonatecoop/id/config"
+	"github.com/resonatecoop/id/session"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )

@@ -1,9 +1,12 @@
 package web
 
 import (
+	"encoding/json"
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"net/http"
+	"os"
 	"path/filepath"
 
 	"github.com/oxtoacart/bpool"
@@ -14,6 +17,31 @@ var (
 	bufpool   *bpool.BufferPool
 	loaded    = false
 )
+
+// load and parse hash.json from data dir
+func loadData(dirname string) (map[string]interface{}, error) {
+	data, err := os.Open(filepath.Join("data", dirname, "hash.json"))
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer data.Close()
+
+	byteValue, err := ioutil.ReadAll(data)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var result map[string]interface{}
+
+	if err = json.Unmarshal([]byte(byteValue), &result); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
 
 // renderTemplate is a wrapper around template.ExecuteTemplate.
 // It writes into a bytes.Buffer before writing to the http.ResponseWriter to catch
@@ -27,11 +55,27 @@ func renderTemplate(w http.ResponseWriter, name string, data map[string]interfac
 		return fmt.Errorf("The template %s does not exist", name)
 	}
 
+	js, err := loadData("js")
+
+	if err != nil {
+		return err
+	}
+
+	data["javascript"] = js["main.js"]
+
+	style, err := loadData("css")
+
+	if err != nil {
+		return err
+	}
+
+	data["stylesheet"] = style["index.css"]
+
 	// Create a buffer to temporarily write to and check if any errors were encountered.
 	buf := bufpool.Get()
 	defer bufpool.Put(buf)
 
-	err := tmpl.ExecuteTemplate(buf, "base", data)
+	err = tmpl.ExecuteTemplate(buf, "base", data)
 	if err != nil {
 		return err
 	}
@@ -43,7 +87,10 @@ func renderTemplate(w http.ResponseWriter, name string, data map[string]interfac
 	w.Header().Set("X-Frame-Options", "deny")
 	// Set the header and write the buffer to the http.ResponseWriter
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	buf.WriteTo(w)
+	_, err = buf.WriteTo(w)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -58,11 +105,20 @@ func loadTemplates() {
 
 	layoutTemplates := map[string][]string{
 		"web/layouts/outside.html": {
-			"./web/includes/register.html",
+			"./web/includes/join.html",
 			"./web/includes/login.html",
+			"./web/includes/password_reset.html",
+			"./web/includes/password_reset_update_password.html",
+			"./web/includes/home.html",
 		},
 		"web/layouts/inside.html": {
 			"./web/includes/authorize.html",
+			"./web/includes/client.html",
+			"./web/includes/welcome.html",
+			"./web/includes/account_settings.html",
+			"./web/includes/profile.html",
+			"./web/includes/profile_label.html",
+			"./web/includes/profile_artist.html",
 		},
 	}
 

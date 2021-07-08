@@ -1,0 +1,13 @@
+.notifications-component {
+  right: 5rem;
+  bottom: 3rem;
+}
+
+.notifications-component li.message {
+  &.error .icon {
+    fill: var(--red);
+  }
+  &.success .icon {
+    fill: var(--green);
+  }
+}

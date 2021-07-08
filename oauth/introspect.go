@@ -1,11 +1,14 @@
 package oauth
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
-	"github.com/RichardKnop/go-oauth2-server/models"
-	"github.com/RichardKnop/go-oauth2-server/oauth/tokentypes"
+	"github.com/google/uuid"
+	"github.com/resonatecoop/id/oauth/tokentypes"
+	"github.com/resonatecoop/id/util"
+	"github.com/resonatecoop/user-api/model"
 )
 
 const (
@@ -22,7 +25,7 @@ var (
 	ErrTokenHintInvalid = errors.New("Invalid token hint")
 )
 
-func (s *Service) introspectToken(r *http.Request, client *models.OauthClient) (*IntrospectResponse, error) {
+func (s *Service) introspectToken(r *http.Request, client *model.Client) (*IntrospectResponse, error) {
 	// Parse the form so r.Form becomes available
 	if err := r.ParseForm(); err != nil {
 		return nil, err
@@ -61,7 +64,8 @@ func (s *Service) introspectToken(r *http.Request, client *models.OauthClient) (
 }
 
 // NewIntrospectResponseFromAccessToken ...
-func (s *Service) NewIntrospectResponseFromAccessToken(accessToken *models.OauthAccessToken) (*IntrospectResponse, error) {
+func (s *Service) NewIntrospectResponseFromAccessToken(accessToken *model.AccessToken) (*IntrospectResponse, error) {
+	ctx := context.Background()
 	var introspectResponse = &IntrospectResponse{
 		Active:    true,
 		Scope:     accessToken.Scope,
@@ -69,23 +73,32 @@ func (s *Service) NewIntrospectResponseFromAccessToken(accessToken *models.Oauth
 		ExpiresAt: int(accessToken.ExpiresAt.Unix()),
 	}
 
-	if accessToken.ClientID.Valid {
-		client := new(models.OauthClient)
-		notFound := s.db.Select("key").First(client, accessToken.ClientID.String).
-			RecordNotFound()
-		if notFound {
+	if util.IsValidUUID(accessToken.ClientID.String()) && accessToken.ClientID != uuid.Nil {
+		client := new(model.Client)
+		err := s.db.NewSelect().
+			Model(client).
+			Column("key").
+			Where("id = ?", accessToken.ClientID.String()).
+			Limit(1).
+			Scan(ctx)
+		if err != nil {
 			return nil, ErrClientNotFound
 		}
 		introspectResponse.ClientID = client.Key
 	}
 
-	if accessToken.UserID.Valid {
-		user := new(models.OauthUser)
-		notFound := s.db.Select("username").Where("id = ?", accessToken.UserID.String).
-			First(user, accessToken.UserID.String).RecordNotFound()
-		if notFound {
+	if util.IsValidUUID(accessToken.UserID.String()) && accessToken.UserID != uuid.Nil {
+		user := new(model.User)
+		err := s.db.NewSelect().
+			Model(user).
+			Column("username").
+			Where("id = ?", accessToken.UserID.String()).
+			Limit(1).
+			Scan(ctx)
+		if err != nil {
 			return nil, ErrUserNotFound
 		}
+
 		introspectResponse.Username = user.Username
 	}
 
@@ -93,7 +106,8 @@ func (s *Service) NewIntrospectResponseFromAccessToken(accessToken *models.Oauth
 }
 
 // NewIntrospectResponseFromRefreshToken ...
-func (s *Service) NewIntrospectResponseFromRefreshToken(refreshToken *models.OauthRefreshToken) (*IntrospectResponse, error) {
+func (s *Service) NewIntrospectResponseFromRefreshToken(refreshToken *model.RefreshToken) (*IntrospectResponse, error) {
+	ctx := context.Background()
 	var introspectResponse = &IntrospectResponse{
 		Active:    true,
 		Scope:     refreshToken.Scope,
@@ -101,23 +115,32 @@ func (s *Service) NewIntrospectResponseFromRefreshToken(refreshToken *models.Oau
 		ExpiresAt: int(refreshToken.ExpiresAt.Unix()),
 	}
 
-	if refreshToken.ClientID.Valid {
-		client := new(models.OauthClient)
-		notFound := s.db.Select("key").First(client, refreshToken.ClientID.String).
-			RecordNotFound()
-		if notFound {
+	if util.IsValidUUID(refreshToken.ClientID.String()) && refreshToken.ClientID != uuid.Nil {
+		client := new(model.Client)
+		err := s.db.NewSelect().
+			Model(client).
+			Column("key").
+			Where("id = ?", refreshToken.ClientID.String()).
+			Limit(1).
+			Scan(ctx)
+		if err != nil {
 			return nil, ErrClientNotFound
 		}
 		introspectResponse.ClientID = client.Key
 	}
 
-	if refreshToken.UserID.Valid {
-		user := new(models.OauthUser)
-		notFound := s.db.Select("username").Where("id = ?", refreshToken.UserID.String).
-			First(user, refreshToken.UserID.String).RecordNotFound()
-		if notFound {
+	if util.IsValidUUID(refreshToken.UserID.String()) && refreshToken.UserID != uuid.Nil {
+		user := new(model.User)
+		err := s.db.NewSelect().
+			Model(user).
+			Column("username").
+			Where("id = ?", refreshToken.UserID.String()).
+			Limit(1).
+			Scan(ctx)
+		if err != nil {
 			return nil, ErrUserNotFound
 		}
+
 		introspectResponse.Username = user.Username
 	}
 
