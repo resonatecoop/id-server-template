@@ -7,7 +7,7 @@ WORKDIR /build
 
 RUN export GO111MODULE=on
 RUN apt-get -y update
-RUN go get github.com/resonatecoop/id
+RUN go get github.com/resonatecoop/id@latest
 RUN cd /build && git clone https://github.com/resonatecoop/id
 
 RUN cd id-server && go build
