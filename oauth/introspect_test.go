@@ -30,6 +30,7 @@ func (suite *OauthTestSuite) TestNewIntrospectResponseFromAccessToken() {
 		TokenType: tokentypes.Bearer,
 		ExpiresAt: int(accessToken.ExpiresAt.Unix()),
 		ClientID:  suite.clients[0].Key,
+		UserID:    accessToken.UserID.String(),
 		Username:  suite.users[0].Username,
 	}
 
@@ -64,6 +65,7 @@ func (suite *OauthTestSuite) TestNewIntrospectResponseFromRefreshToken() {
 		TokenType: tokentypes.Bearer,
 		ExpiresAt: int(refreshToken.ExpiresAt.Unix()),
 		ClientID:  suite.clients[0].Key,
+		UserID:    refreshToken.UserID.String(),
 		Username:  suite.users[0].Username,
 	}
 
