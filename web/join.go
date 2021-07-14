@@ -152,7 +152,6 @@ func (s *Service) createUser(r *http.Request) (
 
 	// create the API client, with the transport
 	client := apiclient.New(transport, strfmt.Default)
-	bearer := httptransport.BearerToken("test_token_superadmin")
 
 	// Create a user
 	params := users.NewResonateUserAddUserParamsWithTimeout(10 * time.Second)
@@ -162,7 +161,7 @@ func (s *Service) createUser(r *http.Request) (
 		Country:  r.Form.Get("country"),
 	}
 
-	_, err := client.Users.ResonateUserAddUser(params, bearer)
+	_, err := client.Users.ResonateUserAddUser(params, nil)
 
 	if err != nil {
 		return nil, err
