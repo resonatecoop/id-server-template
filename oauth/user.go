@@ -257,6 +257,7 @@ func (s *Service) createUserCommon(db *bun.DB, roleID int32, username, password 
 
 	// Create the user
 	_, err = db.NewInsert().
+		Column("id", "username", "password", "role_id", "tenant_id").
 		Model(user).
 		Exec(ctx)
 
