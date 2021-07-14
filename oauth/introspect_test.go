@@ -46,6 +46,7 @@ func (suite *OauthTestSuite) TestNewIntrospectResponseFromAccessToken() {
 
 	accessToken.UserID = uuid.Nil
 	expected.Username = ""
+	expected.UserID = ""
 	actual, err = suite.service.NewIntrospectResponseFromAccessToken(accessToken)
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), expected, actual)
@@ -81,6 +82,7 @@ func (suite *OauthTestSuite) TestNewIntrospectResponseFromRefreshToken() {
 
 	refreshToken.UserID = uuid.Nil
 	expected.Username = ""
+	expected.UserID = ""
 	actual, err = suite.service.NewIntrospectResponseFromRefreshToken(refreshToken)
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), expected, actual)
