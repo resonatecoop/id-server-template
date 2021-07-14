@@ -13,6 +13,13 @@ import (
 
 	"github.com/gorilla/csrf"
 	"github.com/pariz/gountries"
+
+	"github.com/resonatecoop/user-api-client/client/users"
+	"github.com/resonatecoop/user-api-client/models"
+
+	httptransport "github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
+	apiclient "github.com/resonatecoop/user-api-client/client"
 )
 
 func (s *Service) joinForm(w http.ResponseWriter, r *http.Request) {
@@ -61,8 +68,25 @@ func (s *Service) join(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	httpClient, _ := httptransport.TLSClient(httptransport.TLSClientOptions{
+		InsecureSkipVerify: true,
+	})
+
+	transport := httptransport.NewWithClient("api.resonate.localhost", "", nil, httpClient)
+
+	// create the API client, with the transport
+	client := apiclient.New(transport, strfmt.Default)
+	bearer := httptransport.BearerToken("test_token_superadmin")
+
 	// Create a user
-	user, err := s.createUser(r)
+	params := users.NewResonateUserAddUserParamsWithTimeout(10000000)
+
+	params.Body = &models.UserUserAddRequest{
+		Username: r.Form.Get("email"),
+		Country:  r.Form.Get("country"),
+	}
+
+	_, err = client.Users.ResonateUserAddUser(params, bearer)
 
 	if err != nil {
 		switch r.Header.Get("Accept") {
@@ -82,31 +106,23 @@ func (s *Service) join(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if r.Form.Get("country") != "" {
-		// set user country but do not throw
-		if err = s.oauthService.SetUserCountry(
-			user,
-			r.Form.Get("country"),
-		); err != nil {
-			log.ERROR.Print(err)
-		}
-	}
+	// message := fmt.Sprintf(
+	//	"A confirmation email will be sent to %s", user.Username,
+	//)
 
-	message := fmt.Sprintf(
-		"A confirmation email will be sent to %s", user.Username,
-	)
-
-	if r.Header.Get("Accept") == "application/json" {
-		obj := map[string]interface{}{
-			"message": message,
-			"status":  http.StatusCreated,
+	/*
+		if r.Header.Get("Accept") == "application/json" {
+			obj := map[string]interface{}{
+				"message": message,
+				"status":  http.StatusCreated,
+			}
+			response.WriteJSON(w, obj, http.StatusCreated)
+		} else {
+			query := r.URL.Query()
+			query.Set("login_redirect_uri", "/web/welcome")
+			redirectWithQueryString("/web/login", query, w, r)
 		}
-		response.WriteJSON(w, obj, http.StatusCreated)
-	} else {
-		query := r.URL.Query()
-		query.Set("login_redirect_uri", "/web/welcome")
-		redirectWithQueryString("/web/login", query, w, r)
-	}
+	*/
 
 	_, err = s.oauthService.SendEmailToken(
 		model.NewOauthEmail(
@@ -123,22 +139,4 @@ func (s *Service) join(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.ERROR.Print(err)
 	}
-}
-
-func (s *Service) createUser(r *http.Request) (
-	*model.User,
-	error,
-) {
-
-	user, err := s.oauthService.CreateUser(
-		int32(model.UserRole),  // role ID
-		r.Form.Get("email"),    // username
-		r.Form.Get("password"), // password
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return user, nil
 }
