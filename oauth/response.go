@@ -18,6 +18,7 @@ type AccessTokenResponse struct {
 
 // IntrospectResponse ...
 type IntrospectResponse struct {
+	UserID    string `json:"user_id,omitempty"`
 	Active    bool   `json:"active"`
 	Scope     string `json:"scope,omitempty"`
 	ClientID  string `json:"client_id,omitempty"`

@@ -100,6 +100,7 @@ func (s *Service) NewIntrospectResponseFromAccessToken(accessToken *model.Access
 		}
 
 		introspectResponse.Username = user.Username
+		introspectResponse.UserID = accessToken.UserID.String()
 	}
 
 	return introspectResponse, nil
@@ -142,6 +143,7 @@ func (s *Service) NewIntrospectResponseFromRefreshToken(refreshToken *model.Refr
 		}
 
 		introspectResponse.Username = user.Username
+		introspectResponse.UserID = refreshToken.UserID.String()
 	}
 
 	return introspectResponse, nil

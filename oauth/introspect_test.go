@@ -30,6 +30,7 @@ func (suite *OauthTestSuite) TestNewIntrospectResponseFromAccessToken() {
 		TokenType: tokentypes.Bearer,
 		ExpiresAt: int(accessToken.ExpiresAt.Unix()),
 		ClientID:  suite.clients[0].Key,
+		UserID:    accessToken.UserID.String(),
 		Username:  suite.users[0].Username,
 	}
 
@@ -45,6 +46,7 @@ func (suite *OauthTestSuite) TestNewIntrospectResponseFromAccessToken() {
 
 	accessToken.UserID = uuid.Nil
 	expected.Username = ""
+	expected.UserID = ""
 	actual, err = suite.service.NewIntrospectResponseFromAccessToken(accessToken)
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), expected, actual)
@@ -64,6 +66,7 @@ func (suite *OauthTestSuite) TestNewIntrospectResponseFromRefreshToken() {
 		TokenType: tokentypes.Bearer,
 		ExpiresAt: int(refreshToken.ExpiresAt.Unix()),
 		ClientID:  suite.clients[0].Key,
+		UserID:    refreshToken.UserID.String(),
 		Username:  suite.users[0].Username,
 	}
 
@@ -79,6 +82,7 @@ func (suite *OauthTestSuite) TestNewIntrospectResponseFromRefreshToken() {
 
 	refreshToken.UserID = uuid.Nil
 	expected.Username = ""
+	expected.UserID = ""
 	actual, err = suite.service.NewIntrospectResponseFromRefreshToken(refreshToken)
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), expected, actual)
