@@ -10,19 +10,15 @@ import (
 	"github.com/mailgun/mailgun-go/v4"
 	"github.com/pariz/gountries"
 	"github.com/resonatecoop/id/log"
-	"github.com/resonatecoop/id/util"
 	pass "github.com/resonatecoop/id/util/password"
 	"github.com/resonatecoop/user-api/model"
-	"github.com/trustelem/zxcvbn"
 	"github.com/uptrace/bun"
 )
 
 var (
 	// MinPasswordLength defines minimum password length
-	MinPasswordLength = 9
-	MaxPasswordLength = 72
-	MaxLoginLength    = 50
-	MinLoginLength    = 3
+	MaxLoginLength = 50
+	MinLoginLength = 3
 
 	// ErrLoginTooShort ...
 	ErrLoginTooShort = fmt.Errorf(
@@ -36,32 +32,16 @@ var (
 		MaxLoginLength,
 	)
 
-	// ErrPasswordTooShort ...
-	ErrPasswordTooShort = fmt.Errorf(
-		"Password must be at least %d characters long",
-		MinPasswordLength,
-	)
-
-	// ErrPasswordTooLong ...
-	ErrPasswordTooLong = fmt.Errorf(
-		"Password must be at maximum %d characters long",
-		MaxPasswordLength,
-	)
-
 	// ErrLoginRequired ...
 	ErrLoginRequired = errors.New("Login is required")
 	// ErrDisplayNameRequired ...
 	ErrDisplayNameRequired = errors.New("Display Name is required")
-	// ErrPasswordRequired ...
-	ErrPasswordRequired = errors.New("Password is required")
 	// ErrUsernameRequired ...
 	ErrUsernameRequired = errors.New("Email is required")
 	// ErrUserNotFound ...
 	ErrUserNotFound = errors.New("User not found")
 	// ErrInvalidUserPassword ...
 	ErrInvalidUserPassword = errors.New("Invalid user password")
-	// ErrPasswordTooWeak ...
-	ErrPasswordTooWeak = errors.New("Password is too weak")
 	// ErrCannotSetEmptyUsername ...
 	ErrCannotSetEmptyUsername = errors.New("Cannot set empty username")
 	// ErrUserPasswordNotSet ...
@@ -119,16 +99,6 @@ func (s *Service) FindUserByEmail(email string) (*model.User, error) {
 	}
 
 	return user, nil
-}
-
-// CreateUser saves a new user to database
-func (s *Service) CreateUser(roleID int32, username, password string) (*model.User, error) {
-	return s.createUserCommon(s.db, roleID, username, password)
-}
-
-// CreateUserTx saves a new user to database using injected db object
-func (s *Service) CreateUserTx(tx *bun.DB, roleID int32, username, password string) (*model.User, error) {
-	return s.createUserCommon(tx, roleID, username, password)
 }
 
 // SetPassword sets a user password
@@ -204,69 +174,6 @@ func (s *Service) SetUserCountryTx(tx *bun.DB, user *model.User, country string)
 	return s.setUserCountryCommon(tx, user, country)
 }
 
-func (s *Service) createUserCommon(db *bun.DB, roleID int32, username, password string) (*model.User, error) {
-	ctx := context.Background()
-
-	if password == "" {
-		return nil, ErrPasswordRequired
-	}
-
-	if username == "" {
-		return nil, ErrUsernameRequired
-	}
-
-	user := &model.User{
-		RoleID:   roleID,
-		Username: strings.ToLower(username),
-		Password: util.StringOrNull(""),
-	}
-
-	if len(password) < MinPasswordLength {
-		return nil, ErrPasswordTooShort
-	}
-
-	if len(password) > MaxPasswordLength {
-		return nil, ErrPasswordTooLong
-	}
-
-	// enforce strong enough passwords
-	passwordStrength := zxcvbn.PasswordStrength(password, nil)
-
-	if passwordStrength.Score < 3 {
-		return nil, ErrPasswordTooWeak
-	}
-
-	// hash bcrypt password
-	passwordHash, err := pass.HashPassword(password)
-
-	if err != nil {
-		return nil, err
-	}
-
-	user.Password = util.StringOrNull(string(passwordHash))
-
-	// Check if email address is valid
-	if !util.ValidateEmail(user.Username) {
-		return nil, ErrEmailInvalid
-	}
-
-	// Check the email/username is available
-	if s.UserExists(user.Username) {
-		return nil, ErrUsernameTaken
-	}
-
-	// Create the user
-	_, err = db.NewInsert().
-		Model(user).
-		Exec(ctx)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return user, nil
-}
-
 // Delete user will soft delete  user
 func (s *Service) DeleteUser(user *model.User, password string) error {
 	return s.deleteUserCommon(s.db, user, password)
@@ -336,33 +243,11 @@ func (s *Service) deleteUserCommon(db *bun.DB, user *model.User, password string
 func (s *Service) setPasswordCommon(db *bun.DB, user *model.User, password string) error {
 	ctx := context.Background()
 
-	if len(password) < MinPasswordLength {
-		return ErrPasswordTooShort
-	}
-
-	if len(password) > MaxPasswordLength {
-		return ErrPasswordTooLong
-	}
-
-	// enforce strong enough passwords
-	passwordStrength := zxcvbn.PasswordStrength(password, nil)
-
-	if passwordStrength.Score < 3 {
-		return ErrPasswordTooWeak
-	}
-
 	// Create a bcrypt hash
 	passwordHash, err := pass.HashPassword(password)
 	if err != nil {
 		return err
 	}
-
-	// userUpdates := &model.User{
-	// 	IDRecord: model.IDRecord{
-	// 		UpdatedAt: time.Now().UTC(),
-	// 	},
-	// 	Password: ,
-	// }
 
 	// Set the password on the user object
 	_, err = db.NewUpdate().

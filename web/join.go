@@ -2,6 +2,7 @@ package web
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -9,6 +10,8 @@ import (
 
 	"github.com/resonatecoop/id/log"
 	"github.com/resonatecoop/id/session"
+	"github.com/resonatecoop/id/util"
+	"github.com/resonatecoop/id/util/password"
 	"github.com/resonatecoop/id/util/response"
 	"github.com/resonatecoop/user-api/model"
 
@@ -21,6 +24,11 @@ import (
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 	apiclient "github.com/resonatecoop/user-api-client/client"
+)
+
+var (
+	// ErrEmailInvalid
+	ErrEmailInvalid = errors.New("Not a valid email")
 )
 
 func (s *Service) joinForm(w http.ResponseWriter, r *http.Request) {
@@ -69,25 +77,7 @@ func (s *Service) join(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httpClient, _ := httptransport.TLSClient(httptransport.TLSClientOptions{
-		InsecureSkipVerify: true,
-	})
-
-	transport := httptransport.NewWithClient("0.0.0.0:11000", "", nil, httpClient)
-
-	// create the API client, with the transport
-	client := apiclient.New(transport, strfmt.Default)
-	bearer := httptransport.BearerToken("test_token_superadmin")
-
-	// Create a user
-	params := users.NewResonateUserAddUserParamsWithTimeout(10 * time.Second)
-
-	params.Body = &models.UserUserAddRequest{
-		Username: r.Form.Get("email"),
-		Country:  r.Form.Get("country"),
-	}
-
-	_, err = client.Users.ResonateUserAddUser(params, bearer)
+	user, err := s.createUser(r)
 
 	if err != nil {
 		switch r.Header.Get("Accept") {
@@ -107,23 +97,21 @@ func (s *Service) join(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// message := fmt.Sprintf(
-	//	"A confirmation email will be sent to %s", user.Username,
-	//)
+	message := fmt.Sprintf(
+		"A confirmation email will be sent to %s", user.Username,
+	)
 
-	/*
-		if r.Header.Get("Accept") == "application/json" {
-			obj := map[string]interface{}{
-				"message": message,
-				"status":  http.StatusCreated,
-			}
-			response.WriteJSON(w, obj, http.StatusCreated)
-		} else {
-			query := r.URL.Query()
-			query.Set("login_redirect_uri", "/web/welcome")
-			redirectWithQueryString("/web/login", query, w, r)
+	if r.Header.Get("Accept") == "application/json" {
+		obj := map[string]interface{}{
+			"message": message,
+			"status":  http.StatusCreated,
 		}
-	*/
+		response.WriteJSON(w, obj, http.StatusCreated)
+	} else {
+		query := r.URL.Query()
+		query.Set("login_redirect_uri", "/web/welcome")
+		redirectWithQueryString("/web/login", query, w, r)
+	}
 
 	_, err = s.oauthService.SendEmailToken(
 		model.NewOauthEmail(
@@ -140,4 +128,55 @@ func (s *Service) join(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.ERROR.Print(err)
 	}
+}
+
+func (s *Service) createUser(r *http.Request) (
+	*model.User,
+	error,
+) {
+	// first validate password before calling user-api
+	if err := password.ValidatePassword(r.Form.Get("password")); err != nil {
+		return nil, err
+	}
+
+	// Check if email address is valid
+	if !util.ValidateEmail(r.Form.Get("email")) {
+		return nil, ErrEmailInvalid
+	}
+
+	httpClient, _ := httptransport.TLSClient(httptransport.TLSClientOptions{
+		InsecureSkipVerify: true,
+	})
+
+	transport := httptransport.NewWithClient("0.0.0.0:11000", "", nil, httpClient)
+
+	// create the API client, with the transport
+	client := apiclient.New(transport, strfmt.Default)
+	bearer := httptransport.BearerToken("test_token_superadmin")
+
+	// Create a user
+	params := users.NewResonateUserAddUserParamsWithTimeout(10 * time.Second)
+
+	params.Body = &models.UserUserAddRequest{
+		Username: r.Form.Get("email"),
+		Country:  r.Form.Get("country"),
+	}
+
+	_, err := client.Users.ResonateUserAddUser(params, bearer)
+
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := s.oauthService.FindUserByUsername(r.Form.Get("email"))
+
+	if err != nil {
+		return nil, err
+	}
+
+	if err = s.oauthService.SetPassword(user, r.Form.Get("password")); err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }

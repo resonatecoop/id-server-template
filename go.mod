@@ -9,40 +9,53 @@ require (
 	github.com/didip/tollbooth v4.0.2+incompatible
 	github.com/didip/tollbooth_negroni v0.0.0-20170928042109-a4e3efc33255
 	github.com/dlclark/regexp2 v1.4.0 // indirect
+	github.com/fatih/color v1.12.0 // indirect
 	github.com/form3tech-oss/jwt-go v3.2.3+incompatible
 	github.com/go-openapi/runtime v0.19.29
 	github.com/go-openapi/strfmt v0.20.1
-	github.com/google/uuid v1.2.0
+	github.com/google/uuid v1.3.0
 	github.com/gorilla/context v1.1.1
 	github.com/gorilla/csrf v1.7.0
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/sessions v1.2.1
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.5.0 // indirect
 	github.com/hashicorp/consul/api v1.8.1
-	github.com/jackc/pgx/v4 v4.11.0
+	github.com/jackc/pgx/v4 v4.12.0
+	github.com/json-iterator/go v1.1.11 // indirect
 	github.com/lib/pq v1.10.2
 	github.com/mailgun/mailgun-go/v4 v4.5.1
+	github.com/mattn/go-isatty v0.0.13 // indirect
+	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c
 	github.com/pariz/gountries v0.0.0-20200430155801-1c6a393df9c7
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/phyber/negroni-gzip v1.0.0
-	github.com/resonatecoop/user-api v0.0.0-20210625131734-6049b51fd27a
+	github.com/resonatecoop/user-api v0.0.0-20210714154054-448d362dcddf
 	github.com/resonatecoop/user-api-client v0.0.0-20210714130047-0de9eb8b32b4
 	github.com/rs/xid v1.3.0
+	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/test-go/testify v1.1.4 // indirect
 	github.com/thanhpk/randstr v1.0.4
 	github.com/trustelem/zxcvbn v1.0.1
 	github.com/unrolled/secure v1.0.9
-	github.com/uptrace/bun v0.2.8
-	github.com/uptrace/bun/dialect/pgdialect v0.1.17
-	github.com/uptrace/bun/extra/bundebug v0.1.17
+	github.com/uptrace/bun v0.3.2
+	github.com/uptrace/bun/dialect/pgdialect v0.3.2
+	github.com/uptrace/bun/extra/bundebug v0.3.2
 	github.com/urfave/cli v1.22.5
 	github.com/urfave/negroni v1.0.0
 	go.etcd.io/etcd v0.0.0-20191023171146-3cf2f69b5738
-	go.etcd.io/etcd/api/v3 v3.5.0-rc.0
+	go.etcd.io/etcd/api/v3 v3.5.0
+	go.etcd.io/etcd/client/pkg/v3 v3.5.0 // indirect
 	go.etcd.io/etcd/client/v3 v3.5.0-rc.0
-	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
-	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4
+	go.uber.org/atomic v1.8.0 // indirect
+	go.uber.org/multierr v1.7.0 // indirect
+	go.uber.org/zap v1.18.1 // indirect
+	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
+	golang.org/x/net v0.0.0-20210614182718-04defd469f4e
+	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba // indirect
+	google.golang.org/genproto v0.0.0-20210714021259-044028024a4f // indirect
+	google.golang.org/grpc v1.40.0-dev.0.20210623211556-d9eb12feed7a // indirect
 	gopkg.in/tylerb/graceful.v1 v1.2.15
 )
