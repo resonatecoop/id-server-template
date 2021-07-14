@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"time"
 
 	"github.com/resonatecoop/id/log"
 	"github.com/resonatecoop/id/session"
@@ -72,14 +73,14 @@ func (s *Service) join(w http.ResponseWriter, r *http.Request) {
 		InsecureSkipVerify: true,
 	})
 
-	transport := httptransport.NewWithClient("api.resonate.localhost", "", nil, httpClient)
+	transport := httptransport.NewWithClient("0.0.0.0:11000", "", nil, httpClient)
 
 	// create the API client, with the transport
 	client := apiclient.New(transport, strfmt.Default)
 	bearer := httptransport.BearerToken("test_token_superadmin")
 
 	// Create a user
-	params := users.NewResonateUserAddUserParamsWithTimeout(10000000)
+	params := users.NewResonateUserAddUserParamsWithTimeout(10 * time.Second)
 
 	params.Body = &models.UserUserAddRequest{
 		Username: r.Form.Get("email"),
