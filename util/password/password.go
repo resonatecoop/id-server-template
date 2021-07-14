@@ -71,6 +71,7 @@ func HashWpPassword(password string) ([]byte, error) {
 	return passwordHashWp, nil
 }
 
+// ValidatePassword
 func ValidatePassword(password string) error {
 	if len(password) < MinPasswordLength {
 		return ErrPasswordTooShort
