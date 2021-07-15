@@ -1,16 +1,37 @@
 package password
 
 import (
+	"errors"
 	"fmt"
-	"github.com/apokalyptik/phpass"
-	"golang.org/x/crypto/bcrypt"
 	"os"
 	"sync"
+
+	"github.com/apokalyptik/phpass"
+	"github.com/trustelem/zxcvbn"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var (
 	phpassVar   = phpass.New(phpass.NewConfig())
 	phpassMutex = &sync.Mutex{}
+
+	MinPasswordLength = 9
+	MaxPasswordLength = 72
+
+	// ErrPasswordTooShort ...
+	ErrPasswordTooShort = fmt.Errorf(
+		"Password must be at least %d characters long",
+		MinPasswordLength,
+	)
+
+	// ErrPasswordTooLong ...
+	ErrPasswordTooLong = fmt.Errorf(
+		"Password must be at maximum %d characters long",
+		MaxPasswordLength,
+	)
+
+	// ErrPasswordTooWeak ...
+	ErrPasswordTooWeak = errors.New("Password is too weak")
 )
 
 // VerifyPassword compares password and the hashed password
@@ -48,4 +69,24 @@ func HashWpPassword(password string) ([]byte, error) {
 		return nil, err
 	}
 	return passwordHashWp, nil
+}
+
+// ValidatePassword
+func ValidatePassword(password string) error {
+	if len(password) < MinPasswordLength {
+		return ErrPasswordTooShort
+	}
+
+	if len(password) > MaxPasswordLength {
+		return ErrPasswordTooLong
+	}
+
+	// enforce strong enough passwords
+	passwordStrength := zxcvbn.PasswordStrength(password, nil)
+
+	if passwordStrength.Score < 3 {
+		return ErrPasswordTooWeak
+	}
+
+	return nil
 }

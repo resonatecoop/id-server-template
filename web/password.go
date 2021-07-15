@@ -1,10 +1,14 @@
 package web
 
 import (
+	"context"
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/csrf"
+	"github.com/mailgun/mailgun-go/v4"
+	"github.com/resonatecoop/id/log"
 	"github.com/resonatecoop/id/session"
 	pass "github.com/resonatecoop/id/util/password"
 	"github.com/resonatecoop/id/util/response"
@@ -84,11 +88,9 @@ func (s *Service) passwordUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	message := "Your password has been successfully changed"
-
 	if r.Header.Get("Accept") == "application/json" {
 		response.WriteJSON(w, map[string]interface{}{
-			"message": message,
+			"message": "Your password has been successfully changed",
 			"status":  http.StatusOK,
 		}, http.StatusOK)
 		return
@@ -96,11 +98,40 @@ func (s *Service) passwordUpdate(w http.ResponseWriter, r *http.Request) {
 
 	err = sessionService.SetFlashMessage(&session.Flash{
 		Type:    "Info",
-		Message: message,
+		Message: "Your password has been successfully changed",
 	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+
+	// Inform user by email password was changed
+	mg := mailgun.NewMailgun(s.cnf.Mailgun.Domain, s.cnf.Mailgun.Key)
+	sender := s.cnf.Mailgun.Sender
+	body := ""
+	email := model.NewOauthEmail(
+		user.Username,
+		"Password changed",
+		"password-changed",
+	)
+	subject := email.Subject
+	recipient := email.Recipient
+	message := mg.NewMessage(sender, subject, body, recipient)
+	message.SetTemplate(email.Template) // set mailgun template
+	err = message.AddTemplateVariable("email", recipient)
+
+	if err != nil {
+		log.ERROR.Print(err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	// Send the message with a 10 second timeout
+	_, _, err = mg.Send(ctx, message)
+
+	if err != nil {
+		log.ERROR.Print(err)
 	}
 
 	redirectWithQueryString("/web/account-settings", r.URL.Query(), w, r)

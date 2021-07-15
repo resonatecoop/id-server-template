@@ -62,4 +62,6 @@ type Config struct {
 	ApplicationURL      string
 	Origins             []string
 	EmailTokenSecretKey string
+	UserAPIHostname     string
+	UserAPIPort         string
 }
