@@ -32,8 +32,6 @@ type ServiceInterface interface {
 	UserExists(username string) bool
 	FindUserByUsername(username string) (*model.User, error)
 	FindUserByEmail(email string) (*model.User, error)
-	CreateUser(roleID int32, username, password string) (*model.User, error)
-	CreateUserTx(tx *bun.DB, roleID int32, username, password string) (*model.User, error)
 	DeleteUser(user *model.User, password string) error
 	DeleteUserTx(tx *bun.DB, user *model.User, password string) error
 	ConfirmUserEmail(email string) error

@@ -27,3 +27,14 @@ func TestVerifyPassword(t *testing.T) {
 	// Test invalid password
 	assert.NotNil(t, password.VerifyPassword("bogus", "password"))
 }
+
+func TestValidatePassword(t *testing.T) {
+	// Test empty password
+	assert.NotNil(t, password.ValidatePassword(""))
+
+	// Test password too short
+	assert.NotNil(t, password.ValidatePassword("bogus"))
+
+	// Test insecure password
+	assert.NotNil(t, password.ValidatePassword("123456789"))
+}

@@ -55,6 +55,8 @@ var Cnf = &Config{
 	ApplicationURL:      "https://upload.resonate.is",
 	Origins:             []string{"upload.resonate.is", "beta.stream.resonate.is"},
 	EmailTokenSecretKey: "super secret key",
+	UserAPIHostname:     "0.0.0.0",
+	UserAPIPort:         ":11000",
 }
 
 // NewConfig loads configuration from etcd and returns *Config struct
