@@ -148,7 +148,8 @@ func (s *Service) createUser(r *http.Request) (
 		InsecureSkipVerify: true,
 	})
 
-	transport := httptransport.NewWithClient("0.0.0.0:11000", "", nil, httpClient)
+	hostname := fmt.Sprintf("%s%s", s.cnf.UserAPIHostname, s.cnf.UserAPIPort)
+	transport := httptransport.NewWithClient(hostname, "", nil, httpClient)
 
 	// create the API client, with the transport
 	client := apiclient.New(transport, strfmt.Default)
