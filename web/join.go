@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
-	"time"
 
 	"github.com/resonatecoop/id/log"
 	"github.com/resonatecoop/id/session"
@@ -154,14 +153,14 @@ func (s *Service) createUser(r *http.Request) (
 	// create the API client, with the transport
 	client := apiclient.New(transport, strfmt.Default)
 
-	// Create a user
-	params := users.NewResonateUserAddUserParamsWithTimeout(10 * time.Second)
+	params := users.NewResonateUserAddUserParams()
 
 	params.Body = &models.UserUserAddRequest{
 		Username: r.Form.Get("email"),
 		Country:  r.Form.Get("country"),
 	}
 
+	// Create a user
 	_, err := client.Users.ResonateUserAddUser(params, nil)
 
 	if err != nil {
