@@ -53,6 +53,7 @@ func (s *Service) authorizeForm(w http.ResponseWriter, r *http.Request) {
 	)
 
 	profile := &Profile{
+		Email:          user.Username,
 		EmailConfirmed: user.EmailConfirmed,
 	}
 
