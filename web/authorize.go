@@ -84,7 +84,7 @@ func (s *Service) authorize(w http.ResponseWriter, r *http.Request) {
 	state := r.Form.Get("state")
 
 	// Has the resource owner or authorization server denied the request?
-	authorized := len(r.Form.Get("continue")) > 0
+	authorized := len(r.Form.Get("allow")) > 0
 	if !authorized {
 		errorRedirect(w, r, redirectURI, "access_denied", state, responseType)
 		return
