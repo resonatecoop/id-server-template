@@ -7,6 +7,7 @@ const nanostate = require('nanostate')
 const validateFormdata = require('validate-formdata')
 const ProgressBar = require('../progress-bar')
 const input = require('@resonate/input-element')
+const imagePlaceholder = require('../../lib/image-placeholder')
 
 const uploadFile = (url, opts = {}, onProgress) => {
   return new Promise((resolve, reject) => {
@@ -65,6 +66,9 @@ class ImageUpload extends Component {
 
   createElement (props) {
     this.local.name = props.name || 'cover' // name ref for uploaded file
+    this.local.config = props.config || 'avatar'
+    this.local.archive = props.archive
+
     this.validator = props.validator || this.validator
     this.form = props.form || this.form || {
       changed: false,
@@ -94,7 +98,7 @@ class ImageUpload extends Component {
       data: 'Fetch Again?'
     }[this.machine.state]
 
-    const image = this.local.base64ImageData || this.local.src
+    const image = this.local.base64ImageData || this.local.src || this.local.archive
 
     const fileInput = (options) => {
       const attrs = Object.assign({
@@ -112,47 +116,49 @@ class ImageUpload extends Component {
     }
 
     return html`
-      <div class="flex flex-${this.local.direction} ${this.machine.state === 'dragging' ? 'dragging' : ''}" unresolved>
-        <div class="w-100">
-          <div class="bg-image-placeholder flex relative" style="padding-top:calc(${props.format.height / props.format.width} * 100%);">
-            <div style="background: url(${image}) center center / cover no-repeat;" class="upload absolute top-0 w-100 h-100 flex-auto">
-              <div class="relative w-100 h-100" ondragover=${this.onDragOver} ondrop=${this.onDrop} ondragleave=${this.onDragleave}>
-                ${fileInput({ id: `inputFile-${this._name}` })}
-                <label class="absolute o-0 w-100 h-100 top-0 left-0 right-0 bottom-0 z-1" style="cursor:pointer" for="inputFile-${this._name}">
-                  Upload
-                </label>
+      <div class="flex flex-column">
+        <div class="flex flex-${this.local.direction} ${this.machine.state === 'dragging' ? 'dragging' : ''}" unresolved>
+          <div class="w-100">
+            <div class="bg-image-placeholder flex relative" style="padding-top:calc(${props.format.height / props.format.width} * 100%);">
+              <div style="background: url(${image || imagePlaceholder(400, 400)}) center center / cover no-repeat;" class="upload absolute top-0 w-100 h-100 flex-auto">
+                <div class="relative w-100 h-100" ondragover=${this.onDragOver} ondrop=${this.onDrop} ondragleave=${this.onDragleave}>
+                  ${fileInput({ id: `inputFile-${this._name}` })}
+                  <label class="absolute o-0 w-100 h-100 top-0 left-0 right-0 bottom-0 z-1" style="cursor:pointer" for="inputFile-${this._name}">
+                    Upload
+                  </label>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        <div ondragover=${this.onDragOver} ondrop=${this.onDrop} ondragleave=${this.onDragleave} class="flex ${this.local.direction === 'row' ? 'ml3' : 'mt3'} flex-${this.local.direction === 'column' ? 'row' : 'column'}">
-          <div class="relative grow mr2">
-            ${fileInput({ id: `inputFile-${this._name}-button` })}
-            <label class="dib pv2 ph4 mb1 ba bw b--black-80 ${this.direction === 'column' ? 'mr2' : ''}" for="inputFile-${this._name}-button">Upload</label>
-          </div>
-          ${errors[`inputFile-${this._name}`] || errors[`inputFile-${this._name}-button`]
-            ? html`
-              <p class="lh-copy f5 red">
-                ${errors[`inputFile-${this._name}`].message || errors[`inputFile-${this._name}-button`].message}
-              </p>
-            `
-            : ''
-          }
-          ${errors[this.local.name] ? html`<p class="lh-copy f5 red">${errors[this.local.name].message}</p>` : ''}
-          <div class="flex flex-column">
-            <p class="lh-copy ma0 pa0 f6 grey">For best results, upload a JPG or PNG at ${this.local.ratio}</p>
-            <div class="flex flex-column mt2">
-              ${this.state.cache(ProgressBar, this._name + '-image-upload-progress').render({
-                progress: this.local.progress
-              })}
+          <div ondragover=${this.onDragOver} ondrop=${this.onDrop} ondragleave=${this.onDragleave} class="flex ${this.local.direction === 'row' ? 'ml3' : 'mt3'} flex-${this.local.direction === 'column' ? 'row' : 'column'}">
+            <div class="relative grow mr2">
+              ${fileInput({ id: `inputFile-${this._name}-button` })}
+              <label class="dib pv2 ph4 mb1 ba bw b--black-80 ${this.direction === 'column' ? 'mr2' : ''}" for="inputFile-${this._name}-button">Upload</label>
             </div>
+            ${errors[`inputFile-${this._name}`] || errors[`inputFile-${this._name}-button`]
+              ? html`
+                <p class="lh-copy f5 red">
+                  ${errors[`inputFile-${this._name}`].message || errors[`inputFile-${this._name}-button`].message}
+                </p>
+              `
+              : ''
+            }
+            ${errors[this.local.name] ? html`<p class="lh-copy f5 red">${errors[this.local.name].message}</p>` : ''}
+            <div class="flex flex-column">
+              <p class="lh-copy ma0 pa0 f6 grey">For best results, upload a JPG or PNG at ${this.local.ratio}</p>
+              <div class="flex flex-column mt2">
+                ${this.state.cache(ProgressBar, this._name + '-image-upload-progress').render({
+                  progress: this.local.progress
+                })}
+              </div>
+            </div>
+            ${input({
+              type: 'hidden',
+              id: this.local.name,
+              name: this.local.name,
+              value: values[this.local.name]
+            })}
           </div>
-          ${input({
-            type: 'hidden',
-            id: this.local.name,
-            name: this.local.name,
-            value: values[this.local.name]
-          })}
         </div>
       </div>
     `
@@ -225,11 +231,12 @@ class ImageUpload extends Component {
 
             const formData = new FormData()
             formData.append('uploads', file)
+            formData.append('config', this.local.config)
 
             const response = await uploadFile('/upload', {
               method: 'POST',
               headers: {
-                Authorization: 'Bearer ' + this.state.profile.token
+                Authorization: 'Bearer ' + this.state.token
               },
               body: formData
             }, event => {
@@ -293,7 +300,8 @@ class ImageUpload extends Component {
   }
 
   update (props) {
-    return props.src !== this.local.src
+    return props.src !== this.local.src ||
+      props.config !== this.local.config
   }
 }
 

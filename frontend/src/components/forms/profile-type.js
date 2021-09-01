@@ -1,10 +1,9 @@
-/* global fetch */
-
 const Component = require('choo/component')
 const html = require('choo/html')
 const icon = require('@resonate/icon-element')
 
 // ProfileTypeForm component class
+// creates usergroup (persona,band,label, ...)
 class ProfileTypeForm extends Component {
   /***
    * Create profile type form component
@@ -43,6 +42,10 @@ class ProfileTypeForm extends Component {
     if (!this.local.value) {
       this.local.value = props.value
     }
+
+    this.onSubmit = typeof props.onSubmit === 'function'
+      ? props.onSubmit
+      : this.onSubmit
 
     // form attrs
     const attrs = {
@@ -167,37 +170,13 @@ class ProfileTypeForm extends Component {
     }
   }
 
-  async handleSubmit (e) {
+  handleSubmit (e) {
     e.preventDefault()
 
-    try {
-      let response = await fetch('')
-
-      const csrfToken = response.headers.get('X-CSRF-Token')
-
-      const role = {
-        artist: 'member',
-        listener: 'fans',
-        label: 'label-owner'
-      }[this.local.value]
-
-      const payload = { role }
-
-      response = await fetch('', {
-        method: 'PUT',
-        credentials: 'include',
-        headers: {
-          Accept: 'application/json',
-          'X-CSRF-Token': csrfToken
-        },
-        body: new URLSearchParams(payload)
-      })
-
-      this.emit('set:usergroup', this.local.value) // set usergroup (wp role)
-    } catch (err) {
-      console.log(err)
-    }
+    this.onSubmit(this.local.value)
   }
+
+  onSubmit () {}
 
   update (props) {
     return props.value !== this.local.value

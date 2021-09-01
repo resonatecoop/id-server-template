@@ -7,7 +7,7 @@ module.exports = (state, emit) => {
 
   return html`
     <div class="flex flex-column">
-      <h2 class="f3 fw1 mt3 near-black near-black--light light-gray--dark lh-title">Authorize</h2>
+      <h2 class="f3 fw1 mt3 near-black near-black--light light-gray--dark lh-title">Continue to ${state.applicationName}</h2>
       ${authorize.render()}
     </div>
   `

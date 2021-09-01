@@ -63,9 +63,9 @@ class Authorize extends Component {
     const input = (props) => {
       const attrs = Object.assign({
         type: 'submit',
-        name: 'continue',
+        name: 'allow',
         class: 'bg-white black ba bw b--dark-gray f5 b pv3 ph3 grow',
-        value: 'Continue'
+        value: 'Finish Login'
       }, props)
 
       return html`
@@ -141,20 +141,19 @@ class Authorize extends Component {
     return html`
       <div class="flex flex-column flex-auto">
         <form ${attrs}>
-          <div class="flex flex-column">
-            <p>To continue to the <b>${this.state.applicationName}</b>, please confirm the action.</p>
-          </div>
+          <p>Logging in as ${this.state.profile.email}</p>
+
           <div class="flex">
-            <div class="mr2">
+            <div class="mr3">
               ${input({
-                name: 'continue',
-                value: 'Continue'
+                name: 'allow',
+                value: 'Finish Login'
               })}
             </div>
             <div>
               ${input({
-                name: 'cancel',
-                class: 'bg-transparent white bn f5 b pv3 ph3 grow',
+                name: 'deny',
+                class: 'bg-white black f5 bn b pv3 ph3 grow',
                 value: 'Cancel'
               })}
             </div>

@@ -93,6 +93,8 @@ class ProfileForm extends Component {
           return this.local.machine.emit('request:error')
         }
 
+        this.emit('notify', { message: 'Your account info has been successfully updated' })
+
         this.local.machine.emit('request:resolve')
       } catch (err) {
         this.local.machine.emit('request:reject')
@@ -145,8 +147,8 @@ class ProfileForm extends Component {
 
     return html`
       <div class="flex flex-column flex-auto">
-        ${this.state.cache(Form, 'update-profile-form').render({
-          id: 'profile-form',
+        ${this.state.cache(Form, 'account-form-update').render({
+          id: 'account-form',
           method: 'POST',
           action: '',
           buttonText: 'Update',

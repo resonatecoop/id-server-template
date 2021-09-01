@@ -1,5 +1,3 @@
-/* global fetch */
-
 const html = require('choo/html')
 const Component = require('choo/component')
 const nanostate = require('nanostate')
@@ -13,11 +11,15 @@ const textarea = require('../../elements/textarea')
 const messages = require('./messages')
 
 const Uploader = require('../image-upload')
-const Links = require('../links-input')
+// const Links = require('../links-input')
+const imagePlaceholder = require('../../lib/image-placeholder')
 const inputField = require('../../elements/input-field')
 
-// BasicInfoForm class
-class BasicInfoForm extends Component {
+const SwaggerClient = require('swagger-client')
+const ProfileTypeForm = require('../../components/forms/profile-type')
+
+// ProfileForm class
+class ProfileForm extends Component {
   constructor (id, state, emit) {
     super(id)
 
@@ -37,41 +39,72 @@ class BasicInfoForm extends Component {
           loading: { resolve: 'data', reject: 'error' },
           data: { start: 'loading' },
           error: { start: 'loading', stop: 'idle' }
+        }),
+        machine: nanostate('profileType', {
+          profileType: { next: 'basicInfo' },
+          basicInfo: { next: 'recap', prev: 'profileType' },
+          // customInfo: { next: 'recap', prev: 'basicInfo' }, disabled for now
+          recap: { prev: 'basicForm' }
         })
       })
     })
 
-    this.local.machine.on('request:start', () => {
+    this.local.machine.on('machine:next', () => {
+      if (this.element) {
+        this.rerender()
+      }
     })
 
-    this.local.machine.on('request:reject', () => {
-    })
-
-    this.local.machine.on('request:resolve', () => {
+    this.local.machine.on('machine:prev', () => {
+      if (this.element) {
+        this.rerender()
+      }
     })
 
     this.local.machine.on('form:valid', async () => {
       try {
         this.local.machine.emit('request:start')
 
-        let response = await fetch('')
-
-        const csrfToken = response.headers.get('X-CSRF-Token')
-
-        response = await fetch('', {
-          method: 'PUT',
-          headers: {
-            Accept: 'application/json',
-            'X-CSRF-Token': csrfToken
-          },
-          body: new URLSearchParams({
-            nickname: this.local.data.displayName,
-            city: this.local.data.city,
-            bio: this.local.data.bio
-          })
+        const specUrl = new URL('/user/user.swagger.json', 'https://' + process.env.API_DOMAIN)
+        const client = await new SwaggerClient({
+          url: specUrl.href,
+          authorizations: {
+            bearer: 'Bearer ' + this.state.token
+          }
         })
 
-        this.local.machine.emit('request:resolve')
+        if (!this.local.persona.id) {
+          const response = await client.apis.Usergroups.ResonateUser_AddUserGroup({
+            id: this.state.profile.id,
+            body: {
+              displayName: this.local.data.displayName,
+              description: this.local.data.description,
+              shortBio: this.local.data.shortBio,
+              address: this.local.data.location,
+              avatar: this.local.data.avatar, // uuid
+              banner: this.local.data.banner, // uuid
+              groupType: 'persona'
+            }
+          })
+
+          this.local.persona.id = response.body.id
+        } else {
+          const response = await client.apis.Usergroups.ResonateUser_UpdateUserGroup({
+            id: this.local.persona.id, // should be usergroup id
+            body: {
+              displayName: this.local.data.displayName,
+              description: this.local.data.description,
+              address: this.local.data.address,
+              shortBio: this.local.data.shortBio,
+              avatar: this.local.data.avatar,
+              banner: this.local.data.banner
+            }
+          })
+
+          console.log(response.body)
+        }
+
+        this.local.machine.emit('machine:next')
       } catch (err) {
         this.local.machine.emit('request:reject')
         console.log(err)
@@ -105,12 +138,13 @@ class BasicInfoForm extends Component {
     })
 
     this.local.data = {}
-    this.local.data.subscription = 'off' // newsletter subscription
+    this.local.persona = {}
 
     this.validator = validateFormdata()
     this.form = this.validator.state
 
     this.handleSubmit = this.handleSubmit.bind(this)
+    this.renderForm = this.renderForm.bind(this)
 
     // form elements
     this.elements = this.elements.bind(this)
@@ -120,7 +154,62 @@ class BasicInfoForm extends Component {
    * Create basic info form component element
    * @returns {HTMLElement}
    */
-  createElement () {
+  createElement (props = {}) {
+    // initial persona
+    if (!this.local.persona.id) {
+      const profile = props.profile
+      const persona = profile.ownedGroups.find(ownedGroup => {
+        return ownedGroup.groupType === 'persona'
+      }) || {
+        displayName: profile.nickname,
+        description: profile.description || '',
+        avatar: profile.avatar['profile_photo-m'] || profile.avatar['profile_photo-l'] || imagePlaceholder(400, 400)
+      }
+
+      if (persona.id) {
+        this.local.usergroup = persona.id // for updates
+        this.local.data.banner = persona.banner
+        this.local.data.avatar = persona.avatar
+        this.local.data.address = persona.address
+        this.local.data.shortBio = persona.shortBio
+      }
+
+      this.local.data.description = persona.description
+      this.local.data.displayName = persona.displayName
+
+      this.local.persona = persona
+    }
+
+    const steps = {
+      profileType: () => {
+        return this.state.cache(ProfileTypeForm, 'profile-type').render({
+          onSubmit: (usergroup) => {
+            this.local.usergroupType = usergroup
+            this.local.machine.emit('machine:next')
+          }
+        })
+      },
+      basicInfo: this.renderForm, // basic infos for everyone
+      // customInfo: this.renderCustomInfoForm, // label, artist infos (disabled for now
+      recap: renderRecap // recap
+    }[this.local.machine.state.machine]
+
+    return html`
+      <div class="flex flex-column">
+        ${steps()}
+      </div>
+    `
+
+    function renderRecap () {
+      return html`
+        <p class="lh-copy fw1 f4">Thank you for completing your profile!</p>
+      `
+    }
+  }
+
+  renderForm () {
+    // find first available persona or fallback to available legacy profile
+    const persona = this.local.persona
     const values = this.form.values
 
     for (const [key, value] of Object.entries(this.local.data)) {
@@ -151,6 +240,22 @@ class BasicInfoForm extends Component {
     return html`
       <div class="flex flex-column">
         ${messages(this.state, this.form)}
+        <div class="mb5">
+          <h4 class="lh-title mb2 f4 fw1">Profile</h4>
+
+          <p class="lh-copy f5 ma0 mb2">You are currently editing ${persona.displayName}’s profile.</p>
+
+          <div class="flex items-center pv2">
+            <div class="fl w-100 mw3">
+              <div class="db aspect-ratio aspect-ratio--1x1 bg-dark-gray bg-dark-gray--dark">
+                <div class="aspect-ratio--object cover" style="background:url(${persona.avatar || this.state.profile.avatar['profile_photo-m'] || this.state.profile.avatar['profile_photo-l'] || imagePlaceholder(400, 400)}) center;"></div>
+              </div>
+            </div>
+            <div>
+              <span class="pa3">${persona.displayName}</span>
+            </div>
+          </div>
+        </div>
         <form ${attrs}>
           ${Object.entries(this.elements())
             .map(([name, el]) => {
@@ -175,25 +280,25 @@ class BasicInfoForm extends Component {
        * @param {Object} validator Form data validator
        * @param {Object} form Form data object
        */
-      name: (validator, form) => {
+      displayName: (validator, form) => {
         const { values, pristine, errors } = form
 
         const el = input({
           type: 'text',
-          name: 'name',
-          placeholder: 'Name',
-          invalid: errors.name && !pristine.name,
-          value: values.name,
+          name: 'displayName',
+          invalid: errors.displayName && !pristine.displayName,
+          value: values.displayName,
           onchange: (e) => {
             validator.validate(e.target.name, e.target.value)
-            this.local.data.name = e.target.value
+            this.local.data.displayName = e.target.value
             this.rerender()
           }
         })
 
         const labelOpts = {
           labelText: 'Name',
-          inputName: 'name',
+          inputName: 'displayName',
+          helpText: 'Your artist name, nickname or label name.',
           displayErrors: true
         }
 
@@ -207,26 +312,55 @@ class BasicInfoForm extends Component {
       description: (validator, form) => {
         const { values, pristine, errors } = form
 
-        // TODO user inputField func
         return html`
           <div class="mb5">
             <div class="mb1">
               ${textarea({
-                name: 'bio',
-                maxlength: 200,
-                invalid: errors.bio && !pristine.bio,
-                placeholder: 'Short bio',
+                name: 'description',
+                maxlength: 2000,
+                invalid: errors.description && !pristine.description,
+                placeholder: 'Bio',
                 required: false,
-                text: values.bio,
+                text: values.description,
                 onchange: (e) => {
                   validator.validate(e.target.name, e.target.value)
-                  this.local.data.bio = e.target.value
+                  this.local.data.description = e.target.value
                   this.rerender()
                 }
               })}
             </div>
-            <p class="ma0 pa0 message warning">${errors.bio && !pristine.bio ? errors.bio.message : ''}</p>
-            <p class="ma0 pa0 f5 grey">${values.bio ? 200 - values.bio.length : 200} characters remaining</p>
+            <p class="ma0 pa0 message warning">${errors.description && !pristine.description ? errors.description.message : ''}</p>
+            <p class="ma0 pa0 f5 dark-gray">${values.description ? 2000 - values.description.length : 2000} characters remaining</p>
+          </div>
+        `
+      },
+      /**
+       * Short bio
+       * @param {Object} validator Form data validator
+       * @param {Object} form Form data object
+       */
+      shortBio: (validator, form) => {
+        const { values, pristine, errors } = form
+
+        return html`
+          <div class="mb5">
+            <div class="mb1">
+              ${textarea({
+                name: 'shortBio',
+                maxlength: 100,
+                invalid: errors.shortBio && !pristine.shortBio,
+                placeholder: 'Short bio',
+                required: false,
+                text: values.shortBio,
+                onchange: (e) => {
+                  validator.validate(e.target.name, e.target.value)
+                  this.local.data.shortBio = e.target.value
+                  this.rerender()
+                }
+              })}
+            </div>
+            <p class="ma0 pa0 message warning">${errors.shortBio && !pristine.shortBio ? errors.shortBio.message : ''}</p>
+            <p class="ma0 pa0 f5 dark-gray">${values.shortBio ? 100 - values.shortBio.length : 100} characters remaining</p>
           </div>
         `
       },
@@ -240,15 +374,45 @@ class BasicInfoForm extends Component {
         const el = component.render({
           name: 'profilePicture',
           form: form,
+          config: 'avatar',
+          required: false,
           validator: validator,
-          required: true,
           format: { width: 176, height: 99 },
+          src: this.local.persona.avatar,
           accept: 'image/jpeg,image/jpg,image/png',
-          ratio: '1600x900px'
+          ratio: '1600x900px',
+          archive: this.state.profile.avatar['profile_photo-m'] || this.state.profile.avatar['profile_photo-l'], // last uploaded files, old wp cover photo...
+          onFileUploaded: async (filename) => {
+            this.local.data.avatar = filename
+
+            if (!this.local.usergroup.id) return
+
+            try {
+              const specUrl = new URL('/user/user.swagger.json', 'https://' + process.env.API_DOMAIN)
+              const client = await new SwaggerClient({
+                url: specUrl.href,
+                authorizations: {
+                  bearer: 'Bearer ' + this.state.token
+                }
+              })
+
+              await client.apis.Usergroups.ResonateUser_UpdateUserGroup({
+                id: this.local.usergroup.id, // should be usergroup id
+                body: {
+                  avatar: this.local.data.avatar
+                }
+              })
+
+              this.emit('notify', { message: 'Profile picture updated', type: 'success' })
+            } catch (err) {
+              console.log(err)
+            }
+          }
         })
 
         const labelOpts = {
           labelText: 'Profile picture',
+          labelPrefix: 'f4 fw1 db mb2',
           inputName: 'profile-picture',
           displayErrors: true
         }
@@ -264,45 +428,72 @@ class BasicInfoForm extends Component {
         const component = this.state.cache(Uploader, this._name + '-header-image')
         const el = component.render({
           name: 'headerImage',
-          required: false,
           form: form,
+          config: 'banner',
+          required: false,
           validator: validator,
+          src: this.local.persona.banner,
           format: { width: 608, height: 147 },
           accept: 'image/jpeg,image/jpg,image/png',
           ratio: '2480x520px',
           direction: 'column',
+          archive: this.state.profile.avatar['cover_photo-m'], // last uploaded files, old wp cover photo...
           onFileUploaded: async (filename) => {
-            console.log(filename)
-            this.rerender()
+            this.local.data.banner = filename
+
+            if (!this.local.usergroup.id) return
+
+            try {
+              const specUrl = new URL('/user/user.swagger.json', 'https://' + process.env.API_DOMAIN)
+              const client = await new SwaggerClient({
+                url: specUrl.href,
+                authorizations: {
+                  bearer: 'Bearer ' + this.state.token
+                }
+              })
+
+              await client.apis.Usergroups.ResonateUser_UpdateUserGroup({
+                id: this.local.usergroup.id, // should be usergroup id
+                body: {
+                  banner: this.local.data.banner
+                }
+              })
+
+              this.emit('notify', { message: 'Profile picture updated', type: 'success' })
+            } catch (err) {
+              console.log(err)
+            }
           }
         })
 
         const labelOpts = {
           labelText: 'Header image',
+          labelPrefix: 'f4 fw1 db mb2',
           inputName: 'header-image',
           displayErrors: true
         }
 
         return inputField(el, form)(labelOpts)
-      },
+      }
       /**
-       * Location for user (city)
+       * Address for user (could be a place, city, anywhere)
        * @param {Object} validator Form data validator
        * @param {Object} form Form data object
        */
-      location: (validator, form) => {
+      /*
+      address: (validator, form) => {
         const { values, pristine, errors } = form
 
         const el = input({
           type: 'text',
-          name: 'location',
-          invalid: errors.location && !pristine.location,
+          name: 'address',
+          invalid: errors.address && !pristine.address,
           placeholder: 'City',
           required: false,
-          value: values.location,
+          value: values.address,
           onchange: (e) => {
             validator.validate(e.target.name, e.target.value)
-            this.local.data.city = e.target.value
+            this.local.data.address = e.target.value
             this.rerender()
           }
         })
@@ -313,12 +504,14 @@ class BasicInfoForm extends Component {
         }
 
         return inputField(el, form)(labelOpts)
-      },
+      }
+      */
       /**
        * Links for user
        * @param {Object} validator Form data validator
        * @param {Object} form Form data object
        */
+      /*
       links: (validator, form) => {
         const { values } = form
         const component = this.state.cache(Links, 'links-input')
@@ -335,39 +528,8 @@ class BasicInfoForm extends Component {
         }
 
         return inputField(el, form)(labelOpts)
-      },
-      /**
-       * Toggle subscription status for newsletter
-       * @param {Object} validator Form data validator
-       * @param {Object} form Form data object
-       */
-      newsletter: (validator, form) => {
-        const { values } = form
-
-        const attrs = {
-          checked: this.local.data.subscription === 'on' ? 'checked' : false,
-          id: 'subscription',
-          onchange: (e) => {
-            this.local.data.subscription = e.target.checked ? 'on' : 'off'
-            validator.validate('subscription', this.local.data.subscription)
-            this.rerender()
-          },
-          value: values.subscription,
-          class: 'o-0',
-          style: 'width:0;height:0;',
-          name: 'subscription',
-          type: 'checkbox',
-          required: 'required'
-        }
-
-        return inputField(html`<input ${attrs}>`, form)({
-          prefix: 'flex flex-column mb5',
-          labelText: 'Subscribe to newsletter',
-          labelIconName: 'check',
-          inputName: 'subscription',
-          displayErrors: true
-        })
       }
+      */
     }
   }
 
@@ -385,19 +547,23 @@ class BasicInfoForm extends Component {
    * @param {HTMLElement} el THe basic info form element
    */
   load (el) {
-    this.validator.field('name', (data) => {
-      if (isEmpty(data)) return new Error('Name is required')
+    this.validator.field('displayName', (data) => {
+      if (isEmpty(data)) return new Error('Display name is required')
+      if (!isLength(data, { min: 1, max: 100 })) return new Error('Name should be no more than 100 characters')
     })
-    this.validator.field('bio', { required: false }, (data) => {
-      if (!isLength(data, { min: 0, max: 200 })) return new Error('Bio should be no more than 200 characters')
+    this.validator.field('description', { required: false }, (data) => {
+      if (!isLength(data, { min: 0, max: 2000 })) return new Error('Description should be no more than 2000 characters')
     })
-    this.validator.field('location', { required: false }, (data) => {})
-    this.validator.field('subscription', { required: false }, (data) => {
-      if (!isEmpty(data) && ['on', 'off'].indexOf(data) === -1) return new Error('Invalid subscription data')
+    this.validator.field('shortBio', { required: false }, (data) => {
+      if (!isLength(data, { min: 0, max: 100 })) return new Error('Short bio should be no more than 100 characters')
     })
-    this.validator.field('profilePicture', (data) => {
-      if (isEmpty(data)) return new Error('Profile picture is required')
-      if (!isUUID(data, 4)) return new Error('Profile picture ref is invalid')
+    /*
+    this.validator.field('address', { required: false }, (data) => {
+      if (!isLength(data, { min: 0, max: 100 })) return new Error('Location should be no more than 100 characters')
+    })
+    */
+    this.validator.field('profilePicture', { required: false }, (data) => {
+      if (!isEmpty(data) && !isUUID(data, 4)) return new Error('Profile picture ref is invalid')
     })
     this.validator.field('headerImage', { required: false }, (data) => {
       if (!isEmpty(data) && !isUUID(data, 4)) return new Error('Header image ref is invalid')
@@ -408,9 +574,9 @@ class BasicInfoForm extends Component {
    * Basic info form submit handler
    * @returns {Boolean} Should always returns true
    */
-  update () {
+  update (props) {
     return true
   }
 }
 
-module.exports = BasicInfoForm
+module.exports = ProfileForm
