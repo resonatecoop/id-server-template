@@ -17,11 +17,7 @@ RUN cd /build && git clone --branch ${RELEASE_TAG} --single-branch --depth 1 htt
 
 ENV NODE_ENV development
 
-RUN cd /build/id/frontend
-
-RUN npm install
-
-RUN npm install -g gulp
+RUN cd /build/id/frontend && npm install && npm install -g gulp
 
 ENV API_DOMAIN $API_DOMAIN
 ENV NODE_ENV $NODE_ENV
