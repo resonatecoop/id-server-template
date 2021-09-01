@@ -26,7 +26,7 @@ RUN npm install -g gulp
 ENV API_DOMAIN $API_DOMAIN
 ENV NODE_ENV $NODE_ENV
 
-RUN npm run build
+RUN cd /build/id/frontend && npm run build
 
 # Backend build stage
 FROM golang:latest
