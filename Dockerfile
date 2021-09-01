@@ -44,6 +44,7 @@ EXPOSE 11000
 
 WORKDIR /build/id
 
+COPY --from=builder /build/id/data /build/id/data/
 COPY --from=builder /build/id/public /build/id/public/
 
 ENTRYPOINT ["sh", "docker-entrypoint.sh"]
