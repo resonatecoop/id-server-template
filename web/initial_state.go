@@ -43,6 +43,8 @@ func NewInitialState(
 		ID:             user.ID.String(),
 		Email:          user.Username,
 		FullName:       user.FullName,
+		FirstName:      user.FirstName,
+		LastName:       user.LastName,
 		Country:        user.Country,
 		EmailConfirmed: user.EmailConfirmed,
 	}

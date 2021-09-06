@@ -1,0 +1,76 @@
+@import '@resonate/tachyons';
+@import './src/components/progress-bar/index.css';
+@import './src/components/image-upload/index.css';
+@import './src/components/autocomplete-typeahead/index.css';
+@import './src/components/notifications/index.css';
+
+.footer-component dd > .link {
+  padding-bottom: .1rem;
+}
+
+.footer-component dd > .link:hover {
+  border-bottom: 1px solid currentcolor;
+}
+
+.dropdown-navigation li {
+  position: relative;
+  transition-duration: 0.2s;
+}
+
+.dropdown-navigation li:focus-within a {
+  outline: none;
+}
+
+.dropdown-navigation ul li ul {
+  visibility: hidden;
+  opacity: 0;
+  min-width: 5rem;
+  transition: all 0.2s ease;
+  left: 0;
+  display: none;
+}
+
+.dropdown-navigation ul li ul a {
+  width: 100%;
+}
+
+.dropdown-navigation ul li:hover > ul,
+.dropdown-navigation ul li:focus-within > ul,
+.dropdown-navigation ul li ul:hover,
+.dropdown-navigation ul li ul:focus {
+  visibility: visible;
+  z-index: 1;
+  opacity: 1;
+  display: block;
+}
+
+.dropdown-navigation ul li ul li {
+  clear: both;
+  width: 100%;
+}
+
+.icon--full-width {
+  width: 100%;
+  height: 100%;
+}
+
+input[type="radio"] {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+input[type="radio"]:active ~ label {
+  opacity: 1;
+}
+input[type="radio"]:checked ~ label {
+  opacity: 1;
+}
+input[type="radio"]:checked ~ label .icon {
+  fill: var(--black);
+}
+input[type="checkbox"] ~ label .icon {
+  fill: transparent;
+}
+input[type="checkbox"]:checked ~ label .icon {
+  fill: var(--black);
+}

@@ -2,17 +2,32 @@ package web
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
 
 	"github.com/resonatecoop/id/log"
 	"github.com/resonatecoop/id/session"
+	"github.com/resonatecoop/id/util"
+	"github.com/resonatecoop/id/util/password"
 	"github.com/resonatecoop/id/util/response"
 	"github.com/resonatecoop/user-api/model"
 
 	"github.com/gorilla/csrf"
 	"github.com/pariz/gountries"
+
+	"github.com/resonatecoop/user-api-client/client/users"
+	"github.com/resonatecoop/user-api-client/models"
+
+	httptransport "github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
+	apiclient "github.com/resonatecoop/user-api-client/client"
+)
+
+var (
+	// ErrEmailInvalid
+	ErrEmailInvalid = errors.New("Not a valid email")
 )
 
 func (s *Service) joinForm(w http.ResponseWriter, r *http.Request) {
@@ -61,7 +76,6 @@ func (s *Service) join(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create a user
 	user, err := s.createUser(r)
 
 	if err != nil {
@@ -80,16 +94,6 @@ func (s *Service) join(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, r.RequestURI, http.StatusFound)
 		}
 		return
-	}
-
-	if r.Form.Get("country") != "" {
-		// set user country but do not throw
-		if err = s.oauthService.SetUserCountry(
-			user,
-			r.Form.Get("country"),
-		); err != nil {
-			log.ERROR.Print(err)
-		}
 	}
 
 	message := fmt.Sprintf(
@@ -129,14 +133,47 @@ func (s *Service) createUser(r *http.Request) (
 	*model.User,
 	error,
 ) {
+	// first validate password before calling user-api
+	if err := password.ValidatePassword(r.Form.Get("password")); err != nil {
+		return nil, err
+	}
 
-	user, err := s.oauthService.CreateUser(
-		int32(model.UserRole),  // role ID
-		r.Form.Get("email"),    // username
-		r.Form.Get("password"), // password
-	)
+	// Check if email address is valid
+	if !util.ValidateEmail(r.Form.Get("email")) {
+		return nil, ErrEmailInvalid
+	}
+
+	httpClient, _ := httptransport.TLSClient(httptransport.TLSClientOptions{
+		InsecureSkipVerify: true,
+	})
+
+	hostname := fmt.Sprintf("%s%s", s.cnf.UserAPIHostname, s.cnf.UserAPIPort)
+	transport := httptransport.NewWithClient(hostname, "", nil, httpClient)
+
+	// create the API client, with the transport
+	client := apiclient.New(transport, strfmt.Default)
+
+	params := users.NewResonateUserAddUserParams()
+
+	params.Body = &models.UserUserAddRequest{
+		Username: r.Form.Get("email"),
+		Country:  r.Form.Get("country"),
+	}
+
+	// Create a user
+	_, err := client.Users.ResonateUserAddUser(params, nil)
 
 	if err != nil {
+		return nil, err
+	}
+
+	user, err := s.oauthService.FindUserByUsername(r.Form.Get("email"))
+
+	if err != nil {
+		return nil, err
+	}
+
+	if err = s.oauthService.SetPassword(user, r.Form.Get("password")); err != nil {
 		return nil, err
 	}
 

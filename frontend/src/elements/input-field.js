@@ -10,6 +10,7 @@ function inputField (inputComponent, form = {}) {
   return (props) => {
     const {
       prefix = 'mb5',
+      labelPrefix = 'f5 db mb1',
       labelIconName,
       labelImage = false,
       labelImageSrc,
@@ -21,24 +22,29 @@ function inputField (inputComponent, form = {}) {
 
     return html`
       <div class=${prefix}>
-        <div class="flex flex-column flex-column-reverse">
+        <div class="flex flex-column">
+          ${renderLabel(labelText, labelIconName, labelPrefix)}
           ${inputComponent}
           ${renderHelp(helpText)}
-          ${renderLabel(labelText, labelIconName)}
         </div>
         ${displayErrors ? renderErrors(inputName) : ''}
       </div>
     `
 
-    function renderLabel (text, iconName) {
+    function renderLabel (text, iconName, prefix) {
       return html`
-        <label for=${inputName} class="f4 db mv2">
+        <label for=${inputName} class=${prefix}>
           <div class="flex items-center">
-            ${iconName ? html`
-              <div style="width:3rem;height:3rem;" class="flex flex-shrink-0 justify-center bg-white items-center ba bw b--dark-gray mr2">
-                ${icon(iconName, { size: 'sm', class: 'fill-transparent' })}
-              </div>
-            ` : labelImage ? renderImage(labelImageSrc) : ''}
+            ${iconName
+              ? html`
+                <div style="width:3rem;height:3rem;" class="flex flex-shrink-0 justify-center bg-white items-center ba bw b--dark-gray mr2">
+                  ${icon(iconName, { size: 'sm', class: 'fill-transparent' })}
+                </div>
+              `
+              : labelImage
+              ? renderImage(labelImageSrc)
+              : ''
+            }
             <span>${text}</span>
           </div>
         </label>
@@ -62,7 +68,7 @@ function inputField (inputComponent, form = {}) {
 
     function renderHelp (helpText) {
       if (helpText) {
-        return html`<p class="lh-copy f5">${helpText}</p>`
+        return html`<p class="lh-copy dark-gray f5">${helpText}</p>`
       }
     }
 

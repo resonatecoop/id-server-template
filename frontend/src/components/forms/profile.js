@@ -70,15 +70,17 @@ class ProfileForm extends Component {
 
         const csrfToken = response.headers.get('X-CSRF-Token')
 
-        response = await fetch('/password', {
+        response = await fetch('', {
           method: 'PUT',
           headers: {
             Accept: 'application/json',
             'X-CSRF-Token': csrfToken
           },
           body: new URLSearchParams({
-            email: this.local.data.email,
-            nickname: this.local.data.displayName
+            email: this.local.data.email || '',
+            fullName: this.local.data.fullName || '',
+            firstName: this.local.data.firstName || '',
+            lastName: this.local.data.lastName || ''
           })
         })
 
@@ -90,6 +92,8 @@ class ProfileForm extends Component {
           this.local.error.message = error
           return this.local.machine.emit('request:error')
         }
+
+        this.emit('notify', { message: 'Your account info has been successfully updated' })
 
         this.local.machine.emit('request:resolve')
       } catch (err) {
@@ -125,11 +129,7 @@ class ProfileForm extends Component {
 
       this.rerender()
 
-      if (this.local.form.valid) {
-        return this.local.machine.emit('form:valid')
-      }
-
-      return this.local.machine.emit('form:invalid')
+      this.local.machine.emit(`form:${this.local.form.valid ? 'valid' : 'invalid'}`)
     })
 
     this.validator = validateFormdata()
@@ -147,11 +147,11 @@ class ProfileForm extends Component {
 
     return html`
       <div class="flex flex-column flex-auto">
-        ${this.state.cache(Form, 'update-profile-form').render({
-          id: 'profile-form',
+        ${this.state.cache(Form, 'account-form-update').render({
+          id: 'account-form',
           method: 'POST',
           action: '',
-          buttonText: 'Update my profile',
+          buttonText: 'Update',
           validate: (props) => {
             this.local.data[props.name] = props.value
             this.validator.validate(props.name, props.value)
@@ -175,9 +175,21 @@ class ProfileForm extends Component {
             },
             {
               type: 'text',
-              name: 'displayName',
-              placeholder: 'Display name',
-              help: html`<p class="ma0 mt1 lh-copy f7">Your artist name, nickname or label name</p>`
+              name: 'fullName',
+              required: false,
+              placeholder: 'Full name'
+            },
+            {
+              type: 'text',
+              name: 'firstName',
+              required: false,
+              placeholder: 'First name'
+            },
+            {
+              type: 'text',
+              name: 'lastName',
+              required: false,
+              placeholder: 'Last name'
             }
           ]
         })}
@@ -190,8 +202,14 @@ class ProfileForm extends Component {
       if (isEmpty(data)) return new Error('Email is required')
       if (!isEmail(data)) return new Error('Email is invalid')
     })
-    this.validator.field('displayName', (data) => {
-      if (isEmpty(data)) return new Error('Display name is required')
+    this.validator.field('fullName', { required: false }, (data) => {
+      if (isEmpty(data)) return new Error('Full name is required')
+    })
+    this.validator.field('firstName', { required: false }, (data) => {
+      if (isEmpty(data)) return new Error('First name is required')
+    })
+    this.validator.field('lastName', { required: false }, (data) => {
+      if (isEmpty(data)) return new Error('Last name is required')
     })
   }
 

@@ -49,7 +49,7 @@ class Form extends Component {
       }))
 
       return html`
-        <div class="flex flex-column mb3">
+        <div class="mb3">
           ${fieldProps.label
             ? html`
                 <label for=${fieldProps.id || name} class="f5 db mb1">
@@ -117,9 +117,7 @@ class Form extends Component {
     return html`
       <div class="flex flex-column flex-auto">
         <form ${attrs}>
-          <div>
-            ${inputs}
-          </div>
+          ${inputs}
           <div class="flex mt3">
             <div class="flex mr3">
               ${this.local.altButton}

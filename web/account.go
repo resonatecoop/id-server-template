@@ -150,9 +150,9 @@ func (s *Service) account(w http.ResponseWriter, r *http.Request) {
 		// update user (all optional)
 		if err = s.oauthService.UpdateUser(
 			user,
-			r.Form.Get("full_name"),
-			r.Form.Get("first_name"),
-			r.Form.Get("last_name"),
+			r.Form.Get("fullName"),
+			r.Form.Get("firstName"),
+			r.Form.Get("lastName"),
 			r.Form.Get("country"),
 		); err != nil {
 			switch r.Header.Get("Accept") {
