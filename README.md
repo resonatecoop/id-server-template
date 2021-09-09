@@ -60,13 +60,7 @@ go install .
 
 ## Run
 
-First, run migrations
-
-```
-go-oauth2-server migrate
-```
-
-Then run the server
+Run the server
 
 ```
 go-oauth2-server runserver
