@@ -33,16 +33,6 @@ app.use((state, emitter) => {
 
   state.profile.avatar = state.profile.avatar || {}
 
-  state.usergroup = {
-    member: 'artist',
-    listener: 'listener',
-    fans: 'listener',
-    'label-owner': 'label',
-    admin: 'admin',
-    uploader: 'uploader',
-    volunteer: 'volunteer'
-  }[state.profile.role]
-
   state.clients = state.clients || [
     {
       connectUrl: 'https://stream.resonate.coop/api/user/connect/resonate',
