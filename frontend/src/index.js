@@ -74,8 +74,8 @@ app.use((state, emitter) => {
       const response = await client.apis.profile.getUserProfile()
 
       state.profile.nickname = response.body.data.nickname
-      state.profile.ownedGroups = response.body.data.ownedGroups
-      state.profile.avatar = response.body.data.avatar
+      state.profile.ownedGroups = response.body.data.ownedGroups || []
+      state.profile.avatar = response.body.data.avatar || {}
 
       emitter.emit(state.events.RENDER)
     } catch (err) {
