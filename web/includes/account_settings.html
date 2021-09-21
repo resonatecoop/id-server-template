@@ -25,7 +25,7 @@
               </ul>
             </nav>
           </div>
-          <div class="flex flex-column flex-auto ph3 pt4 mw6 ph0-l">
+          <div class="flex flex-column flex-auto ph3 mw6 ph0-l">
             {{ if .flash }}
             <div class="mb3">
               <p{{ if eq .flash.Type "Error" }} class="ma0 pa3 bg-red white" {{ else }} class="ma0 pa3 bb b--light-gray black" {{ end }}>{{ .flash.Message }}</p>
@@ -57,9 +57,9 @@
                       <input
                         value="{{ .profile.FullName }}"
                         autocomplete="false"
-                        id="full_name"
+                        id="fullName"
                         type="text"
-                        name="full_name"
+                        name="fullName"
                         placeholder="Full Name"
                         class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid"
                       />
@@ -71,9 +71,9 @@
                       <input
                         value="{{ .profile.FirstName }}"
                         autocomplete="false"
-                        id="first_name"
+                        id="firstName"
                         type="text"
-                        name="first_name"
+                        name="firstName"
                         placeholder="First Name"
                         class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid"
                       />
@@ -85,9 +85,9 @@
                       <input
                         value="{{ .profile.LastName }}"
                         autocomplete="false"
-                        id="last_name"
+                        id="lastName"
                         type="text"
-                        name="last_name"
+                        name="lastName"
                         placeholder="Last Name"
                         class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid"
                       />
@@ -99,7 +99,7 @@
                     </div>
                     <div class="flex flex-auto justify-end">
                       <button style="outline:solid 1px var(--near-black);outline-offset:-1px" type="submit" class="bg-white dib bn b pv2 ph4 flex-shrink-0 f5 grow">
-                        Update my profile
+                        Update
                       </button>
                     </div>
                   </div>

@@ -1,0 +1,28 @@
+@import '@resonate/tachyons';
+@import './src/components/progress-bar/index.css';
+@import './src/components/image-upload/index.css';
+@import './src/components/autocomplete-typeahead/index.css';
+@import './src/components/notifications/index.css';
+@import './src/components/header/index.css';
+@import './src/components/footer/index.css';
+
+input[type="radio"] {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+input[type="radio"]:active ~ label {
+  opacity: 1;
+}
+input[type="radio"]:checked ~ label {
+  opacity: 1;
+}
+input[type="radio"]:checked ~ label .icon {
+  fill: var(--black);
+}
+input[type="checkbox"] ~ label .icon {
+  fill: transparent;
+}
+input[type="checkbox"]:checked ~ label .icon {
+  fill: var(--black);
+}

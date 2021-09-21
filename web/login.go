@@ -85,7 +85,7 @@ func (s *Service) login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the scope string
-	scope, err := s.oauthService.GetScope(r.Form.Get("scope"))
+	scope, err := s.oauthService.GetScope("read_write")
 	if err != nil {
 		err = sessionService.SetFlashMessage(&session.Flash{
 			Type:    "Error",

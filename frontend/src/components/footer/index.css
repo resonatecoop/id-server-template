@@ -1,0 +1,13 @@
+.footer-component dd > .link {
+  padding-bottom: .1rem;
+}
+
+.footer-component dd > .link:hover {
+  border-bottom: 1px solid currentcolor;
+}
+
+.icon-resonate {
+  width: 100%;
+  height: 100%;
+  max-width: 144px; /* need tachyons update */
+}

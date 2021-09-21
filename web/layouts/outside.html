@@ -21,27 +21,54 @@
   <script type="text/javascript" defer src="../js/{{ .javascript }}"></script>
 </head>
 <body class="ff-no-fouc color-scheme--light">
-  <header role="banner" style="height:3rem" class="sticky left-0 top-0 right-0 w-100 z-9999 flex items-center">
-    <nav role="navigation" aria-label="Secondary navigation" class="dropdown-navigation flex flex-auto justify-end items-center">
-      <ul class="list ma0 pa0 flex">
-          <li>
-              <button id="menu" title="menu" class="bg-transparent bn flex justify-end w4 h-100 dropdown-toggle">
-                <span class="flex justify-center items-center w3" style="height:3rem">
-                    <svg viewBox="0 0 16 16" class="icon icon-dropdown icon--sm icon icon--sm fill-black fill-white--dark fill-black--light">
-                      <use xlink:href="#icon-dropdown"></use>
-                    </svg>
-                </span>
-              </button>
-              <ul style="width: 100vw; left: auto; margin-top: 1px; max-width: 24rem;" class="bg-black white bg-white--dark black--dark bg-black--light white--light list ma0 pa2 absolute right-0 dropdown z-999">
-                <li>
-                    <a href="../web/login{{ .queryString }}" class="link db dim pa2 w-100">Login</a>
-                </li>
-                <li class="bb bw b--near-black b--mid-gray--dark b--near-black--light"></li>
-                <li>
-                  <a href="../web/join{{ .queryString }}" class="link db dim pa2 w-100">Join</a>
-                </li>
-              </ul>
-          </li>
+  <header role="banner" style="height:3rem" class="bg-white black bg-white--light black--light bg-black--dark white--dark white fixed sticky-l left-0 top-0-l bottom-0 right-0 w-100 z-9999 flex items-center bt bt-0-l bb-l bw b--mid-gray b--mid-gray--light b--near-black--dark">
+    <nav role="navigation" class="relative dropdown-navigation--focus">
+      <ul role="menu" style="height:3rem" class="list ma0 pa0 bg-white bg-white--light bg-black--dark bg-transparent-l fixed w-100 w-auto-l top-0 left-0 flex relative-l flex-l bb bb-0-l bw b--mid-gray b--mid-gray--light b--near-black--dark">
+        <li>
+          <a href="/" title="Resonate" class="link flex items-center flex-shrink-0 h-100 ph2 ml2 overflow-hidden">
+            <svg viewBox="0 0 16 16" class="icon icon-logo-wordmark icon--sm">
+              <use xlink:href="#icon-logo-wordmark"></use>
+            </svg>
+          </a>
+        </li>
+        <li class="flex flex-auto-l w-100-l justify-center">
+          <button title="Open learn menu" class="bg-transparent near-black near-black--light near-white--dark bn dropdown-toggle grow pa3">
+            <div class="flex justify-center items-center">
+              <span>Learn</span> 
+              <div class="ph2">
+                <svg viewBox="0 0 16 16" class="icon icon-caret-down icon--xxs">
+                  <use xlink:href="#icon-caret-down"></use>
+                </svg>
+              </div>
+            </div>
+          </button>
+          <ul role="menu" style="left:0;width:120px;" class="bg-white black bg-black--dark white--dark bg-white--light black--light ba bw b--mid-gray b--mid-gray--light b--near-black--dark list ma0 pa0 absolute right-0 dropdown z-999 top-100">
+            <li><a href="https://resonate.coop/about" target="_blank" class="link db w-100 ph3 pv2 bg-animate hover-bg-light-gray hover-bg-light-gray--light hover-bg-dark-gray--dark">About</a></li>
+            <li><a href="https://resonate.coop/pricing" target="_blank" class="link db w-100 ph3 pv2 bg-animate hover-bg-light-gray hover-bg-light-gray--light hover-bg-dark-gray--dark">Pricing</a></li>
+            <li><a href="https://resonate.coop/the-co-op" target="_blank" class="link db w-100 ph3 pv2 bg-animate hover-bg-light-gray hover-bg-light-gray--light hover-bg-dark-gray--dark">The Co-op</a></li>
+            <li><a href="https://resonate.coop/handbook" target="_blank" class="link db w-100 ph3 pv2 bg-animate hover-bg-light-gray hover-bg-light-gray--light hover-bg-dark-gray--dark">Handbook</a></li>
+            <li><a href="https://community.resonate.coop" target="_blank" class="link db w-100 ph3 pv2 bg-animate hover-bg-light-gray hover-bg-light-gray--light hover-bg-dark-gray--dark">Forum</a></li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+    <div class="search flex-l flex-auto-l w-100-l justify-center-l">
+      <button class="js bn dn db-l bg-transparent">
+        <div class="flex items-center">
+          <svg viewBox="0 0 16 16" class="icon icon-search icon--sm">
+            <use xlink:href="#icon-search"></use>
+          </svg>
+          <span class="db pl3 near-black near-black--light near-white--dark">Search</span>
+        </div>
+      </button>
+    </div>
+    <nav role="navigation" aria-label="Main navigation" class="dropdown-navigation flex w-100 flex-auto justify-end-l">
+      <ul role="menu" class="flex list ma0 pa0 w-100 w-75-l justify-end items-center mr3-l">
+        <li role="menuitem" class="flex flex-auto justify-center w-100 grow">
+          <a href="../web/login{{ .queryString }}" class="link pv1 ph3 ttu ba b--mid-gray b--dark-gray--dark db f6 b">
+            Log In
+          </a>
+        </li>
       </ul>
     </nav>
   </header>
@@ -103,6 +130,9 @@
     <symbol viewBox="0 0 100 100" id="icon-logo">
       <path d="M100 50c0-12.9-5.5-24.5-14.2-33l-18 17.3a21.7 21.7 0 0 1 0 31.5l18 17.3a45.7 45.7 0 0 0 14.2-33zm-74.6 0c0-6 2.6-11.6 6.8-15.7L14.2 17a45.7 45.7 0 0 0 0 66.1l18-17.3c-4.2-4-6.8-9.6-6.8-15.7z"/>
     </symbol>
+    <symbol viewBox="0 0 100 100" id="icon-search">
+      <path d="M74.7 63.9L100 89.2 89.2 100 63.9 74.7A40.9 40.9 0 1174.7 64zM41 66.5a25.6 25.6 0 100-51.2 25.6 25.6 0 000 51.2z"/>
+    </symbol>
     <symbol viewBox="0 0 100 100" id="icon-check">
         <path d="M30.3 88l-.7 1L0 58.7 6.5 52l23 23.5 64-65.5 6.5 6.7-63.9 65.6z"/>
       </symbol>
@@ -112,8 +142,14 @@
     <symbol viewBox="0 0 100 100" id="icon-dropdown">
       <path d="M0 40h20v20H0zM40 40h20v20H40zM80 40h20v20H80z"/>
     </symbol>
+    <symbol viewBox="0 0 100 100" id="icon-caret-down">
+      <path d="M50 63l42-42 8 8-50 50L0 29l8-8z"/>
+    </symbol>
+    <symbol viewBox="0 0 315 44" id="icon-logo-wordmark">
+      <path d="M101.5 8H97v28.5h4.5V20.9c0-7 3.7-8.8 9.4-9V7.5c-5.1.1-7.6 2.4-9.4 5.6V8Z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M112.4 22.1v.5c0 8.7 5.7 14.4 13.7 14.4 6.5 0 11.2-3 12.2-8.7h-4.5c-.6 3.3-3.2 5-7.6 5-5.8 0-9-3.7-9.1-10.1h21.4v-1.5c0-10.2-6.2-14.1-12.8-14.1-7.8 0-13.3 6-13.3 14.5Zm13.3-10.8c4.7 0 7.7 2.4 8.2 8.2h-16.7c.8-5 3.9-8.2 8.5-8.2Z"/><path d="M146.9 27.7h-4.4c.3 5.9 4.3 9.3 11.1 9.3 7 0 10.5-3.5 10.5-8.7 0-6-4.2-7.3-10-8.4-5.2-1-6.7-2-6.7-4.5 0-2.4 2.2-4 5.4-4 3.6 0 5.3 1.3 6 4.4h4.3c-.7-6.2-5.1-8.2-10.2-8.2-4.5 0-9.6 2.7-9.6 8 0 5 2.5 7 9.8 8.3 4.5.9 6.7 1.8 6.7 4.8s-2 4.5-6.2 4.5c-4.6 0-6.4-2-6.7-5.5ZM203.8 8h-4.5v28.5h4.5V19.3c0-5.1 3.7-7.8 8-7.8 4.5 0 6.6 2.2 6.6 7.2v17.8h4.5V19c0-8.2-4.1-11.4-10-11.4-4.7 0-7.8 2.3-9.1 5V8Z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M241.4 19.8c-7.3 0-14.2 2.2-14.2 8.8 0 5.8 4.2 8.4 9.4 8.4 4.2 0 6.8-1.4 8.9-4v3.5h4.5V17.7c0-7.9-5-10.1-10.4-10.1-5.5 0-10.6 2.4-11.2 8.8h4.5c.4-3.4 2.6-5 6.5-5 4.3 0 6 1.8 6 6.3v2.1h-4Zm4 3.2v3.5c0 4.5-3.6 6.9-8.3 6.9-4 0-5.4-1.8-5.4-4.8 0-4.2 4.2-5.6 9.9-5.6h3.9Z" /><path d="M257.6 11.9v17.5c0 4.4 2.5 7.5 7.6 7.5 1.9 0 3-.3 3.9-.6v-3.8c-1 .4-2 .6-3.5.6-2.3 0-3.5-1.4-3.5-4.2V12h6.6V8h-6.6V1.6h-4.5v6.5h-4.1v3.8h4Z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M272.1 22.1v.5c0 8.7 5.7 14.4 13.8 14.4 6.4 0 11.1-3 12.1-8.7h-4.5c-.6 3.3-3.2 5-7.6 5-5.8 0-8.9-3.7-9.1-10.1h21.4v-1.5c0-10.2-6.2-14.1-12.8-14.1-7.8 0-13.3 6-13.3 14.5Zm13.3-10.8c4.7 0 7.8 2.4 8.2 8.2H277c.7-5 3.8-8.2 8.4-8.2ZM166.6 22a14.7 14.7 0 1 1 29.4 0 14.7 14.7 0 0 1-29.4 0Zm14.7 11c6.2 0 10-4.3 10-10.7v-.4c0-6.6-3.9-10.8-10-10.8s-10 4.2-10 10.7v.5c0 6.5 3.8 10.7 10 10.7Z"/><path d="M16.3 22.5c0-4.2 1.7-8 4.4-10.6L10 .9l-.2.2a30 30 0 0 0-.2 42.5l10.9-10.9a14.7 14.7 0 0 1-4.1-10.2Zm42.5 11.7a30 30 0 0 0-6.4-33l-.2-.2-10.9 10.9a14.8 14.8 0 0 1 .4 20.8l10.9 10.9a30 30 0 0 0 6.2-9.4Z"/>
+    </symbol>
     <symbol viewBox="0 0 74 74" id="icon-resonate">
-      <path transform="translate(0 10)" d="M0 2.38h1.66v1.87c.66-1.18 1.56-2 3.44-2.05v1.55c-2.1.1-3.44.76-3.44 3.34v5.73H0V2.38zM5.66 7.7v-.15c0-3.16 2.02-5.36 4.9-5.36 2.41 0 4.7 1.46 4.7 5.2v.53H7.36c.08 2.38 1.22 3.7 3.36 3.7 1.62 0 2.56-.6 2.78-1.82h1.66c-.36 2.1-2.1 3.2-4.46 3.2-2.95 0-5.05-2.08-5.05-5.3zm7.9-1.11c-.17-2.16-1.29-3.02-3-3.02-1.7 0-2.84 1.16-3.12 3.02h6.11zM16.73 9.6h1.62c.12 1.24.78 2.02 2.46 2.02 1.58 0 2.28-.54 2.28-1.65 0-1.1-.82-1.46-2.44-1.76-2.72-.5-3.64-1.26-3.64-3.07 0-1.94 1.9-2.94 3.54-2.94 1.88 0 3.5.76 3.78 3.02h-1.6c-.24-1.14-.88-1.64-2.2-1.64-1.2 0-1.98.6-1.98 1.5 0 .93.52 1.32 2.44 1.65 2.16.4 3.68.88 3.68 3.1 0 1.9-1.3 3.17-3.84 3.17-2.5 0-4-1.26-4.1-3.4zM37.61 2.38h1.66v1.65c.48-.97 1.64-1.83 3.36-1.83 2.16 0 3.68 1.18 3.68 4.21v6.41h-1.66V6.29c0-1.83-.78-2.65-2.46-2.65-1.54 0-2.92.97-2.92 2.85v6.33H37.6V2.38zM47.87 9.93c0-2.42 2.56-3.24 5.23-3.24h1.5v-.76c0-1.66-.64-2.36-2.24-2.36-1.43 0-2.23.6-2.4 1.88h-1.65c.22-2.38 2.12-3.25 4.14-3.25 2 0 3.81.82 3.81 3.73v6.89H54.6V11.5a3.77 3.77 0 01-3.25 1.5c-1.95 0-3.48-.94-3.48-3.07zm6.73-.76v-1.3h-1.43c-2.1 0-3.64.52-3.64 2.06 0 1.08.52 1.75 1.98 1.75 1.75 0 3.1-.9 3.1-2.51zM59.05 10.2V3.78h-1.5v-1.4h1.5V0h1.66v2.38h2.43v1.4h-2.43v6.26c0 1.02.46 1.52 1.3 1.52.51 0 .91-.08 1.27-.22v1.4c-.33.12-.74.22-1.42.22-1.9 0-2.81-1.12-2.81-2.76zM64.4 7.7v-.15c0-3.16 2.02-5.36 4.9-5.36 2.42 0 4.7 1.46 4.7 5.2v.53h-7.88c.08 2.38 1.22 3.7 3.36 3.7 1.62 0 2.56-.6 2.77-1.82h1.66c-.36 2.1-2.1 3.2-4.45 3.2-2.96 0-5.06-2.08-5.06-5.3zm7.9-1.11c-.16-2.16-1.28-3.02-3-3.02-1.7 0-2.84 1.16-3.12 3.02h6.12zM31 2.1a5.4 5.4 0 100 10.82A5.4 5.4 0 0031 2.1zm3.7 5.5c0 2.35-1.43 3.93-3.7 3.93-2.28 0-3.68-1.55-3.68-3.93v-.16c0-2.4 1.42-3.95 3.69-3.95 2.24 0 3.68 1.55 3.68 3.97v.14z"/>
+      <path d="M0 2.38h1.66v1.87c.66-1.18 1.56-2 3.44-2.05v1.55c-2.1.1-3.44.76-3.44 3.34v5.73H0V2.38zM5.66 7.7v-.15c0-3.16 2.02-5.36 4.9-5.36 2.41 0 4.7 1.46 4.7 5.2v.53H7.36c.08 2.38 1.22 3.7 3.36 3.7 1.62 0 2.56-.6 2.78-1.82h1.66c-.36 2.1-2.1 3.2-4.46 3.2-2.95 0-5.05-2.08-5.05-5.3zm7.9-1.11c-.17-2.16-1.29-3.02-3-3.02-1.7 0-2.84 1.16-3.12 3.02h6.11zM16.73 9.6h1.62c.12 1.24.78 2.02 2.46 2.02 1.58 0 2.28-.54 2.28-1.65 0-1.1-.82-1.46-2.44-1.76-2.72-.5-3.64-1.26-3.64-3.07 0-1.94 1.9-2.94 3.54-2.94 1.88 0 3.5.76 3.78 3.02h-1.6c-.24-1.14-.88-1.64-2.2-1.64-1.2 0-1.98.6-1.98 1.5 0 .93.52 1.32 2.44 1.65 2.16.4 3.68.88 3.68 3.1 0 1.9-1.3 3.17-3.84 3.17-2.5 0-4-1.26-4.1-3.4zM37.61 2.38h1.66v1.65c.48-.97 1.64-1.83 3.36-1.83 2.16 0 3.68 1.18 3.68 4.21v6.41h-1.66V6.29c0-1.83-.78-2.65-2.46-2.65-1.54 0-2.92.97-2.92 2.85v6.33H37.6V2.38zM47.87 9.93c0-2.42 2.56-3.24 5.23-3.24h1.5v-.76c0-1.66-.64-2.36-2.24-2.36-1.43 0-2.23.6-2.4 1.88h-1.65c.22-2.38 2.12-3.25 4.14-3.25 2 0 3.81.82 3.81 3.73v6.89H54.6V11.5a3.77 3.77 0 01-3.25 1.5c-1.95 0-3.48-.94-3.48-3.07zm6.73-.76v-1.3h-1.43c-2.1 0-3.64.52-3.64 2.06 0 1.08.52 1.75 1.98 1.75 1.75 0 3.1-.9 3.1-2.51zM59.05 10.2V3.78h-1.5v-1.4h1.5V0h1.66v2.38h2.43v1.4h-2.43v6.26c0 1.02.46 1.52 1.3 1.52.51 0 .91-.08 1.27-.22v1.4c-.33.12-.74.22-1.42.22-1.9 0-2.81-1.12-2.81-2.76zM64.4 7.7v-.15c0-3.16 2.02-5.36 4.9-5.36 2.42 0 4.7 1.46 4.7 5.2v.53h-7.88c.08 2.38 1.22 3.7 3.36 3.7 1.62 0 2.56-.6 2.77-1.82h1.66c-.36 2.1-2.1 3.2-4.45 3.2-2.96 0-5.06-2.08-5.06-5.3zm7.9-1.11c-.16-2.16-1.28-3.02-3-3.02-1.7 0-2.84 1.16-3.12 3.02h6.12zM31 2.1a5.4 5.4 0 100 10.82A5.4 5.4 0 0031 2.1zm3.7 5.5c0 2.35-1.43 3.93-3.7 3.93-2.28 0-3.68-1.55-3.68-3.93v-.16c0-2.4 1.42-3.95 3.69-3.95 2.24 0 3.68 1.55 3.68 3.97v.14z"/>
     </symbol>
   </svg>
   {{ .initialState }}

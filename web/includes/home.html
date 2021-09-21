@@ -11,11 +11,11 @@
     <div class="flex flex-auto flex-column w-100 pb6">
       <article class="mh2 mt3 cf">
         {{ range .clients }}
-        <div class="fl w-50 pa2 mw4-ns mw5-l">
+        <div class="fl w-50 w-33-l pa2">
           <a href="{{.ConnectUrl}}" class="link db aspect-ratio aspect-ratio--1x1 dim ba bw b--near-black">
             <div class="flex flex-column justify-center aspect-ratio--object pa2 pa3-ns pa4-l">
-              <span class="f3 f4-ns f3-l lh-title">{{.Name}}</span>
-              <span class="f4 f5-ns f4-l lh-copy">{{.Description}}</span>
+              <span class="f3 lh-title">{{.Name}}</span>
+              <span class="f4 lh-copy">{{.Description}}</span>
             </div>
           </a>
         </div>
