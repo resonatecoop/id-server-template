@@ -1,4 +1,4 @@
-module github.com/resonatecoop/id/v2
+module github.com/resonatecoop/id
 
 go 1.16
 
