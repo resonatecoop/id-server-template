@@ -8,7 +8,6 @@ FROM node:12-alpine as builder
 
 ARG RELEASE_TAG
 ARG API_DOMAIN
-ARG APP_HOST
 ARG NODE_ENV
 
 WORKDIR /build
