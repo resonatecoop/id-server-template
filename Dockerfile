@@ -1,6 +1,5 @@
 ARG RELEASE_TAG=develop 
 ARG API_DOMAIN=api.resonate.coop
-ARG APP_HOST=stream.resonate.coop
 ARG NODE_ENV=development
 
 # Frontend build stage
@@ -21,7 +20,6 @@ ENV NODE_ENV development
 RUN cd /build/id/frontend && npm install && npm install -g gulp
 
 ENV API_DOMAIN $API_DOMAIN
-ENV APP_HOST $APP_HOST
 ENV NODE_ENV $NODE_ENV
 
 RUN cd /build/id/frontend && npm run build
