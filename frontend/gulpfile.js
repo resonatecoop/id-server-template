@@ -18,6 +18,7 @@ function javascript () {
       ['babelify', {
         presets: ['@babel/preset-env'],
         plugins: [
+          ['module:nanohtml'],
           ['@babel/plugin-transform-runtime', {
             absoluteRuntime: false,
             corejs: false,
