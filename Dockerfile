@@ -1,12 +1,10 @@
 ARG RELEASE_TAG=develop 
-ARG API_DOMAIN=api.resonate.coop
 ARG NODE_ENV=development
 
 # Frontend build stage
 FROM node:12-alpine as builder
 
 ARG RELEASE_TAG
-ARG API_DOMAIN
 ARG NODE_ENV
 
 WORKDIR /build
@@ -19,7 +17,6 @@ ENV NODE_ENV development
 
 RUN cd /build/id/frontend && npm install && npm install -g gulp
 
-ENV API_DOMAIN $API_DOMAIN
 ENV NODE_ENV $NODE_ENV
 
 RUN cd /build/id/frontend && npm run build
