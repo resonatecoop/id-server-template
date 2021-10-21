@@ -21,17 +21,24 @@
   <script type="text/javascript" defer src="../js/{{ .javascript }}"></script>
 </head>
 <body class="ff-no-fouc color-scheme--light">
-  <header role="banner" style="height:3rem" class="bg-white black bg-white--light black--light bg-black--dark white--dark white fixed sticky-l left-0 top-0-l bottom-0 right-0 w-100 z-9999 flex items-center bt bt-0-l bb-l bw b--mid-gray b--mid-gray--light b--near-black--dark">
-    <nav role="navigation" class="relative dropdown-navigation--focus">
-      <ul role="menu" style="height:3rem" class="list ma0 pa0 bg-white bg-white--light bg-black--dark bg-transparent-l fixed w-100 w-auto-l top-0 left-0 flex relative-l flex-l bb bb-0-l bw b--mid-gray b--mid-gray--light b--near-black--dark">
-        <li>
-          <a href="/" title="Resonate" class="link flex items-center flex-shrink-0 h-100 ph2 ml2 overflow-hidden">
+  <header role="banner" id="header" class="bg-white black bg-white--light black--light bg-black--dark white--dark white fixed sticky-l left-0 top-0-l bottom-0 right-0 w-100 z-9999 flex items-center bt bt-0-l bb-l bw b--mid-gray b--mid-gray--light b--near-black--dark" style="height:3rem;">
+    <nav role="navigation" aria-label="Main navigation" class="flex-l flex-auto-l w-60-l relative dropdown-navigation--focus">
+      <ul role="menu" class="list ma0 pa0 bg-white bg-white--light bg-black--dark bg-transparent-l fixed w-100 top-0 left-0 flex flex-auto w-100 relative-l flex-l bb bb-0-l bw b--mid-gray b--mid-gray--light b--near-black--dark" style="height: 3rem;">
+        <li class="dn db-ns">
+          <a class="link flex items-center flex-shrink-0 h-100 ph2 ml2 overflow-hidden" href="/" title="Resonate">
             <svg viewBox="0 0 16 16" class="icon icon-logo-wordmark icon--sm">
               <use xlink:href="#icon-logo-wordmark"></use>
             </svg>
           </a>
         </li>
-        <li class="flex flex-auto-l w-100-l justify-center">
+        <li class="db dn-ns">
+          <a class="link flex items-center flex-shrink-0 h-100 ph2 ml2 overflow-hidden" href="/" title="Resonate">
+            <svg viewBox="0 0 16 16" class="icon icon-logo icon--sm">
+              <use xlink:href="#icon-logo"></use>
+            </svg>
+          </a>
+        </li>
+        <li id="learn">
           <button title="Open learn menu" class="bg-transparent near-black near-black--light near-white--dark bn dropdown-toggle grow pa3">
             <div class="flex justify-center items-center">
               <span>Learn</span> 
@@ -42,7 +49,7 @@
               </div>
             </div>
           </button>
-          <ul role="menu" style="left:0;width:120px;" class="bg-white black bg-black--dark white--dark bg-white--light black--light ba bw b--mid-gray b--mid-gray--light b--near-black--dark list ma0 pa0 absolute right-0 dropdown z-999 top-100">
+          <ul role="menu" style="width:120px;left:0;" class="bg-white black bg-black--dark white--dark bg-white--light black--light ba bw b--mid-gray b--mid-gray--light b--near-black--dark list ma0 pa0 absolute right-0 dropdown z-999 top-100">
             <li><a href="https://resonate.coop/about" target="_blank" class="link db w-100 ph3 pv2 bg-animate hover-bg-light-gray hover-bg-light-gray--light hover-bg-dark-gray--dark">About</a></li>
             <li><a href="https://resonate.coop/pricing" target="_blank" class="link db w-100 ph3 pv2 bg-animate hover-bg-light-gray hover-bg-light-gray--light hover-bg-dark-gray--dark">Pricing</a></li>
             <li><a href="https://resonate.coop/the-co-op" target="_blank" class="link db w-100 ph3 pv2 bg-animate hover-bg-light-gray hover-bg-light-gray--light hover-bg-dark-gray--dark">The Co-op</a></li>
@@ -50,80 +57,91 @@
             <li><a href="https://community.resonate.coop" target="_blank" class="link db w-100 ph3 pv2 bg-animate hover-bg-light-gray hover-bg-light-gray--light hover-bg-dark-gray--dark">Forum</a></li>
           </ul>
         </li>
+        <li role="menuitem" class="search flex w-100 flex-auto justify-end justify-center-l">
+          <button class="bn mr4 mr0-l pa0 bg-transparent">
+            <div class="flex items-center justify-center">
+              <svg viewBox="0 0 16 16" class="icon icon-search icon--sm">
+                <use xlink:href="#icon-search"></use>
+              </svg>
+              <span class="dn db-l pl3 near-black near-black--light near-white--dark">Search</span>
+            </div>
+          </button>
+        </li>
       </ul>
     </nav>
-    <div class="search flex-l flex-auto-l w-100-l justify-center-l">
-      <button class="js bn dn db-l bg-transparent">
-        <div class="flex items-center">
-          <svg viewBox="0 0 16 16" class="icon icon-search icon--sm">
-            <use xlink:href="#icon-search"></use>
-          </svg>
-          <span class="db pl3 near-black near-black--light near-white--dark">Search</span>
-        </div>
-      </button>
-    </div>
-    <nav role="navigation" aria-label="Main navigation" class="dropdown-navigation flex w-100 flex-auto justify-end-l">
-      <ul role="menu" class="flex list ma0 pa0 w-100 w-75-l justify-end items-center mr3-l">
-        <li role="menuitem" class="flex flex-auto justify-center w-100 grow">
-          <a href="../web/login{{ .queryString }}" class="link pv1 ph3 ttu ba b--mid-gray b--dark-gray--dark db f6 b">
-            Log In
-          </a>
+    <nav role="navigation" aria-label="Player navigation" class="dropdown-navigation flex w-100 w-40-l flex-auto justify-end-l">
+      <ul role="menu" class="flex list ma0 pa0 w-100 w-75-l justify-around items-center mr3-l">
+        <li role="menuitem" class="flex flex-auto w-100 justify-center relative">
+          <a href="https://beta.stream.resonate.ninja/artists" class="dn db-l link near-black near-black--light near-white--dark pv2 ph3">Browse</a>
+          <button title="Open Browse Menu" class="db dn-l bg-transparent bn near-black near-black--light near-white--dark pa0">
+          <span class="flex justify-center items-center">Browse</span></button>
         </li>
+        <li role="menuitem" class="flex flex-auto w-100 justify-center relative">
+          <a href="https://beta.stream.resonate.ninja/discover" class="link db near-black near-black--light near-white--dark pv2 ph3">Discover</a>
+        </li>
+        <li role="divider" class="flex flex-auto w-100 justify-center"></li>
+        <li role="menuitem" class="flex flex-auto justify-center w-100">
+          <a href="../web/login{{ .queryString }}" class="link pv1 ph3 ttu ba b--mid-gray b--dark-gray--dark db f6 b">Log In</a>
+        </li>
+        <li role="divider" class="dn flex-auto w-100 justify-center"></li>
       </ul>
     </nav>
   </header>
   <!-- Begin page content -->
   {{ template "content" . }}
 
-  <footer class="footer-component flex flex-column flex-row-reverse-l flex-row-l">
-    <div class="flex flex-auto flex-column flex-row-l items-center-l justify-around-l mh3">
+  <footer class="footer-component bg-black white flex flex-column flex-row-reverse-l flex-row-l pt4 pb5" id="ncid-8c2f">
+    <div class="flex flex-auto flex-column flex-row-l items-center-l justify-around-l mh4 mh3-l">
       <div>
         <dl>
-          <dt class="clip">Resonate</dt>
-          <dd class="ma0 pb2"><a href="https://resonate.is/everything" target="_blank" rel="noopener noreferer" class="link ttu pa0 lh-copy">Explore</a></dd>
-          <dd class="ma0 pb2"><a href="https://resonate.is/blog" target="_blank" rel="noopener noreferer" class="link ttu pa0 lh-copy">Blog</a></dd>
-          <dd class="ma0 pb2"><a href="https://resonate.is/support" target="_blank" rel="noopener noreferer" class="link ttu pa0 lh-copy">Support</a></dd>
+          <dt class="ttu mb2">Learn</dt>
+          <dd class="ma0 pb2"><a href="https://resonate.coop/about" target="_blank" rel="noopener noreferer" class="link mid-gray pa0 lh-copy">About</a></dd>
+          <dd class="ma0 pb2"><a href="https://resonate.coop/pricing" target="_blank" rel="noopener noreferer" class="link mid-gray pa0 lh-copy">Pricing</a></dd>
+          <dd class="ma0 pb2"><a href="https://resonate.coop/co-op" target="_blank" rel="noopener noreferer" class="link mid-gray pa0 lh-copy">The Co-op</a></dd>
+          <dd class="ma0 pb2"><a href="https://resonate.coop/handbook" target="_blank" rel="noopener noreferer" class="link mid-gray pa0 lh-copy">Handbook</a></dd>
         </dl>
-        <p class="dark-gray f5">©2015-2020 RESONATE</p>
+        <p class="dark-gray f5 ttu">© 2015-2021 Resonate Coop</p>
       </div>
       <div>
         <dl>
-          <dt class="clip">Code</dt>
-          <dd class="ma0 pb2"><a href="https://github.com/resonatecoop/upload/tree/master/docs/api.md" target="_blank" rel="noopener noreferer" class="link ttu pa0 lh-copy">API documentation</a></dd>
-          <dd class="ma0 pb2"><a href="https://github.com/resonatecoop/upload" target="_blank" rel="noopener noreferer" class="link ttu pa0 lh-copy">Github</a></dd>
-          <dd class="ma0 pb2"><a href="https://gitlab.resonate.ninja" target="_blank" rel="noopener noreferer" class="link ttu pa0 lh-copy">Gitlab</a></dd>
+          <dt class="ttu mb2">Community</dt>
+          <dd class="ma0 pb2"><a href="https://id.resonate.coop/join" target="_blank" rel="noopener noreferer" class="link mid-gray pa0 lh-copy">Join</a></dd>
+          <dd class="ma0 pb2"><a href="https://resonate.coop/volunteering" target="_blank" rel="noopener noreferer" class="link mid-gray pa0 lh-copy">Volunteering</a></dd>
+          <dd class="ma0 pb2"><a href="https://resonate.coop/team" target="_blank" rel="noopener noreferer" class="link mid-gray pa0 lh-copy">Team</a></dd>
+          <dd class="ma0 pb2"><a href="https://community.resonate.coop" target="_blank" rel="noopener noreferer" class="link mid-gray pa0 lh-copy">Forum</a></dd>
         </dl>
-        <p class="dark-gray f5"><a href="https://resonate.is/volunteer/" class="link">VOLUNTEERING</a></p>
+        <p class="dark-gray f5"><a href="https://resonate.coop/terms" class="link ttu">Terms + Conditions</a></p>
       </div>
       <div>
         <dl>
-          <dt class="clip">Informations</dt>
-          <dd class="ma0 pb2"><a href="https://resonate.is/press" target="_blank" rel="noopener noreferer" class="link ttu pa0 lh-copy">Press</a></dd>
-          <dd class="ma0 pb2"><a href="https://resonate.is/collaborators" target="_blank" rel="noopener noreferer" class="link ttu pa0 lh-copy">Team</a></dd>
-          <dd class="ma0 pb2"><a href="https://resonate.is/contact" target="_blank" rel="noopener noreferer" class="link ttu pa0 lh-copy">Contact</a></dd>
-        </dl>
-        <p class="dark-gray f5"><a href="https://resonate.is/terms-conditions/" class="link">TERMS + CONDITIONS</a></p>
-      </div>
-      <div>
-        <dl>
-          <dt class="clip">Other</dt>
+          <dt class="ttu mb2">Connect</dt>
           <dd class="ma0 pb2">
-            <a href="https://twitter.com/resonatecoop" target="_blank" rel="noopener noreferer" class="link ttu pa0 lh-copy mr2">TW</a>
-            <a href="https://www.facebook.com/resonatecoop" target="_blank" rel="noopener noreferer" class="link ttu pa0 lh-copy mr2">FB</a>
-            <a href="https://www.instagram.com/resonate_coop/" target="_blank" rel="noopener noreferer" class="link ttu pa0 lh-copy mr2">IG</a>
-            <a href="https://resonate.is/new/the-blog/feed/" target="_blank" rel="noopener noreferer" class="link ttu pa0 lh-copy mr2">RSS</a>
+            <a href="https://twitter.com/resonatecoop" target="_blank" rel="noopener noreferer" class="link mid-gray ttu pa0 lh-copy mr2">TW</a><a href="https://www.facebook.com/resonatecoop" target="_blank" rel="noopener noreferer" class="link mid-gray ttu pa0 lh-copy mr2">FB</a><a href="https://www.instagram.com/resonate_coop/" target="_blank" rel="noopener noreferer" class="link mid-gray ttu pa0 lh-copy mr2">IG</a><a href="https://resonate.coop/new/the-blog/feed/" target="_blank" rel="noopener noreferer" class="link mid-gray ttu pa0 lh-copy mr2">RSS</a>
           </dd>
-          <dd class="ma0 pb2"><a href="https://community.resonate.is" target="_blank" rel="noopener noreferer" class="link ttu pa0 lh-copy">Community</a></dd>
-          <dd class="ma0 pb2"><a href="https://resonate.is/donate" target="_blank" rel="noopener noreferer" class="link ttu pa0 lh-copy">Donate</a></dd>
+          <dd class="ma0 pb2"><a href="https://resonate.coop/blog" target="_blank" rel="noopener noreferer" class="link mid-gray pa0 lh-copy">Blog</a></dd>
+          <dd class="ma0 pb2"><a href="https://resonate.coop/newsletter" target="_blank" rel="noopener noreferer" class="link mid-gray pa0 lh-copy">Newsletter</a></dd>
+          <dd class="ma0 pb2"><a href="https://resonate.coop/contact" target="_blank" rel="noopener noreferer" class="link mid-gray pa0 lh-copy">Contact</a></dd>
         </dl>
-        <p class="dark-gray f5"><a href="https://resonate.is/privacy-policy/" class="link">PRIVACY POLICY</a></p>
+        <p class="dark-gray f5"><a href="https://resonate.coop/privacy-policy/" class="link ttu">Privacy Policy</a></p>
+      </div>
+      <div class="mb4 mb0-l">
+        <dl>
+          <dt class="ttu mb2">Code</dt>
+          <dd class="ma0 pb2"><a href="https://github.com/resonatecoop/resonate/tree/master/docs/api.md" target="_blank" rel="noopener noreferer" class="link mid-gray pa0 lh-copy">Documentation</a></dd>
+          <dd class="ma0 pb2"><a href="https://github.com/resonatecoop" target="_blank" rel="noopener noreferer" class="link mid-gray pa0 lh-copy">Github</a></dd>
+          <dd class="ma0 pb2"><a href="https://github.com/resonatecoop/resonate/issues" target="_blank" rel="noopener noreferer" class="link mid-gray pa0 lh-copy">Report a problem</a></dd>
+          <dd class="ma0 pb2"><a href="https://resonate.coop/donate" target="_blank" rel="noopener noreferer" class="link mid-gray pa0 lh-copy">Donate</a></dd>
+        </dl>
+        <p class="dark-gray f5">7.0.2</p>
       </div>
     </div>
-    <a href="/" title="Resonate" class="link flex pa3">
-      <svg viewBox="0 0 16 16" transform="scale(1, 1)" class="icon icon-resonate icon--full-width mw4">a
-        <use xlink:href="#icon-resonate"></use>
-      </svg>
-    </a>
+    <div>
+      <a href="/" title="Resonate" class="link dib">
+        <svg viewBox="0 0 16 16" class="icon icon-resonate icon--full-width fill-white mh4 mh3-l pa3">
+          <use xlink:href="#icon-resonate"></use>
+        </svg>
+      </a>
+    </div>
   </footer>
 
   <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="display:none" width="100" height="100">
@@ -134,8 +152,11 @@
       <path d="M74.7 63.9L100 89.2 89.2 100 63.9 74.7A40.9 40.9 0 1174.7 64zM41 66.5a25.6 25.6 0 100-51.2 25.6 25.6 0 000 51.2z"/>
     </symbol>
     <symbol viewBox="0 0 100 100" id="icon-check">
-        <path d="M30.3 88l-.7 1L0 58.7 6.5 52l23 23.5 64-65.5 6.5 6.7-63.9 65.6z"/>
-      </symbol>
+      <path d="M30.3 88l-.7 1L0 58.7 6.5 52l23 23.5 64-65.5 6.5 6.7-63.9 65.6z"/>
+    </symbol>
+    <symbol viewBox="0 0 100 100" id="icon-close">
+      <path d="M50 42.5L8.4 0 0 8.6 41.6 51 2 91.4l8.4 8.6L50 59.6 89.6 100l8.4-8.6L58.4 51 100 8.6 91.6 0z"/>
+    </symbol>
     <symbol viewBox="0 0 100 100" id="icon-info">
       <path d="M50 100A50 50 0 1 0 50 0a50 50 0 0 0 0 100zm7.8-15.5H42V44.3h15.8v40.2zm.7-58.6c0 4.6-3.7 8-8.7 8-5 0-8.6-3.4-8.6-8 0-4.7 3.7-8.3 8.6-8.3 1.6 0 3 .4 4.3 1a8 8 0 0 1 4.4 7.3z"/>
     </symbol>

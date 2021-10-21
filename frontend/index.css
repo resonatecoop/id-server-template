@@ -4,6 +4,7 @@
 @import './src/components/autocomplete-typeahead/index.css';
 @import './src/components/notifications/index.css';
 @import './src/components/header/index.css';
+@import '@resonate/search-component/index.css';
 @import './src/components/footer/index.css';
 
 input[type="radio"] {
