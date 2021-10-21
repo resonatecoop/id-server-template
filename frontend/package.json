@@ -55,7 +55,7 @@
     "@resonate/input-element": "^1.3.0",
     "@resonate/link-element": "^1.2.0",
     "@resonate/rangeslider": "^1.1.3",
-    "@resonate/search-component": "^1.0.0",
+    "@resonate/search-component": "^1.1.0",
     "@resonate/tachyons": "^1.3.4",
     "@resonate/theme-skins": "^1.1.2",
     "babel-polyfill": "^6.26.0",

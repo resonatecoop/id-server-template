@@ -146,7 +146,12 @@ search.use((state, emitter, app) => {
   state.params = {} // nanochoo does not have a router
 
   emitter.on('search', (q) => {
-    window.open(`https://beta.stream.resonate.coop/search?q=${q}`, '_blank')
+    const bang = q.startsWith('#')
+    const pathname = bang ? '/tag' : '/search'
+    const url = new URL(pathname, process.env.APP_HOST || 'http://localhost')
+    const params = bang ? { term: q.split('#')[1] } : { q }
+    url.search = new URLSearchParams(params)
+    return window.open(url.href, '_blank')
   })
 })
 
