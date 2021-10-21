@@ -1,9 +1,14 @@
 const choo = require('choo')
+const nanochoo = require('nanochoo')
 const app = choo({ href: false }) // disable choo href routing
 
 const { isBrowser } = require('browser-or-node')
-const SwaggerClient = require('swagger-client')
 const setTitle = require('./lib/title')
+const { getAPIServiceClientWithAuth } = require('@resonate/api-service')({
+  apiHost: process.env.API_HOST
+})
+
+const Header = require('./components/header')
 
 if (isBrowser) {
   require('web-animations-js/web-animations.min')
@@ -59,23 +64,16 @@ app.use((state, emitter) => {
   emitter.on('route:profile', async () => {
     try {
       // get v2 api profile
-      const specUrl = new URL('/v2/user/profile/apiDocs', 'https://' + process.env.API_DOMAIN)
-      specUrl.search = new URLSearchParams({
-        type: 'apiDoc',
-        basePath: '/v2/user/profile'
-      })
-      const client = await new SwaggerClient({
-        url: specUrl.href,
-        authorizations: {
-          Bearer: 'Bearer ' + state.token
-        }
-      })
+      const getClient = getAPIServiceClientWithAuth(state.token)
+      const client = await getClient('profile')
+      const result = await client.getUserProfile()
 
-      const response = await client.apis.profile.getUserProfile()
+      const { body: response } = result
+      const { data: userData } = response
 
-      state.profile.nickname = response.body.data.nickname
-      state.profile.ownedGroups = response.body.data.ownedGroups || []
-      state.profile.avatar = response.body.data.avatar || {}
+      state.profile.nickname = userData.nickname
+      state.profile.ownedGroups = userData.ownedGroups || []
+      state.profile.avatar = userData.avatar || {}
 
       emitter.emit(state.events.RENDER)
     } catch (err) {
@@ -132,3 +130,28 @@ app.route('/profile/new', layoutNarrow(require('./views/profile/new')))
 app.route('*', layoutNarrow(require('./views/404')))
 
 module.exports = app.mount('#app')
+
+/*
+ * Append search component to header (outside of main choo app)
+ */
+
+const search = nanochoo()
+
+search.use((state, emitter, app) => {
+  state.search = state.search || {
+    q: ''
+  }
+
+  state.user = {}
+  state.params = {} // nanochoo does not have a router
+
+  emitter.on('search', (q) => {
+    window.open(`https://beta.stream.resonate.coop/search?q=${q}`, '_blank')
+  })
+})
+
+search.view((state, emit) => {
+  return state.cache(Header, 'header').render()
+})
+
+search.mount('.search')

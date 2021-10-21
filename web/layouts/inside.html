@@ -21,17 +21,24 @@
   <script type="text/javascript" defer src="/js/{{ .javascript }}"></script>
 </head>
 <body class="ff-no-fouc color-scheme--light">
-  <header role="banner" style="height:3rem" class="bg-white black bg-white--light black--light bg-black--dark white--dark white fixed sticky-l left-0 top-0-l bottom-0 right-0 w-100 z-9999 flex items-center bt bt-0-l bb-l bw b--mid-gray b--mid-gray--light b--near-black--dark">
-    <nav role="navigation" class="relative dropdown-navigation--focus">
-      <ul role="menu" style="height:3rem" class="list ma0 pa0 bg-white bg-white--light bg-black--dark bg-transparent-l fixed w-100 w-auto-l top-0 left-0 flex relative-l flex-l bb bb-0-l bw b--mid-gray b--mid-gray--light b--near-black--dark">
-        <li>
-          <a href="/" title="Resonate" class="link flex items-center flex-shrink-0 h-100 ph2 ml2 overflow-hidden">
+  <header role="banner" id="header" class="bg-white black bg-white--light black--light bg-black--dark white--dark white fixed sticky-l left-0 top-0-l bottom-0 right-0 w-100 z-9999 flex items-center bt bt-0-l bb-l bw b--mid-gray b--mid-gray--light b--near-black--dark" style="height:3rem;">
+    <nav role="navigation" aria-label="Main navigation" class="flex-l flex-auto-l w-60-l relative dropdown-navigation--focus">
+      <ul role="menu" class="list ma0 pa0 bg-white bg-white--light bg-black--dark bg-transparent-l fixed w-100 top-0 left-0 flex flex-auto w-100 relative-l flex-l bb bb-0-l bw b--mid-gray b--mid-gray--light b--near-black--dark" style="height: 3rem;">
+        <li class="dn db-ns">
+          <a class="link flex items-center flex-shrink-0 h-100 ph2 ml2 overflow-hidden" href="/" title="Resonate">
             <svg viewBox="0 0 16 16" class="icon icon-logo-wordmark icon--sm">
               <use xlink:href="#icon-logo-wordmark"></use>
             </svg>
           </a>
         </li>
-        <li class="flex flex-auto-l w-100-l justify-center">
+        <li class="db dn-ns">
+          <a class="link flex items-center flex-shrink-0 h-100 ph2 ml2 overflow-hidden" href="/" title="Resonate">
+            <svg viewBox="0 0 16 16" class="icon icon-logo icon--sm">
+              <use xlink:href="#icon-logo"></use>
+            </svg>
+          </a>
+        </li>
+        <li id="learn">
           <button title="Open learn menu" class="bg-transparent near-black near-black--light near-white--dark bn dropdown-toggle grow pa3">
             <div class="flex justify-center items-center">
               <span>Learn</span> 
@@ -42,7 +49,7 @@
               </div>
             </div>
           </button>
-          <ul role="menu" style="left:0;width:120px;" class="bg-white black bg-black--dark white--dark bg-white--light black--light ba bw b--mid-gray b--mid-gray--light b--near-black--dark list ma0 pa0 absolute right-0 dropdown z-999 top-100">
+          <ul role="menu" style="width:120px;left:0;" class="bg-white black bg-black--dark white--dark bg-white--light black--light ba bw b--mid-gray b--mid-gray--light b--near-black--dark list ma0 pa0 absolute right-0 dropdown z-999 top-100">
             <li><a href="https://resonate.coop/about" target="_blank" class="link db w-100 ph3 pv2 bg-animate hover-bg-light-gray hover-bg-light-gray--light hover-bg-dark-gray--dark">About</a></li>
             <li><a href="https://resonate.coop/pricing" target="_blank" class="link db w-100 ph3 pv2 bg-animate hover-bg-light-gray hover-bg-light-gray--light hover-bg-dark-gray--dark">Pricing</a></li>
             <li><a href="https://resonate.coop/the-co-op" target="_blank" class="link db w-100 ph3 pv2 bg-animate hover-bg-light-gray hover-bg-light-gray--light hover-bg-dark-gray--dark">The Co-op</a></li>
@@ -50,20 +57,29 @@
             <li><a href="https://community.resonate.coop" target="_blank" class="link db w-100 ph3 pv2 bg-animate hover-bg-light-gray hover-bg-light-gray--light hover-bg-dark-gray--dark">Forum</a></li>
           </ul>
         </li>
+        <li role="menuitem" class="search flex w-100 flex-auto justify-end justify-center-l">
+          <button class="bn mr4 mr0-l pa0 bg-transparent">
+            <div class="flex items-center justify-center">
+              <svg viewBox="0 0 16 16" class="icon icon-search icon--sm">
+                <use xlink:href="#icon-search"></use>
+              </svg>
+              <span class="dn db-l pl3 near-black near-black--light near-white--dark">Search</span>
+            </div>
+          </button>
+        </li>
       </ul>
     </nav>
-    <div class="search flex-l flex-auto-l w-100-l justify-center-l">
-      <button class="js bn dn db-l bg-transparent">
-        <div class="flex items-center">
-          <svg viewBox="0 0 16 16" class="icon icon-search icon--sm">
-            <use xlink:href="#icon-search"></use>
-          </svg>
-          <span class="db pl3 near-black near-black--light near-white--dark">Search</span>
-        </div>
-      </button>
-    </div>
-    <nav role="navigation" aria-label="Main navigation" class="dropdown-navigation flex w-100 flex-auto justify-end-l">
-      <ul role="menu" class="flex list ma0 pa0 w-100 w-75-l justify-end items-center mr3-l">
+    <nav role="navigation" aria-label="Player navigation" class="dropdown-navigation flex w-100 w-40-l flex-auto justify-end-l">
+      <ul role="menu" class="flex list ma0 pa0 w-100 w-75-l justify-around items-center mr3-l">
+        <li role="menuitem" class="flex flex-auto w-100 justify-center relative">
+          <a href="https://beta.stream.resonate.ninja/artists" class="dn db-l link near-black near-black--light near-white--dark pv2 ph3">Browse</a>
+          <button title="Open Browse Menu" class="db dn-l bg-transparent bn near-black near-black--light near-white--dark pa0">
+          <span class="flex justify-center items-center">Browse</span></button>
+        </li>
+        <li role="menuitem" class="flex flex-auto w-100 justify-center relative">
+          <a href="https://beta.stream.resonate.ninja/discover" class="link db near-black near-black--light near-white--dark pv2 ph3">Discover</a>
+        </li>
+        <li role="divider" class="flex flex-auto w-100 justify-center"></li>
         <li role="menuitem" class="flex flex-auto justify-center w-100 mw4">
           <button title="Open menu" class="bg-transparent bn dropdown-toggle w-100 pa2 grow">
             <span class="flex justify-center items-center">
@@ -85,7 +101,7 @@
           <ul style="width:100vw;left:auto;max-width:18rem;margin-top:-1px;" role="menu" class="bg-white black bg-black--dark white--dark bg-white--light black--light ba bw b--mid-gray b--mid-gray--light b--near-black--dark list ma0 pa0 absolute right-0 dropdown z-999 bottom-100 top-100-l">
             <li role="menuitem" class="pt3">
               <a href="../account-settings{{ .queryString }}" title="Account settings" class="link flex flex-auto items-center ph3 dim">
-                <span class="b">auggod</span> 
+                <span class="b">{{ .profile.Email }}</span> 
                 <div class="flex flex-auto justify-end"><span class="br-pill pv1 ph2 bg-light-gray bg-light-gray--light bg-near-black--dark">Listener</span></div>
               </a>
             </li>
@@ -174,16 +190,16 @@
       <path d="M74.7 63.9L100 89.2 89.2 100 63.9 74.7A40.9 40.9 0 1174.7 64zM41 66.5a25.6 25.6 0 100-51.2 25.6 25.6 0 000 51.2z"/>
     </symbol>
     <symbol viewBox="0 0 100 100" id="icon-check">
-        <path d="M30.3 88l-.7 1L0 58.7 6.5 52l23 23.5 64-65.5 6.5 6.7-63.9 65.6z"/>
-      </symbol>
+      <path d="M30.3 88l-.7 1L0 58.7 6.5 52l23 23.5 64-65.5 6.5 6.7-63.9 65.6z"/>
+    </symbol>
+    <symbol viewBox="0 0 100 100" id="icon-close">
+      <path d="M50 42.5L8.4 0 0 8.6 41.6 51 2 91.4l8.4 8.6L50 59.6 89.6 100l8.4-8.6L58.4 51 100 8.6 91.6 0z"/>
+    </symbol>
     <symbol viewBox="0 0 100 100" id="icon-info">
       <path d="M50 100A50 50 0 1 0 50 0a50 50 0 0 0 0 100zm7.8-15.5H42V44.3h15.8v40.2zm.7-58.6c0 4.6-3.7 8-8.7 8-5 0-8.6-3.4-8.6-8 0-4.7 3.7-8.3 8.6-8.3 1.6 0 3 .4 4.3 1a8 8 0 0 1 4.4 7.3z"/>
     </symbol>
     <symbol viewBox="0 0 100 100" id="icon-circle">
       <circle stroke="black" cx="50" cy="50" r="45" stroke-width="10" />
-    </symbol>
-    <symbol viewBox="0 0 100 100" id="icon-info">
-      <path d="M50 100A50 50 0 1 0 50 0a50 50 0 0 0 0 100zm7.8-15.5H42V44.3h15.8v40.2zm.7-58.6c0 4.6-3.7 8-8.7 8-5 0-8.6-3.4-8.6-8 0-4.7 3.7-8.3 8.6-8.3 1.6 0 3 .4 4.3 1a8 8 0 0 1 4.4 7.3z"/>
     </symbol>
     <symbol viewBox="0 0 100 100" id="icon-dropdown">
       <path d="M0 40h20v20H0zM40 40h20v20H40zM80 40h20v20H80z"/>
