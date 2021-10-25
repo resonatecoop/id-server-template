@@ -112,22 +112,7 @@ app.use((state, emitter) => {
 
 app.use(require('./plugins/notifications')())
 
-// layouts
-const layout = require('./layouts/default')
-const layoutNarrow = require('./layouts/narrow')
-
-// choo routes
-app.route('/', layout(require('./views/home')))
-app.route('/authorize', layoutNarrow(require('./views/authorize')))
-app.route('/join', layoutNarrow(require('./views/join')))
-app.route('/login', layoutNarrow(require('./views/login')))
-app.route('/password-reset', layoutNarrow(require('./views/password-reset')))
-app.route('/email-confirmation', layoutNarrow(require('./views/email-confirmation')))
-app.route('/account-settings', layout(require('./views/account-settings')))
-app.route('/welcome', layoutNarrow(require('./views/welcome')))
-app.route('/profile', layoutNarrow(require('./views/profile')))
-app.route('/profile/new', layoutNarrow(require('./views/profile/new')))
-app.route('*', layoutNarrow(require('./views/404')))
+require('./routes')(app)
 
 module.exports = app.mount('#app')
 
