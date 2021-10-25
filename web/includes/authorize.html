@@ -2,78 +2,67 @@
 
 {{ define "content" }}
 <div id="app">
-  <main class="flex flex-auto relative">
-    <div class="flex flex-column flex-auto w-100">
-      <div class="flex flex-column flex-auto items-center justify-center min-vh-100 mh3 pt6 pb6">
-        <div class="bg-white black bg-black--dark white--dark bg-white--light black--light z-1 w-100 w-auto-l ph4 pt4 pb3">
-          <div class="flex flex-column flex-auto">
-            <svg viewBox="0 0 16 16" class="icon icon-logo icon--sm icon icon--lg fill-black fill-white--dark fill-black--light">
-              <use xlink:href="#icon-logo"></use>
-            </svg>
-            <div class="flex flex-column">
-              <h2 class="f3 fw1 mt3 near-black near-black--light light-gray--dark lh-title">Continue to {{ .applicationName }}</h2>
-              {{ if .flash }}
-              <div>
-                <p{{ if eq .flash.Type "Error" }} class="red"{{ end }}>{{ .flash.Message }}</p>
-              </div>
-              {{ end }}
-              <div class="flex flex-column flex-auto">
-                <form action="" method="POST" class="flex flex-column flex-auto ma0 pa0">
-                  {{ .csrfField }}
-                  {{ if .token }}
-                  <p>How long do you want to authorize <b>{{ .applicationName }}</b> for?</p>
-                  <div class="flex w-100">
-                    <div class="flex items-center flex-auto">
-                      <input tabindex="-1" type="radio" name="lifetime" id="hour" value="3600">
-                      <label tabindex="0" class="flex flex-auto items-center justify-center w-100" for="hour">
-                        <div class="pv3 flex justify-center w-100 flex-auto">
-                          <svg viewBox="0 0 16 16" class="icon icon-circle icon--sm icon icon--sm fill-white">
-                            <use xlink:href="#icon-circle"></use>
-                          </svg>
-                        </div>
-                        <div class="pv3 flex w-100 flex-auto">1 hour</div>
-                      </label>
-                    </div>
-                    <div class="flex items-center flex-auto">
-                      <input tabindex="-1" type="radio" name="lifetime" id="day" value="86400">
-                      <label tabindex="0" class="flex flex-auto items-center justify-center w-100" for="day">
-                        <div class="pv3 flex justify-center w-100 flex-auto">
-                          <svg viewBox="0 0 16 16" class="icon icon-circle icon--sm icon icon--sm fill-white">
-                            <use xlink:href="#icon-circle"></use>
-                          </svg>
-                        </div>
-                        <div class="pv3 flex w-100 flex-auto">1 day</div>
-                      </label>
-                    </div>
-                    <div class="flex items-center flex-auto">
-                      <input tabindex="-1" type="radio" name="lifetime" id="week" value="604800" checked>
-                      <label tabindex="0" class="flex flex-auto items-center justify-center w-100" for="week">
-                        <div class="pv3 flex justify-center w-100 flex-auto">
-                          <svg viewBox="0 0 16 16" class="icon icon-circle icon--sm icon icon--sm fill-white">
-                            <use xlink:href="#icon-circle"></use>
-                          </svg>
-                        </div>
-                        <div class="pv3 flex w-100 flex-auto">1 week</div>
-                      </label>
-                    </div>
-                  </div>
-                  {{ end }}
-
-                  <p>Logging in as {{ .profile.Email }}</p>
-                  
-                  <div class="flex">
-                    <div class="mr3">
-                      <input name="allow" type="submit" class="bg-white black ba bw b--dark-gray f5 b pv3 ph3 grow" value="Finish Login" />
-                    </div>
-                    <div>
-                      <input name="deny" type="submit" class="bg-white black f5 bn b pv3 ph3 grow" value="Cancel" />
-                    </div>
-                  </div>
-                </form>
-              </div>
+  <main class="flex flex-column flex-auto items-center justify-center min-vh-100 mh3 pt6 pb6">
+    <div class="flex flex-column w-100 w-auto-l ph4 pt4 pb3">
+      <h2 class="f3 fw1 mt3 near-black near-black--light light-gray--dark lh-title">Continue to {{ .applicationName }}</h2>
+      {{ if .flash }}
+      <div>
+        <p{{ if eq .flash.Type "Error" }} class="red"{{ end }}>{{ .flash.Message }}</p>
+      </div>
+      {{ end }}
+      <div class="flex flex-column flex-auto">
+        <form action="" method="POST" class="flex flex-column flex-auto ma0 pa0">
+          {{ .csrfField }}
+          {{ if .token }}
+          <p>How long do you want to authorize <b>{{ .applicationName }}</b> for?</p>
+          <div class="flex w-100">
+            <div class="flex items-center flex-auto">
+              <input tabindex="-1" type="radio" name="lifetime" id="hour" value="3600">
+              <label tabindex="0" class="flex flex-auto items-center justify-center w-100" for="hour">
+                <div class="pv3 flex justify-center w-100 flex-auto">
+                  <svg viewBox="0 0 16 16" class="icon icon-circle icon--sm icon icon--sm fill-white">
+                    <use xlink:href="#icon-circle"></use>
+                  </svg>
+                </div>
+                <div class="pv3 flex w-100 flex-auto">1 hour</div>
+              </label>
+            </div>
+            <div class="flex items-center flex-auto">
+              <input tabindex="-1" type="radio" name="lifetime" id="day" value="86400">
+              <label tabindex="0" class="flex flex-auto items-center justify-center w-100" for="day">
+                <div class="pv3 flex justify-center w-100 flex-auto">
+                  <svg viewBox="0 0 16 16" class="icon icon-circle icon--sm icon icon--sm fill-white">
+                    <use xlink:href="#icon-circle"></use>
+                  </svg>
+                </div>
+                <div class="pv3 flex w-100 flex-auto">1 day</div>
+              </label>
+            </div>
+            <div class="flex items-center flex-auto">
+              <input tabindex="-1" type="radio" name="lifetime" id="week" value="604800" checked>
+              <label tabindex="0" class="flex flex-auto items-center justify-center w-100" for="week">
+                <div class="pv3 flex justify-center w-100 flex-auto">
+                  <svg viewBox="0 0 16 16" class="icon icon-circle icon--sm icon icon--sm fill-white">
+                    <use xlink:href="#icon-circle"></use>
+                  </svg>
+                </div>
+                <div class="pv3 flex w-100 flex-auto">1 week</div>
+              </label>
             </div>
           </div>
-        </div>
+          {{ end }}
+
+          <p>Logging in as {{ .profile.Email }}</p>
+          
+          <div class="flex">
+            <div class="mr3">
+              <input name="allow" type="submit" class="bg-white black ba bw b--dark-gray f5 b pv3 ph3 grow" value="Finish Login" />
+            </div>
+            <div>
+              <input name="deny" type="submit" class="bg-white black f5 bn b pv3 ph3 grow" value="Cancel" />
+            </div>
+          </div>
+        </form>
       </div>
     </div>
   </main>
