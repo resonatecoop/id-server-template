@@ -115,7 +115,7 @@ func loadTemplates() {
 			"./web/includes/authorize.html",
 			"./web/includes/client.html",
 			"./web/includes/welcome.html",
-			"./web/includes/account_settings.html",
+			"./web/includes/account.html",
 			"./web/includes/profile.html",
 			"./web/includes/profile_label.html",
 			"./web/includes/profile_artist.html",

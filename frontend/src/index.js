@@ -1,6 +1,10 @@
 const choo = require('choo')
 const nanochoo = require('nanochoo')
+const initialState = window.initialState
+  ? Object.assign({}, window.initialState)
+  : {}
 const app = choo({ href: false }) // disable choo href routing
+window.initialState = initialState // hack to bring back initial state (should be deleted again by nanochoo)
 
 const { isBrowser } = require('browser-or-node')
 const setTitle = require('./lib/title')
@@ -8,7 +12,8 @@ const { getAPIServiceClientWithAuth } = require('@resonate/api-service')({
   apiHost: process.env.API_HOST
 })
 
-const Header = require('./components/header')
+const SearchOuter = require('./components/header')
+const UserMenu = require('./components/user-menu')
 
 if (isBrowser) {
   require('web-animations-js/web-animations.min')
@@ -72,6 +77,7 @@ app.use((state, emitter) => {
       const { data: userData } = response
 
       state.profile.nickname = userData.nickname
+      state.profile.role = userData.role
       state.profile.ownedGroups = userData.ownedGroups || []
       state.profile.avatar = userData.avatar || {}
 
@@ -114,34 +120,76 @@ app.use(require('./plugins/notifications')())
 
 require('./routes')(app)
 
-module.exports = app.mount('#app')
-
 /*
  * Append search component to header (outside of main choo app)
  */
+async function searchApp (initialState) {
+  window.initialState = initialState
 
-const search = nanochoo()
+  const search = nanochoo()
 
-search.use((state, emitter, app) => {
-  state.search = state.search || {
-    q: ''
-  }
+  search.use((state, emitter, app) => {
+    state.search = state.search || {
+      q: ''
+    }
 
-  state.user = {}
-  state.params = {} // nanochoo does not have a router
+    state.user = {
+      token: state.token
+    }
+    state.params = {} // nanochoo does not have a router
 
-  emitter.on('search', (q) => {
-    const bang = q.startsWith('#')
-    const pathname = bang ? '/tag' : '/search'
-    const url = new URL(pathname, process.env.APP_HOST || 'http://localhost')
-    const params = bang ? { term: q.split('#')[1] } : { q }
-    url.search = new URLSearchParams(params)
-    return window.open(url.href, '_blank')
+    emitter.on('search', (q) => {
+      const bang = q.startsWith('#')
+      const pathname = bang ? '/tag' : '/search'
+      const url = new URL(pathname, process.env.APP_HOST || 'http://localhost')
+      const params = bang ? { term: q.split('#')[1] } : { q }
+      url.search = new URLSearchParams(params)
+      return window.open(url.href, '_blank')
+    })
   })
+
+  search.view((state, emit) => {
+    // component id needs to be header to work correctly
+    return state.cache(SearchOuter, 'header').render()
+  })
+
+  search.mount('#search-host')
+
+  return Promise.resolve()
+}
+
+/*
+ * Append usermenu app
+ */
+async function userMenuApp (initialState) {
+  if (!document.getElementById('usermenu')) return
+
+  window.initialState = initialState
+
+  const usermenu = nanochoo()
+
+  usermenu.use((state, emitter, app) => {
+    state.user = {
+      token: state.token
+    }
+    state.params = {} // nanochoo does not have a router
+  })
+
+  usermenu.view((state, emit) => {
+    return state.cache(UserMenu, 'usermenu').render()
+  })
+
+  usermenu.mount('#usermenu')
+
+  return Promise.resolve()
+}
+
+searchApp(initialState).then(() => {
+  console.log('Loaded search app')
 })
 
-search.view((state, emit) => {
-  return state.cache(Header, 'header').render()
+userMenuApp(initialState).then(() => {
+  console.log('Loaded user menu')
 })
 
-search.mount('.search')
+module.exports = app.mount('#app')

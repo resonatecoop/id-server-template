@@ -4,8 +4,15 @@ const html = require('nanohtml')
 const icon = require('@resonate/icon-element')
 const Search = require('@resonate/search-component')
 
-// Universal header base for search component we use on Resonate website and id server
-class Header extends Nanocomponent {
+// SearchOuter class
+// base for search component we use on Resonate website and id server
+class SearchOuter extends Nanocomponent {
+  /***
+   * Create a search outer component
+   * @param {String} id - The search outer component id (unique)
+   * @param {Number} state - The choo app state
+   * @param {Function} emit - Emit event on choo app
+   */
   constructor (id, state, emit) {
     super(id)
 
@@ -76,7 +83,7 @@ class Header extends Nanocomponent {
     }[this.local.machine.state.search]
 
     return html`
-      <li role="menuitem" class="search flex w-100 flex-auto justify-end justify-center-l">
+      <li id="search-host" role="menuitem" class="flex w-100 flex-auto justify-end justify-center-l">
         ${machine()}
       </li>
     `
@@ -87,4 +94,4 @@ class Header extends Nanocomponent {
   }
 }
 
-module.exports = Header
+module.exports = SearchOuter

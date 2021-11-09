@@ -18,7 +18,7 @@ import (
 var ErrIncorrectResponseType = errors.New("Response type not one of token or code")
 
 func (s *Service) authorizeForm(w http.ResponseWriter, r *http.Request) {
-	sessionService, client, user, responseType, _, err := s.authorizeCommon(r)
+	sessionService, client, user, userSession, responseType, _, err := s.authorizeCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -33,12 +33,18 @@ func (s *Service) authorizeForm(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	query.Set("login_redirect_uri", r.URL.Path)
 
+	usergroup := r.URL.Query().Get("usergroup")
+
+	if usergroup == "" {
+		usergroup = s.getDefaultUserGroupType(user) // artist, label or user
+	}
+
 	initialState, err := json.Marshal(NewInitialState(
 		s.cnf,
 		client,
 		user,
-		nil,
-		"",
+		userSession,
+		usergroup,
 	))
 
 	if err != nil {
@@ -74,7 +80,7 @@ func (s *Service) authorizeForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) authorize(w http.ResponseWriter, r *http.Request) {
-	_, client, user, responseType, redirectURI, err := s.authorizeCommon(r)
+	_, client, user, _, responseType, redirectURI, err := s.authorizeCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -164,6 +170,7 @@ func (s *Service) authorizeCommon(r *http.Request) (
 	session.ServiceInterface,
 	*model.Client,
 	*model.User,
+	*session.UserSession,
 	string,
 	*url.URL,
 	error,
@@ -171,19 +178,19 @@ func (s *Service) authorizeCommon(r *http.Request) (
 	// Get the session service from the request context
 	sessionService, err := getSessionService(r)
 	if err != nil {
-		return nil, nil, nil, "", nil, err
+		return nil, nil, nil, nil, "", nil, err
 	}
 
 	// Get the client from the request context
 	client, err := getClient(r)
 	if err != nil {
-		return nil, nil, nil, "", nil, err
+		return nil, nil, nil, nil, "", nil, err
 	}
 
 	// Get the user session
 	userSession, err := sessionService.GetUserSession()
 	if err != nil {
-		return nil, nil, nil, "", nil, err
+		return nil, nil, nil, nil, "", nil, err
 	}
 
 	// Fetch the user
@@ -191,7 +198,7 @@ func (s *Service) authorizeCommon(r *http.Request) (
 		userSession.Username,
 	)
 	if err != nil {
-		return nil, nil, nil, "", nil, err
+		return nil, nil, nil, nil, "", nil, err
 	}
 
 	// Fetch the user
@@ -216,7 +223,7 @@ func (s *Service) authorizeCommon(r *http.Request) (
 	}
 
 	if responseType != "code" && responseType != "token" {
-		return nil, nil, nil, "", nil, ErrIncorrectResponseType
+		return nil, nil, nil, nil, "", nil, ErrIncorrectResponseType
 	}
 
 	// Fallback to the client redirect URI if not in query string
@@ -228,8 +235,8 @@ func (s *Service) authorizeCommon(r *http.Request) (
 	// // Parse the redirect URL
 	parsedRedirectURI, err := url.ParseRequestURI(redirectURI)
 	if err != nil {
-		return nil, nil, nil, "", nil, err
+		return nil, nil, nil, nil, "", nil, err
 	}
 
-	return sessionService, client, user, responseType, parsedRedirectURI, nil
+	return sessionService, client, user, userSession, responseType, parsedRedirectURI, nil
 }

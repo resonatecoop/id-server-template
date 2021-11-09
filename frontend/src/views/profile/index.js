@@ -8,9 +8,10 @@ const ProfileForm = require('../../components/forms/basic-info')
  */
 module.exports = (state, emit) => {
   return html`
-    <div class="flex flex-column ph2 ph0-ns mw6 mt5 center pb6">
+    <div class="flex flex-column mw6 mt5 center pb6">
       ${state.cache(ProfileForm, 'profile-form').render({
-        profile: state.profile
+        role: state.profile.role,
+        profile: state.profile || {}
       })}
     </div>
   `

@@ -12,10 +12,8 @@ function routes (app) {
   app.route('/login', layoutNarrow(require('./views/login')))
   app.route('/password-reset', layoutNarrow(require('./views/password-reset')))
   app.route('/email-confirmation', layoutNarrow(require('./views/email-confirmation')))
-  app.route('/account-settings', layout(require('./views/account-settings')))
-  app.route('/welcome', layoutNarrow(require('./views/welcome')))
   app.route('/profile', layoutNarrow(require('./views/profile')))
-  app.route('/profile/new', layoutNarrow(require('./views/profile/new')))
+  app.route('/account', layout(require('./views/account')))
   app.route('*', layoutNarrow(require('./views/404')))
 }
 

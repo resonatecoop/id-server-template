@@ -58,7 +58,7 @@ func (s *Service) accountForm(w http.ResponseWriter, r *http.Request) {
 		EmailConfirmed: user.EmailConfirmed,
 	}
 
-	err = renderTemplate(w, "account_settings.html", map[string]interface{}{
+	err = renderTemplate(w, "account.html", map[string]interface{}{
 		"flash":           flash,
 		"clientID":        client.Key,
 		"countries":       countries,

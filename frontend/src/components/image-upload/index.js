@@ -9,20 +9,33 @@ const ProgressBar = require('../progress-bar')
 const input = require('@resonate/input-element')
 const imagePlaceholder = require('../../lib/image-placeholder')
 
-const uploadFile = (url, opts = {}, onProgress) => {
+/**
+ * @function uploadFile
+ * @description Upload file util function
+ * @param {String} url Upload path (method POST by default)
+ * @param {Object} opts xhr opts (method, headers, body)
+ * @param {Function} onProgress optional onProgress callback function
+ * @param {Function} onLoadEnd optional onLoadEnd callback function
+ * @returns {Promise} Upload data response
+ */
+
+const uploadFile = (url = '/upload', opts = {}, onProgress = () => {}, loadend = () => {}) => {
   return new Promise((resolve, reject) => {
+    const {
+      headers = {},
+      method = 'POST'
+    } = opts
+
     const xhr = new XMLHttpRequest()
 
     xhr.upload.addEventListener('progress', onProgress)
-    xhr.upload.addEventListener('loadend', () => {
-      console.log('Ended')
-    })
+    xhr.upload.addEventListener('loadend', loadend)
 
-    xhr.open(opts.method || 'POST', url, true)
+    xhr.open(method, url, true)
     xhr.withCredentials = true
 
-    for (const k in opts.headers || {}) {
-      xhr.setRequestHeader(k, opts.headers[k])
+    for (const k in headers) {
+      xhr.setRequestHeader(k, headers[k])
     }
 
     xhr.onload = e => {
@@ -37,6 +50,7 @@ const uploadFile = (url, opts = {}, onProgress) => {
 
 const MAX_FILE_SIZE_IMAGE = 1024 * 1024 * 10
 
+// ImageUpload component class
 class ImageUpload extends Component {
   constructor (id, state, emit) {
     super(id)
@@ -230,9 +244,11 @@ class ImageUpload extends Component {
             }
 
             const formData = new FormData()
+
             formData.append('uploads', file)
             formData.append('config', this.local.config)
 
+            // upload file using upload tool (expect path /upload to be proxied to upload tool API)
             const response = await uploadFile('/upload', {
               method: 'POST',
               headers: {
@@ -241,9 +257,15 @@ class ImageUpload extends Component {
               body: formData
             }, event => {
               if (event.lengthComputable) {
+                // current progress by precentage
                 const progress = event.loaded / event.total * 100
+
                 this.local.progress = progress
-                this.state.components[this._name + '-image-upload-progress'].slider.update({
+                const componentID = this._name + '-image-upload-progress'
+                // get slider component by reference
+                const component = this.state.components[componentID]
+                // update slider progress
+                component.slider.update({
                   value: this.local.progress
                 })
               }
@@ -301,7 +323,8 @@ class ImageUpload extends Component {
 
   update (props) {
     return props.src !== this.local.src ||
-      props.config !== this.local.config
+      props.config !== this.local.config ||
+      props.archive !== this.local.archive
   }
 }
 
