@@ -5,7 +5,7 @@ const Dialog = require('@resonate/dialog-component')
 const button = require('@resonate/button')
 const nanostate = require('nanostate')
 const { getAPIServiceClientWithAuth } = require('@resonate/api-service')({
-  apiHost: process.env.API_HOST
+  apiHost: process.env.APP_HOST
 })
 const imagePlaceholder = require('../../lib/image-placeholder')
 
