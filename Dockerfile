@@ -1,6 +1,6 @@
 ARG RELEASE_TAG=develop 
 ARG API_DOMAIN=api.resonate.coop
-ARG APP_HOST=stream.resonate.coop
+ARG APP_HOST=https://stream.resonate.coop
 ARG NODE_ENV=development
 
 # Frontend build stage
@@ -8,6 +8,7 @@ FROM node:12-alpine as builder
 
 ARG RELEASE_TAG
 ARG API_DOMAIN
+ARG APP_HOST
 ARG NODE_ENV
 
 WORKDIR /build
