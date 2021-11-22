@@ -66,7 +66,20 @@ app.use((state, emitter) => {
     emitter.emit(state.events.RENDER)
   })
 
-  emitter.on('route:profile', async () => {
+  emitter.on('route:account', () => {
+    getUserProfile()
+  })
+
+  emitter.on('route:profile', () => {
+    getUserProfile()
+  })
+
+  emitter.on(state.events.NAVIGATE, () => {
+    emitter.emit(`route:${state.route}`)
+    setMeta()
+  })
+
+  async function getUserProfile () {
     try {
       // get v2 api profile
       const getClient = getAPIServiceClientWithAuth(state.token)
@@ -86,12 +99,7 @@ app.use((state, emitter) => {
       console.log(err.message)
       console.log(err)
     }
-  })
-
-  emitter.on(state.events.NAVIGATE, () => {
-    emitter.emit(`route:${state.route}`)
-    setMeta()
-  })
+  }
 
   function setMeta () {
     const title = {
