@@ -72,32 +72,33 @@ class SelectCountryList extends Component {
     }
 
     return html`
-      <div class="flex flex-column">
-        <label for="select-country" class="f6 b db mr2">Select a country</label>
-        ${errors[attrs.name] && !pristine[attrs.name]
-          ? html`
-            <div class="absolute left-0 ph1 flex items-center" style="top:50%;transform: translate(-100%, -50%);">
-              ${icon('info', { class: 'fill-red', size: 'sm' })}
-            </div>
-          `
-          : ''
-        }
-
-        <select ${attrs}>
-          <option value="" selected=${!values[attrs.name]} disabled>…</option>
-          ${this.local.options.map(({ value, label, disabled = false }) => {
-            const selected = this.local.country === value || getCode(this.local.country) === value
-            return html`
-              <option value=${value} disabled=${disabled} selected=${selected}>
-                ${label}
-              </option>
+      <div class="mb3">
+        <div class="flex flex-auto flex-column">
+          ${errors[attrs.name] && !pristine[attrs.name]
+            ? html`
+              <div class="absolute left-0 ph1 flex items-center" style="top:50%;transform: translate(-100%, -50%);">
+                ${icon('info', { class: 'fill-red', size: 'sm' })}
+              </div>
             `
-          })}
-        </select>
-        ${errors[attrs.name] && !pristine[attrs.name]
-          ? html`<span class="message f5 pb2">${errors[attrs.name].message}</span>`
-          : ''
-        }
+            : ''
+          }
+
+          <select ${attrs}>
+            <option value="" selected=${!values[attrs.name]} disabled>Select a country</option>
+            ${this.local.options.map(({ value, label, disabled = false }) => {
+              const selected = this.local.country === value || getCode(this.local.country) === value
+              return html`
+                <option value=${value} disabled=${disabled} selected=${selected}>
+                  ${label}
+                </option>
+              `
+            })}
+          </select>
+          ${errors[attrs.name] && !pristine[attrs.name]
+            ? html`<span class="message f5 pb2">${errors[attrs.name].message}</span>`
+            : ''
+          }
+        </div>
       </div>
     `
   }

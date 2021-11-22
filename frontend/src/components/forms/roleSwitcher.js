@@ -3,11 +3,11 @@ const html = require('choo/html')
 const icon = require('@resonate/icon-element')
 const morph = require('nanomorph')
 
-// UserGroupTypeSwitcher component class
-class UserGroupTypeSwitcher extends Component {
+// RoleSwitcher component class
+class RoleSwitcher extends Component {
   /***
-   * Create usergroup type component
-   * @param {String} id - The usergroup type component id (unique)
+   * Create role switcher component
+   * @param {String} id - The role switcher component id (unique)
    * @param {Number} state - The choo app state
    * @param {Function} emit - Emit event on choo app
    */
@@ -22,9 +22,9 @@ class UserGroupTypeSwitcher extends Component {
     this.local.value = ''
 
     this.local.items = [
-      { value: 'persona', name: 'Persona' }, // for both artists and listeners
-      { value: 'band', name: 'Band' },
-      { value: 'label', name: 'Label' }
+      { value: 'user', name: 'I\'m a listener' }, // for both artists and listeners
+      { value: 'artist', name: 'I\'m an artist' },
+      { value: 'label', name: 'I am a label' }
     ]
 
     this.handleKeyPress = this.handleKeyPress.bind(this)
@@ -32,8 +32,8 @@ class UserGroupTypeSwitcher extends Component {
   }
 
   /***
-   * Create usergroup type component element
-   * @param {Object} props - The usergroup type component props
+   * Create role switcher component element
+   * @param {Object} props - The role switcher component props
    * @param {String} props.value - Selected value
    * @returns {HTMLElement}
    */
@@ -44,9 +44,9 @@ class UserGroupTypeSwitcher extends Component {
       : this.onChangeCallback
 
     return html`
-      <div class="mb5">
+      <div class="mb3">
         ${this.renderItems()}
-        <p class="f5 lh-copy">Dev only: Changes to to the currently selected usergroup take effect immediatly.</p>
+        <p class="f5 lh-copy">Your account type change should take effect at your next log in.</p>
       </div>
     `
   }
@@ -57,28 +57,30 @@ class UserGroupTypeSwitcher extends Component {
         ${this.local.items.map((item, index) => {
           const { value, name } = item
 
-          const id = 'usergroup-item-' + index
+          const id = 'role-item-' + index
 
           // item attrs
           const attrs = {
             class: `flex flex-auto w-100 ${index < this.local.items.length - 1 ? ' mr3' : ''}`
           }
 
+          const checked = value === this.local.value
+
           // input attrs
           const attrs2 = {
             onchange: this.updateSelection,
             id: id,
             tabindex: -1,
-            name: 'usergroup',
+            name: 'role',
             type: 'radio',
             disabled: item.hidden ? 'disabled' : false,
-            checked: value === this.local.value,
+            checked: checked,
             value: value
           }
 
           // label attrs
           const attrs3 = {
-            class: 'flex items-center fw4 pv3 w-100 grow bw',
+            class: `flex items-center justify-center fw4 pv2 w-100 grow bw f5${checked ? ' pr2' : ''}`,
             style: 'outline:solid 1px var(--near-black);outline-offset:-1px',
             tabindex: '0',
             onkeypress: this.handleKeyPress,
@@ -89,9 +91,13 @@ class UserGroupTypeSwitcher extends Component {
             <div ${attrs}>
               <input ${attrs2}>
               <label ${attrs3}>
-                <div class="flex flex-shrink-0 justify-center bg-white items-center w2 h2 ml2">
-                  ${icon('check', { size: 'sm', class: 'fill-transparent' })}
-                </div>
+                ${checked
+                  ? html`
+                    <div class="flex flex-shrink-0 justify-center bg-white items-center w2 h2">
+                      ${icon('check', { size: 'sm', class: 'fill-transparent' })}
+                    </div>
+                    `
+                  : ''}
                 ${name}
               </label>
             </div>
@@ -132,4 +138,4 @@ class UserGroupTypeSwitcher extends Component {
   }
 }
 
-module.exports = UserGroupTypeSwitcher
+module.exports = RoleSwitcher

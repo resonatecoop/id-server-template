@@ -128,6 +128,9 @@ class UserMenu extends Nanocomponent {
           </li>
           <li class="bb bw b--mid-gray b--mid-gray--light b--near-black--dark mt3 mb2" role="separator"></li>
           <li class="mb1" role="menuitem">
+            <a class="link db pv2 pl3" href="/account">Update your account</a>
+          </li>
+          <li class="mb1" role="menuitem">
             <a class="link db pv2 pl3" href="${process.env.APP_HOST}/faq">FAQ</a>
           </li>
           <li class="mb1" role="menuitem">
@@ -164,14 +167,10 @@ class UserMenu extends Nanocomponent {
       const { data: userdata } = response
 
       this.local.src = userdata.avatar['profile_photo-m'] || userdata.avatar['profile_photo-l'] || imagePlaceholder(400, 400)
-
       this.local.credits = userdata.credits
-
       this.local.displayName = userdata.nickname
 
       this.rerender()
-
-      console.log(response)
     } catch (err) {
       console.log(err.message)
       console.log(err)

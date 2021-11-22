@@ -13,7 +13,12 @@ const isEmail = require('validator/lib/isEmail')
 const validateFormdata = require('validate-formdata')
 const nanostate = require('nanostate')
 
-class ProfileForm extends Component {
+const SwaggerClient = require('swagger-client')
+const CountrySelect = require('../select-country-list')
+const RoleSwitcher = require('./roleSwitcher')
+
+// AccountForm class
+class AccountForm extends Component {
   constructor (id, state, emit) {
     super(id)
 
@@ -151,7 +156,7 @@ class ProfileForm extends Component {
           id: 'account-form',
           method: 'POST',
           action: '',
-          buttonText: 'Update',
+          buttonText: this.state.profile.complete ? 'Update' : 'Next',
           validate: (props) => {
             this.local.data[props.name] = props.value
             this.validator.validate(props.name, props.value)
@@ -170,8 +175,69 @@ class ProfileForm extends Component {
           },
           fields: [
             {
+              component: this.state.cache(RoleSwitcher, 'role-switcher').render({
+                value: this.state.profile.role,
+                onChangeCallback: async (value) => {
+                  const specUrl = new URL('/user/user.swagger.json', 'https://' + process.env.API_DOMAIN)
+
+                  this.swaggerClient = await new SwaggerClient({
+                    url: specUrl.href,
+                    authorizations: {
+                      bearer: 'Bearer ' + this.state.token
+                    }
+                  })
+
+                  const roles = [
+                    'superadmin',
+                    'admin',
+                    'tenantadmin',
+                    'label', // 4
+                    'artist', // 5
+                    'listener' // 6
+                  ]
+
+                  await this.swaggerClient.apis.Users.ResonateUser_UpdateUser({
+                    id: this.state.profile.id, // user-api user uuid
+                    body: {
+                      role_id: roles.indexOf(value) + 1
+                    }
+                  })
+                }
+              })
+            },
+            {
               type: 'email',
-              placeholder: 'E-mail'
+              placeholder: 'E-mail',
+              readonly: true // can't change email address here
+            },
+            {
+              component: this.state.cache(CountrySelect, 'update-country').render({
+                country: this.state.profile.country || '',
+                onchange: async (props) => {
+                  const { country, code } = props
+
+                  let response = await fetch('')
+
+                  const csrfToken = response.headers.get('X-CSRF-Token')
+
+                  response = await fetch('', {
+                    method: 'PUT',
+                    headers: {
+                      Accept: 'application/json',
+                      'X-CSRF-Token': csrfToken
+                    },
+                    body: new URLSearchParams({
+                      country: code
+                    })
+                  })
+
+                  if (response.status >= 400) {
+                    throw new Error('Something went wrong')
+                  }
+
+                  this.state.profile.country = country
+                }
+              })
             },
             {
               type: 'text',
@@ -222,4 +288,4 @@ class ProfileForm extends Component {
   }
 }
 
-module.exports = ProfileForm
+module.exports = AccountForm
