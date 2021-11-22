@@ -144,68 +144,6 @@ func (s *Service) UpdateUsernameTx(tx *bun.DB, user *model.User, username string
 	return s.updateUsernameCommon(tx, user, username)
 }
 
-// IsUserAccountComplete ...
-func (s *Service) IsUserAccountComplete(user *model.User) bool {
-	return s.isUserAccountCompleteCommon(user)
-}
-
-// isUserAccountCompleteCommon ...
-func (s *Service) isUserAccountCompleteCommon(user *model.User) bool {
-	// is email address confirmed
-	if !user.EmailConfirmed {
-		return false
-	}
-
-	// listeners only need to confirm their email address
-	if user.RoleID == int32(model.UserRole) {
-		return true
-	}
-
-	if user.FirstName == "" || user.LastName == "" || user.FullName == "" {
-		return false
-	}
-
-	if user.Country == "" {
-		return false
-	}
-
-	// TODO check if label or artist got complete persona with display_name
-	// 	if user.RoleID == int32(model.LabelRole) {
-	// 		httpClient, _ := httptransport.TLSClient(httptransport.TLSClientOptions{
-	// 			InsecureSkipVerify: true,
-	// 		})
-	//
-	// 		hostname := fmt.Sprintf("%s%s", s.cnf.UserAPIHostname, s.cnf.UserAPIPort)
-	// 		transport := httptransport.NewWithClient(hostname, "", nil, httpClient)
-	//
-	// 		// create the API client, with the transport
-	// 		client := apiclient.New(transport, strfmt.Default)
-	//
-	// 		params := usergroups.NewResonateUserListUsersUserGroupsParams()
-	//
-	// 		params.WithID(user.ID.String())
-	//
-	// 		// List user usergroups
-	// 		result, _ := client.Usergroups.ResonateUserListUsersUserGroups(params, nil)
-	//
-	// 		// if err != nil {
-	// 		// 	if casted, ok := err.(*usergroups.ResonateUserListUsersUserGroupsDefault); ok {
-	// 		// 		// do something here....
-	// 		// 	}
-	// 		// }
-	//
-	// 		for _, item := range result.(*ResonateUserListUsersUserGroupsOK) {
-	// 			// check if type id is
-	// 			if item.TypeId {
-	// 				return false
-	// 				break
-	// 			}
-	// 		}
-	// 	}
-
-	return true
-}
-
 func (s *Service) ConfirmUserEmail(email string) error {
 	ctx := context.Background()
 	user, err := s.FindUserByUsername(email)

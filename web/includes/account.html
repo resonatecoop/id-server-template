@@ -27,7 +27,7 @@
                 <div class="mb3">
                   <div class="flex flex-column flex-column-reverse">
                     <input
-                      value=""
+                      value="{{ if .profile.Usergroups }}{{ (index .profile.Usergroups 0).DisplayName }}{{ end }}"
                       autocomplete="false"
                       id="displayName"
                       type="text"

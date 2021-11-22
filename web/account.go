@@ -29,7 +29,7 @@ func (s *Service) accountForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	isUserAccountComplete := s.oauthService.IsUserAccountComplete(user)
+	isUserAccountComplete := s.isUserAccountComplete(user, userSession.AccessToken)
 
 	w.Header().Set("X-CSRF-Token", csrf.Token(r))
 
@@ -41,6 +41,8 @@ func (s *Service) accountForm(w http.ResponseWriter, r *http.Request) {
 	q := gountries.New()
 	countries := q.FindAllCountries()
 
+	usergroups, _ := s.getUserGroupList(user, userSession.AccessToken)
+
 	initialState, err := json.Marshal(NewInitialState(
 		s.cnf,
 		client,
@@ -48,6 +50,7 @@ func (s *Service) accountForm(w http.ResponseWriter, r *http.Request) {
 		userSession,
 		"",
 		isUserAccountComplete,
+		usergroups.Usergroup,
 	))
 
 	if err != nil {
@@ -61,14 +64,22 @@ func (s *Service) accountForm(w http.ResponseWriter, r *http.Request) {
 		string(initialState),
 	)
 
+	displayName := ""
+
+	if len(usergroups.Usergroup) > 0 {
+		displayName = usergroups.Usergroup[0].DisplayName
+	}
+
 	profile := &Profile{
 		Email:          user.Username,
+		DisplayName:    displayName,
 		FullName:       user.FullName,
 		FirstName:      user.FirstName,
 		LastName:       user.LastName,
 		Country:        user.Country,
 		EmailConfirmed: user.EmailConfirmed,
 		Complete:       isUserAccountComplete,
+		Usergroups:     usergroups.Usergroup,
 	}
 
 	err = renderTemplate(w, "account.html", map[string]interface{}{
@@ -187,10 +198,32 @@ func (s *Service) account(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if r.Form.Get("displayName") != "" {
-			result, _ := s.getUserGroupList(user, userSession.AccessToken)
+			result, err := s.getUserGroupList(user, userSession.AccessToken)
 
-			if result == nil {
-				_ = s.createUserGroup(user, r.Form.Get("displayName"), userSession.AccessToken)
+			if err != nil {
+				switch r.Header.Get("Accept") {
+				case "application/json":
+					response.Error(w, err.Error(), http.StatusBadRequest)
+				default:
+					err = sessionService.SetFlashMessage(&session.Flash{
+						Type:    "Error",
+						Message: err.Error(),
+					})
+					if err != nil {
+						http.Error(w, err.Error(), http.StatusInternalServerError)
+						return
+					}
+					http.Redirect(w, r, r.RequestURI, http.StatusFound)
+				}
+				return
+			} else {
+				if len(result.Usergroup) == 0 {
+					err = s.createUserGroup(user, r.Form.Get("displayName"), userSession.AccessToken)
+
+					if err != nil {
+						log.ERROR.Print(err)
+					}
+				}
 			}
 		}
 
@@ -217,8 +250,40 @@ func (s *Service) account(w http.ResponseWriter, r *http.Request) {
 	redirectWithQueryString("/web/profile", query, w, r)
 }
 
+func (s *Service) isUserAccountComplete(user *model.User, accessToken string) bool {
+	// is email address confirmed
+	if !user.EmailConfirmed {
+		return false
+	}
+
+	result, err := s.getUserGroupList(user, accessToken)
+
+	if err != nil {
+		return false
+	}
+
+	if len(result.Usergroup) == 0 {
+		return false
+	}
+
+	// listeners only need to confirm their email address
+	if user.RoleID == int32(model.UserRole) {
+		return true
+	}
+
+	if user.FirstName == "" || user.LastName == "" || user.FullName == "" {
+		return false
+	}
+
+	if user.Country == "" {
+		return false
+	}
+
+	return true
+}
+
 func (s *Service) getUserGroupList(user *model.User, accessToken string) (
-	*usergroups.ResonateUserListUsersUserGroupsOK,
+	*models.UserUserGroupListResponse,
 	error,
 ) {
 	httpClient, _ := httptransport.TLSClient(httptransport.TLSClientOptions{
@@ -238,7 +303,13 @@ func (s *Service) getUserGroupList(user *model.User, accessToken string) (
 
 	result, err := client.Usergroups.ResonateUserListUsersUserGroups(params, bearer)
 
-	return result, err
+	if err != nil {
+		if casted, ok := err.(*usergroups.ResonateUserListUsersUserGroupsDefault); ok {
+			return nil, casted
+		}
+	}
+
+	return result.Payload, err
 }
 
 func (s *Service) createUserGroup(user *model.User, displayName, accessToken string) error {

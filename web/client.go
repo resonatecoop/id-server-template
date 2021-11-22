@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/csrf"
 	"github.com/resonatecoop/id/session"
 	"github.com/resonatecoop/id/util/response"
+	"github.com/resonatecoop/user-api-client/models"
 	"github.com/resonatecoop/user-api/model"
 	"github.com/rs/xid"
 	"github.com/thanhpk/randstr"
@@ -35,6 +36,7 @@ func (s *Service) clientForm(w http.ResponseWriter, r *http.Request) {
 		nil,
 		"",
 		false,
+		[]*models.UserUserGroupPrivateResponse{},
 	))
 
 	if err != nil {

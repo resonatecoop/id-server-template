@@ -42,7 +42,6 @@ type ServiceInterface interface {
 	UpdateUser(user *model.User, fullName, firstName, lastName, country string) error
 	SetUserCountry(user *model.User, country string) error
 	SetUserCountryTx(db *bun.DB, user *model.User, country string) error
-	IsUserAccountComplete(user *model.User) bool
 	AuthUser(username, thePassword string) (*model.User, error)
 	GetScope(requestedScope string) (string, error)
 	GetDefaultScope() string

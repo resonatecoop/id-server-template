@@ -21,7 +21,7 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("X-CSRF-Token", csrf.Token(r))
 
-	isUserAccountComplete := s.oauthService.IsUserAccountComplete(user)
+	isUserAccountComplete := s.isUserAccountComplete(user, userSession.AccessToken)
 
 	if !isUserAccountComplete {
 		err = sessionService.SetFlashMessage(&session.Flash{
@@ -51,6 +51,8 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 		usergroup = s.getDefaultUserGroupType(user) // artist, label or user
 	}
 
+	usergroups, _ := s.getUserGroupList(user, userSession.AccessToken)
+
 	initialState, err := json.Marshal(NewInitialState(
 		s.cnf,
 		client,
@@ -58,6 +60,7 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 		userSession,
 		usergroup,
 		isUserAccountComplete,
+		usergroups.Usergroup,
 	))
 
 	if err != nil {
@@ -89,6 +92,7 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 		Country:        user.Country,
 		EmailConfirmed: user.EmailConfirmed,
 		Complete:       isUserAccountComplete,
+		Usergroups:     usergroups.Usergroup,
 	}
 
 	err = renderTemplate(w, templateName, map[string]interface{}{

@@ -11,6 +11,7 @@ import (
 
 	"github.com/gorilla/csrf"
 	"github.com/resonatecoop/id/session"
+	"github.com/resonatecoop/user-api-client/models"
 	"github.com/resonatecoop/user-api/model"
 )
 
@@ -26,7 +27,7 @@ func (s *Service) authorizeForm(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("X-CSRF-Token", csrf.Token(r))
 
-	isUserAccountComplete := s.oauthService.IsUserAccountComplete(user)
+	isUserAccountComplete := s.isUserAccountComplete(user, userSession.AccessToken)
 
 	// Render the template
 	flash, _ := sessionService.GetFlashMessage()
@@ -46,6 +47,7 @@ func (s *Service) authorizeForm(w http.ResponseWriter, r *http.Request) {
 		userSession,
 		usergroup,
 		isUserAccountComplete,
+		[]*models.UserUserGroupPrivateResponse{},
 	))
 
 	if err != nil {
