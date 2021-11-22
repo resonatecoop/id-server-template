@@ -160,6 +160,13 @@ func (s *Service) createUser(r *http.Request) (
 		Country:  r.Form.Get("country"),
 	}
 
+	switch r.Form.Get("role") {
+	case "artist":
+		params.Body.RoleID = int32(model.ArtistRole)
+	case "label":
+		params.Body.RoleID = int32(model.LabelRole)
+	}
+
 	// Create a user
 	_, err := client.Users.ResonateUserAddUser(params, nil)
 
