@@ -34,6 +34,7 @@ func (s *Service) clientForm(w http.ResponseWriter, r *http.Request) {
 		user,
 		nil,
 		"",
+		false,
 	))
 
 	if err != nil {

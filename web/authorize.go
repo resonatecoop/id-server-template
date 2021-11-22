@@ -24,9 +24,9 @@ func (s *Service) authorizeForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	csrfToken := csrf.Token(r)
+	w.Header().Set("X-CSRF-Token", csrf.Token(r))
 
-	w.Header().Set("X-CSRF-Token", csrfToken)
+	isUserAccountComplete := s.oauthService.IsUserAccountComplete(user)
 
 	// Render the template
 	flash, _ := sessionService.GetFlashMessage()
@@ -45,6 +45,7 @@ func (s *Service) authorizeForm(w http.ResponseWriter, r *http.Request) {
 		user,
 		userSession,
 		usergroup,
+		isUserAccountComplete,
 	))
 
 	if err != nil {
@@ -64,14 +65,15 @@ func (s *Service) authorizeForm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = renderTemplate(w, "authorize.html", map[string]interface{}{
-		"flash":           flash,
-		"clientID":        client.Key,
-		"applicationName": client.ApplicationName.String,
-		"profile":         profile,
-		"queryString":     getQueryString(query),
-		"token":           responseType == "token",
-		"initialState":    template.HTML(fragment),
-		csrf.TemplateTag:  csrf.TemplateField(r),
+		"isUserAccountComplete": isUserAccountComplete,
+		"flash":                 flash,
+		"clientID":              client.Key,
+		"applicationName":       client.ApplicationName.String,
+		"profile":               profile,
+		"queryString":           getQueryString(query),
+		"token":                 responseType == "token",
+		"initialState":          template.HTML(fragment),
+		csrf.TemplateTag:        csrf.TemplateField(r),
 	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

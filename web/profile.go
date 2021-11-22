@@ -21,6 +21,22 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("X-CSRF-Token", csrf.Token(r))
 
+	isUserAccountComplete := s.oauthService.IsUserAccountComplete(user)
+
+	if !isUserAccountComplete {
+		err = sessionService.SetFlashMessage(&session.Flash{
+			Type:    "Info",
+			Message: "Account not complete",
+		})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		query := r.URL.Query()
+		redirectWithQueryString("/web/account", query, w, r)
+		return
+	}
+
 	// Render the template
 	flash, _ := sessionService.GetFlashMessage()
 	query := r.URL.Query()
@@ -41,6 +57,7 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 		user,
 		userSession,
 		usergroup,
+		isUserAccountComplete,
 	))
 
 	if err != nil {
@@ -71,17 +88,19 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 		LastName:       user.LastName,
 		Country:        user.Country,
 		EmailConfirmed: user.EmailConfirmed,
+		Complete:       isUserAccountComplete,
 	}
 
 	err = renderTemplate(w, templateName, map[string]interface{}{
-		"flash":           flash,
-		"clientID":        client.Key,
-		"countries":       countries,
-		"applicationName": client.ApplicationName.String,
-		"profile":         profile,
-		"queryString":     getQueryString(query),
-		"initialState":    template.HTML(fragment),
-		csrf.TemplateTag:  csrf.TemplateField(r),
+		"isUserAccountComplete": isUserAccountComplete,
+		"flash":                 flash,
+		"clientID":              client.Key,
+		"countries":             countries,
+		"applicationName":       client.ApplicationName.String,
+		"profile":               profile,
+		"queryString":           getQueryString(query),
+		"initialState":          template.HTML(fragment),
+		csrf.TemplateTag:        csrf.TemplateField(r),
 	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

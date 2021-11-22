@@ -186,13 +186,7 @@ func (s *Service) passwordReset(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) passwordResetUpdatePassword(r *http.Request) error {
-	emailToken, email, err := s.oauthService.GetValidEmailToken(r.Form.Get("token"))
-
-	if err != nil {
-		return err
-	}
-
-	user, err := s.oauthService.FindUserByUsername(email)
+	emailToken, user, err := s.oauthService.GetValidEmailToken(r.Form.Get("token"))
 
 	if err != nil {
 		return err

@@ -15,6 +15,7 @@ type Profile struct {
 	LastName       string `json:"lastName"`
 	Country        string `json:"country"`
 	EmailConfirmed bool   `json:"emailConfirmed"`
+	Complete       bool   `json:"complete"`
 }
 
 type InitialState struct {
@@ -32,6 +33,7 @@ func NewInitialState(
 	user *model.User,
 	userSession *session.UserSession,
 	usergroup string,
+	isUserAccountComplete bool,
 ) *InitialState {
 	accessToken := ""
 
@@ -47,6 +49,7 @@ func NewInitialState(
 		LastName:       user.LastName,
 		Country:        user.Country,
 		EmailConfirmed: user.EmailConfirmed,
+		Complete:       isUserAccountComplete,
 	}
 
 	return &InitialState{

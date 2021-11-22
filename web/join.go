@@ -108,7 +108,7 @@ func (s *Service) join(w http.ResponseWriter, r *http.Request) {
 		response.WriteJSON(w, obj, http.StatusCreated)
 	} else {
 		query := r.URL.Query()
-		query.Set("login_redirect_uri", "/web/welcome")
+		query.Set("login_redirect_uri", "/web/profile")
 		redirectWithQueryString("/web/login", query, w, r)
 	}
 

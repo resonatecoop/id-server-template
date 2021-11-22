@@ -20,6 +20,8 @@ func (s *Service) accountForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	isUserAccountComplete := s.oauthService.IsUserAccountComplete(user)
+
 	w.Header().Set("X-CSRF-Token", csrf.Token(r))
 
 	// Render the template
@@ -36,6 +38,7 @@ func (s *Service) accountForm(w http.ResponseWriter, r *http.Request) {
 		user,
 		userSession,
 		"",
+		isUserAccountComplete,
 	))
 
 	if err != nil {
@@ -56,17 +59,19 @@ func (s *Service) accountForm(w http.ResponseWriter, r *http.Request) {
 		LastName:       user.LastName,
 		Country:        user.Country,
 		EmailConfirmed: user.EmailConfirmed,
+		Complete:       isUserAccountComplete,
 	}
 
 	err = renderTemplate(w, "account.html", map[string]interface{}{
-		"flash":           flash,
-		"clientID":        client.Key,
-		"countries":       countries,
-		"applicationName": client.ApplicationName.String,
-		"profile":         profile,
-		"queryString":     getQueryString(query),
-		"initialState":    template.HTML(fragment),
-		csrf.TemplateTag:  csrf.TemplateField(r),
+		"isUserAccountComplete": isUserAccountComplete,
+		"flash":                 flash,
+		"clientID":              client.Key,
+		"countries":             countries,
+		"applicationName":       client.ApplicationName.String,
+		"profile":               profile,
+		"queryString":           getQueryString(query),
+		"initialState":          template.HTML(fragment),
+		csrf.TemplateTag:        csrf.TemplateField(r),
 	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -172,7 +177,7 @@ func (s *Service) account(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		message = "Profile updated"
+		message = "Account updated"
 	}
 
 	if r.Header.Get("Accept") == "application/json" {
@@ -191,5 +196,6 @@ func (s *Service) account(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	http.Redirect(w, r, r.RequestURI, http.StatusFound)
+	query := r.URL.Query()
+	redirectWithQueryString("/web/profile", query, w, r)
 }

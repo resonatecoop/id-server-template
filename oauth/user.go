@@ -58,6 +58,8 @@ var (
 	ErrEmailAsLogin = errors.New("Username cannot be an email address")
 	// ErrCountryNotFound
 	ErrCountryNotFound = errors.New("Country cannot be found")
+	// ErrEmailNotConfirmed
+	ErrEmailNotConfirmed = errors.New("Please confirm your email address")
 )
 
 // UserExists returns true if user exists
@@ -140,6 +142,68 @@ func (s *Service) UpdateUsername(user *model.User, username string) error {
 // UpdateUsernameTx ...
 func (s *Service) UpdateUsernameTx(tx *bun.DB, user *model.User, username string) error {
 	return s.updateUsernameCommon(tx, user, username)
+}
+
+// IsUserAccountComplete ...
+func (s *Service) IsUserAccountComplete(user *model.User) bool {
+	return s.isUserAccountCompleteCommon(user)
+}
+
+// isUserAccountCompleteCommon ...
+func (s *Service) isUserAccountCompleteCommon(user *model.User) bool {
+	// is email address confirmed
+	if !user.EmailConfirmed {
+		return false
+	}
+
+	// listeners only need to confirm their email address
+	if user.RoleID == int32(model.UserRole) {
+		return true
+	}
+
+	if user.FirstName == "" || user.LastName == "" || user.FullName == "" {
+		return false
+	}
+
+	if user.Country == "" {
+		return false
+	}
+
+	// TODO check if label or artist got complete persona with display_name
+	// 	if user.RoleID == int32(model.LabelRole) {
+	// 		httpClient, _ := httptransport.TLSClient(httptransport.TLSClientOptions{
+	// 			InsecureSkipVerify: true,
+	// 		})
+	//
+	// 		hostname := fmt.Sprintf("%s%s", s.cnf.UserAPIHostname, s.cnf.UserAPIPort)
+	// 		transport := httptransport.NewWithClient(hostname, "", nil, httpClient)
+	//
+	// 		// create the API client, with the transport
+	// 		client := apiclient.New(transport, strfmt.Default)
+	//
+	// 		params := usergroups.NewResonateUserListUsersUserGroupsParams()
+	//
+	// 		params.WithID(user.ID.String())
+	//
+	// 		// List user usergroups
+	// 		result, _ := client.Usergroups.ResonateUserListUsersUserGroups(params, nil)
+	//
+	// 		// if err != nil {
+	// 		// 	if casted, ok := err.(*usergroups.ResonateUserListUsersUserGroupsDefault); ok {
+	// 		// 		// do something here....
+	// 		// 	}
+	// 		// }
+	//
+	// 		for _, item := range result.(*ResonateUserListUsersUserGroupsOK) {
+	// 			// check if type id is
+	// 			if item.TypeId {
+	// 				return false
+	// 				break
+	// 			}
+	// 		}
+	// 	}
+
+	return true
 }
 
 func (s *Service) ConfirmUserEmail(email string) error {
@@ -290,15 +354,15 @@ func (s *Service) updateUserCommon(db *bun.DB, user *model.User, fullName, first
 		}
 	}
 
-	if fullName != user.FullName {
+	if fullName != user.FullName && fullName != "" {
 		update.Set("full_name = ?", fullName)
 	}
 
-	if firstName != user.FirstName {
+	if firstName != user.FirstName && firstName != "" {
 		update.Set("first_name = ?", firstName)
 	}
 
-	if lastName != user.LastName {
+	if lastName != user.LastName && lastName != "" {
 		update.Set("last_name = ?", lastName)
 	}
 

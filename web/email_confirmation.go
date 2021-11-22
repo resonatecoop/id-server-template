@@ -23,7 +23,7 @@ func (s *Service) getEmailConfirmationToken(w http.ResponseWriter, r *http.Reque
 
 	w.Header().Set("X-CSRF-Token", csrf.Token(r))
 
-	err = s.emailConfirm(r)
+	user, err := s.emailConfirm(r)
 
 	query := r.URL.Query()
 	query.Del("token")
@@ -37,7 +37,68 @@ func (s *Service) getEmailConfirmationToken(w http.ResponseWriter, r *http.Reque
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		redirectWithQueryString("/web/account-settings", query, w, r)
+		redirectWithQueryString("/web/account", query, w, r)
+		return
+	}
+
+	// Get the client from the request context
+	client, err := getClient(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Get the scope string
+	scope, err := s.oauthService.GetScope("read_write")
+	if err != nil {
+		err = sessionService.SetFlashMessage(&session.Flash{
+			Type:    "Error",
+			Message: err.Error(),
+		})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		http.Redirect(w, r, r.RequestURI, http.StatusFound)
+		return
+	}
+
+	// Log in the user
+	accessToken, refreshToken, err := s.oauthService.Login(
+		client,
+		user,
+		scope,
+	)
+	if err != nil {
+		err = sessionService.SetFlashMessage(&session.Flash{
+			Type:    "Error",
+			Message: err.Error(),
+		})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		http.Redirect(w, r, r.RequestURI, http.StatusFound)
+		return
+	}
+
+	// Log in the user and store the user session in a cookie
+	userSession := &session.UserSession{
+		ClientID:     client.Key,
+		Username:     user.Username,
+		AccessToken:  accessToken.Token,
+		RefreshToken: refreshToken.Token,
+	}
+	if err := sessionService.SetUserSession(userSession); err != nil {
+		err = sessionService.SetFlashMessage(&session.Flash{
+			Type:    "Error",
+			Message: err.Error(),
+		})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		http.Redirect(w, r, r.RequestURI, http.StatusFound)
 		return
 	}
 
@@ -50,37 +111,37 @@ func (s *Service) getEmailConfirmationToken(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	redirectWithQueryString("/web/account-settings", query, w, r)
+	redirectWithQueryString("/web/account", query, w, r)
 }
 
-func (s *Service) emailConfirm(r *http.Request) error {
+func (s *Service) emailConfirm(r *http.Request) (*model.User, error) {
 	token := r.URL.Query().Get("token")
 
 	if token == "" {
-		return ErrTokenMissing
+		return nil, ErrTokenMissing
 	}
 
-	emailToken, email, err := s.oauthService.GetValidEmailToken(token)
+	emailToken, user, err := s.oauthService.GetValidEmailToken(token)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// set email_confirmed to true
-	err = s.oauthService.ConfirmUserEmail(email)
+	err = s.oauthService.ConfirmUserEmail(user.Username)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	softDelete := true
 	err = s.oauthService.DeleteEmailToken(emailToken, softDelete)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return user, nil
 }
 
 func (s *Service) resendEmailConfirmationToken(w http.ResponseWriter, r *http.Request) {
