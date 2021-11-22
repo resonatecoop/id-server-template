@@ -57,7 +57,7 @@ class UserGroupTypeSwitcher extends Component {
         ${this.local.items.map((item, index) => {
           const { value, name } = item
 
-          const id = 'usergroup-item-' + index
+          const id = 'usergroup-type-item-' + index
 
           // item attrs
           const attrs = {
@@ -69,7 +69,7 @@ class UserGroupTypeSwitcher extends Component {
             onchange: this.updateSelection,
             id: id,
             tabindex: -1,
-            name: 'usergroup',
+            name: 'usergroup-type',
             type: 'radio',
             disabled: item.hidden ? 'disabled' : false,
             checked: value === this.local.value,
