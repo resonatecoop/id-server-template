@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/csrf"
 	"github.com/pariz/gountries"
+	"github.com/resonatecoop/id/config"
 	"github.com/resonatecoop/id/log"
 	"github.com/resonatecoop/id/session"
 	"github.com/resonatecoop/id/util/response"
@@ -18,8 +19,6 @@ import (
 	"github.com/resonatecoop/user-api-client/models"
 
 	httptransport "github.com/go-openapi/runtime/client"
-	"github.com/go-openapi/strfmt"
-	apiclient "github.com/resonatecoop/user-api-client/client"
 )
 
 func (s *Service) accountForm(w http.ResponseWriter, r *http.Request) {
@@ -286,14 +285,7 @@ func (s *Service) getUserGroupList(user *model.User, accessToken string) (
 	*models.UserUserGroupListResponse,
 	error,
 ) {
-	httpClient, _ := httptransport.TLSClient(httptransport.TLSClientOptions{
-		InsecureSkipVerify: true,
-	})
-
-	hostname := fmt.Sprintf("%s%s", s.cnf.UserAPIHostname, s.cnf.UserAPIPort)
-	transport := httptransport.NewWithClient(hostname, "", nil, httpClient)
-
-	client := apiclient.New(transport, strfmt.Default)
+	client := config.NewAPIClient(s.cnf.UserAPIHostname, s.cnf.UserAPIPort)
 
 	bearer := httptransport.BearerToken(accessToken)
 
@@ -313,14 +305,7 @@ func (s *Service) getUserGroupList(user *model.User, accessToken string) (
 }
 
 func (s *Service) createUserGroup(user *model.User, displayName, accessToken string) error {
-	httpClient, _ := httptransport.TLSClient(httptransport.TLSClientOptions{
-		InsecureSkipVerify: true,
-	})
-
-	hostname := fmt.Sprintf("%s%s", s.cnf.UserAPIHostname, s.cnf.UserAPIPort)
-	transport := httptransport.NewWithClient(hostname, "", nil, httpClient)
-
-	client := apiclient.New(transport, strfmt.Default)
+	client := config.NewAPIClient(s.cnf.UserAPIHostname, s.cnf.UserAPIPort)
 
 	bearer := httptransport.BearerToken(accessToken)
 

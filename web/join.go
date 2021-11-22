@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"net/http"
 
+	"github.com/resonatecoop/id/config"
 	"github.com/resonatecoop/id/log"
 	"github.com/resonatecoop/id/session"
 	"github.com/resonatecoop/id/util"
@@ -19,10 +20,6 @@ import (
 
 	"github.com/resonatecoop/user-api-client/client/users"
 	"github.com/resonatecoop/user-api-client/models"
-
-	httptransport "github.com/go-openapi/runtime/client"
-	"github.com/go-openapi/strfmt"
-	apiclient "github.com/resonatecoop/user-api-client/client"
 )
 
 var (
@@ -143,15 +140,7 @@ func (s *Service) createUser(r *http.Request) (
 		return nil, ErrEmailInvalid
 	}
 
-	httpClient, _ := httptransport.TLSClient(httptransport.TLSClientOptions{
-		InsecureSkipVerify: true,
-	})
-
-	hostname := fmt.Sprintf("%s%s", s.cnf.UserAPIHostname, s.cnf.UserAPIPort)
-	transport := httptransport.NewWithClient(hostname, "", nil, httpClient)
-
-	// create the API client, with the transport
-	client := apiclient.New(transport, strfmt.Default)
+	client := config.NewAPIClient(s.cnf.UserAPIHostname, s.cnf.UserAPIPort)
 
 	params := users.NewResonateUserAddUserParams()
 
