@@ -178,7 +178,8 @@ class Signup extends Component {
                 const redirectURL = new URL('/login', 'http://localhost')
 
                 redirectURL.search = new URLSearchParams({
-                  login_redirect_uri: '/web/welcome'
+                  confirm: true,
+                  login_redirect_uri: '/web/account'
                 })
 
                 this.emit(this.state.events.PUSHSTATE, redirectURL.pathname + redirectURL.search)

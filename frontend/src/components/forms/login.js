@@ -70,6 +70,10 @@ class Login extends Component {
       noResults: html`<p class="status bg-yellow w-100 black pa1">Wrong email or password</p>`
     }[this.local.machine.state.request]
 
+    const confirmEmail = this.state.query.confirm
+      ? html`<p class="status bg-yellow w-100 black pa1">Check your mailbox for email confirmation</p>`
+      : ''
+
     const form = this.state.cache(Form, 'login-form').render({
       id: 'login',
       method: 'POST',
@@ -165,6 +169,7 @@ class Login extends Component {
 
     return html`
       <div class="flex flex-column flex-auto">
+        ${confirmEmail}
         ${message}
         ${form}
       </div>
