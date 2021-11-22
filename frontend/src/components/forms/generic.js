@@ -31,6 +31,8 @@ class Form extends Component {
     const values = this.form.values
 
     const inputs = this.local.fields.map(fieldProps => {
+      if (fieldProps.component) return fieldProps.component
+
       const { name = fieldProps.type, help, component } = fieldProps
 
       fieldProps.onInput = typeof fieldProps.onInput === 'function'
