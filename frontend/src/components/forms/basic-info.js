@@ -9,7 +9,7 @@ const icon = require('@resonate/icon-element')
 const morph = require('nanomorph')
 
 const input = require('@resonate/input-element')
-const textarea = require('../../elements/textarea')
+const textarea = require('@resonate/textarea-element')
 const messages = require('./messages')
 
 const button = require('@resonate/button')
