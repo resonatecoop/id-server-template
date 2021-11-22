@@ -177,6 +177,7 @@ class AccountForm extends Component {
           fields: [
             {
               component: this.state.cache(RoleSwitcher, 'role-switcher').render({
+                help: true,
                 value: this.state.profile.role,
                 onChangeCallback: async (value) => {
                   const specUrl = new URL('/user/user.swagger.json', 'https://' + process.env.API_DOMAIN)
@@ -194,7 +195,7 @@ class AccountForm extends Component {
                     'tenantadmin',
                     'label', // 4
                     'artist', // 5
-                    'listener' // 6
+                    'user' // 6
                   ]
 
                   await this.swaggerClient.apis.Users.ResonateUser_UpdateUser({

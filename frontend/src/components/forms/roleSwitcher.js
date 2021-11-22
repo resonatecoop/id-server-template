@@ -38,6 +38,7 @@ class RoleSwitcher extends Component {
    * @returns {HTMLElement}
    */
   createElement (props = {}) {
+    this.local.help = props.help
     this.local.value = props.value
     this.onChangeCallback = typeof props.onChangeCallback === 'function'
       ? props.onChangeCallback
@@ -46,7 +47,10 @@ class RoleSwitcher extends Component {
     return html`
       <div class="mb3">
         ${this.renderItems()}
-        <p class="f5 lh-copy">Your account type change should take effect at your next log in.</p>
+        ${this.local.help
+          ? html`<p class="f5 lh-copy">Your account type change should take effect at your next log in.</p>`
+          : ''
+        }
       </div>
     `
   }

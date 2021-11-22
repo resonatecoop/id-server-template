@@ -113,7 +113,7 @@ class UserMenu extends Nanocomponent {
         <ul style="width:100vw;left:auto;max-width:18rem;margin-top:-1px;" role="menu" class="bg-white black bg-black--dark white--dark bg-white--light black--light ba bw b--mid-gray b--mid-gray--light b--near-black--dark list ma0 pa0 absolute right-0 dropdown z-999 bottom-100 top-100-l">
           <li role="menuitem" class="pt3">
             <div class="flex flex-auto items-center ph3">
-              <span class="b">${this.local.displayName}</span>
+              <span class="b">${this.state.profile.displayName}</span>
             </div>
           </li>
           <li class="bb bw b--mid-gray b--mid-gray--light b--near-black--dark mv3" role="separator"></li>
@@ -165,10 +165,10 @@ class UserMenu extends Nanocomponent {
 
       const { body: response } = result
       const { data: userdata } = response
+      const { avatar = {} } = userdata
 
-      this.local.src = userdata.avatar['profile_photo-m'] || userdata.avatar['profile_photo-l'] || imagePlaceholder(400, 400)
+      this.local.src = avatar['profile_photo-m'] || avatar['profile_photo-l'] || imagePlaceholder(400, 400)
       this.local.credits = userdata.credits
-      this.local.displayName = userdata.nickname
 
       this.rerender()
     } catch (err) {
