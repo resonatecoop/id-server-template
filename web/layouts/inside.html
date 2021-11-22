@@ -21,6 +21,7 @@
   <script type="text/javascript" defer src="/js/{{ .javascript }}"></script>
 </head>
 <body class="ff-no-fouc color-scheme--light">
+  {{ if .isUserAccountComplete }}
   <header role="banner" id="header" class="bg-white black bg-white--light black--light bg-black--dark white--dark white fixed sticky-l left-0 top-0-l bottom-0 right-0 w-100 z-9999 flex items-center bt bt-0-l bb-l bw b--mid-gray b--mid-gray--light b--near-black--dark" style="height:3rem;">
     <nav role="navigation" aria-label="Main navigation" class="flex-l flex-auto-l w-60-l relative dropdown-navigation--focus">
       <ul role="menu" class="list ma0 pa0 bg-white bg-white--light bg-black--dark bg-transparent-l fixed w-100 top-0 left-0 flex flex-auto w-100 relative-l flex-l bb bb-0-l bw b--mid-gray b--mid-gray--light b--near-black--dark" style="height: 3rem;">
@@ -104,6 +105,8 @@
       </ul>
     </nav>
   </header>
+  {{ else }}
+  {{ end }}
 
   {{ if not .profile.EmailConfirmed }}
   <p class="ma0 pa3 bg-gray">Please confirm your email address. <a class="link b" href="../web/resend-email-confirmation">Re-send confirmation email</a>.</p>
