@@ -9,8 +9,17 @@ import (
 
 	"github.com/gorilla/csrf"
 	"github.com/pariz/gountries"
+	"github.com/resonatecoop/id/log"
 	"github.com/resonatecoop/id/session"
 	"github.com/resonatecoop/id/util/response"
+	"github.com/resonatecoop/user-api/model"
+
+	"github.com/resonatecoop/user-api-client/client/usergroups"
+	"github.com/resonatecoop/user-api-client/models"
+
+	httptransport "github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
+	apiclient "github.com/resonatecoop/user-api-client/client"
 )
 
 func (s *Service) accountForm(w http.ResponseWriter, r *http.Request) {
@@ -177,6 +186,14 @@ func (s *Service) account(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		if r.Form.Get("displayName") != "" {
+			result, _ := s.getUserGroupList(user, userSession.AccessToken)
+
+			if result == nil {
+				_ = s.createUserGroup(user, r.Form.Get("displayName"), userSession.AccessToken)
+			}
+		}
+
 		message = "Account updated"
 	}
 
@@ -198,4 +215,59 @@ func (s *Service) account(w http.ResponseWriter, r *http.Request) {
 	}
 	query := r.URL.Query()
 	redirectWithQueryString("/web/profile", query, w, r)
+}
+
+func (s *Service) getUserGroupList(user *model.User, accessToken string) (
+	*usergroups.ResonateUserListUsersUserGroupsOK,
+	error,
+) {
+	httpClient, _ := httptransport.TLSClient(httptransport.TLSClientOptions{
+		InsecureSkipVerify: true,
+	})
+
+	hostname := fmt.Sprintf("%s%s", s.cnf.UserAPIHostname, s.cnf.UserAPIPort)
+	transport := httptransport.NewWithClient(hostname, "", nil, httpClient)
+
+	client := apiclient.New(transport, strfmt.Default)
+
+	bearer := httptransport.BearerToken(accessToken)
+
+	params := usergroups.NewResonateUserListUsersUserGroupsParams()
+
+	params.WithID(user.ID.String())
+
+	result, err := client.Usergroups.ResonateUserListUsersUserGroups(params, bearer)
+
+	return result, err
+}
+
+func (s *Service) createUserGroup(user *model.User, displayName, accessToken string) error {
+	httpClient, _ := httptransport.TLSClient(httptransport.TLSClientOptions{
+		InsecureSkipVerify: true,
+	})
+
+	hostname := fmt.Sprintf("%s%s", s.cnf.UserAPIHostname, s.cnf.UserAPIPort)
+	transport := httptransport.NewWithClient(hostname, "", nil, httpClient)
+
+	client := apiclient.New(transport, strfmt.Default)
+
+	bearer := httptransport.BearerToken(accessToken)
+
+	params := usergroups.NewResonateUserAddUserGroupParams()
+
+	params.WithID(user.ID.String())
+
+	params.Body = &models.UserUserGroupCreateRequest{
+		DisplayName: displayName,
+		GroupType:   "persona",
+	}
+
+	_, err := client.Usergroups.ResonateUserAddUserGroup(params, bearer)
+
+	if err != nil {
+		// silent
+		log.ERROR.Print(err)
+	}
+
+	return nil
 }

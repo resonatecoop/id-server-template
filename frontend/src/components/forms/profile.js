@@ -83,6 +83,7 @@ class AccountForm extends Component {
           },
           body: new URLSearchParams({
             email: this.local.data.email || '',
+            displayName: this.local.data.displayName || '',
             fullName: this.local.data.fullName || '',
             firstName: this.local.data.firstName || '',
             lastName: this.local.data.lastName || ''
@@ -206,6 +207,12 @@ class AccountForm extends Component {
               })
             },
             {
+              type: 'text',
+              name: 'displayName',
+              required: true,
+              placeholder: 'Name'
+            },
+            {
               type: 'email',
               placeholder: 'E-mail',
               readonly: true // can't change email address here
@@ -267,6 +274,9 @@ class AccountForm extends Component {
     this.validator.field('email', (data) => {
       if (isEmpty(data)) return new Error('Email is required')
       if (!isEmail(data)) return new Error('Email is invalid')
+    })
+    this.validator.field('displayName', { required: true }, (data) => {
+      if (isEmpty(data)) return new Error('Name is required')
     })
     this.validator.field('fullName', { required: false }, (data) => {
       if (isEmpty(data)) return new Error('Full name is required')
