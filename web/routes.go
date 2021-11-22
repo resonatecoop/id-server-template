@@ -300,7 +300,7 @@ func (s *Service) GetRoutes() []routes.Route {
 					tollbooth.NewLimiter(1, nil),
 				),
 				new(parseFormMiddleware),
-				newLoggedInMiddleware(s),
+				newGuestMiddleware(s),
 				newClientMiddleware(s),
 			},
 		},
