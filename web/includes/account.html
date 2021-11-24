@@ -1,10 +1,24 @@
-{{ define "title"}}{{ if not .isUserAccountComplete }}Create{{ else }}Update{{ end }} your account{{ end }}
+{{ define "title"}}
+{{ if not .isUserAccountComplete }}Create{{ else }}Update{{ end }} your account
+{{ end }}
 
 {{ define "content" }}
 
 {{ if .flash }}
-<div class="mb3">
-  <p{{ if eq .flash.Type "Error" }} class="ma0 pa3 bg-red white" {{ else }} class="ma0 pa3 bb b--light-gray black" {{ end }}>{{ .flash.Message }}</p>
+<div class="mb3 flex {{ if eq .flash.Type "Error" }}bg-red white{{ else }}bb b--light-gray black{{ end }}">
+  <p class="ma0 pa3 w-100">{{ .flash.Message }}</p>
+  {{ if not .isUserAccountComplete }}
+  <p class="ma0 pa3 tr w-100">
+    <a href="../web/logout" class="db ph3">Log out</a>
+  </p>
+  {{ end}}
+</div>
+{{ else if not .isUserAccountComplete }}
+<div class="mb3 flex bb b--light-gray black">
+  <p class="ma0 pa3 w-100">Account not complete</p>
+  <p class="ma0 pa3 tr w-100">
+    <a href="../web/logout" class="db ph3">Log out</a>
+  </p>
 </div>
 {{ end }}
 
@@ -66,6 +80,7 @@
                     </select>
                   </div>
                 </div>
+                <!--
                 <div class="mb3">
                   <div class="flex flex-column flex-column-reverse">
                     <input
@@ -108,6 +123,7 @@
                   </div>
                   <p class="lh-copy f5 red"></p>
                 </div>
+                -->
                 <div class="flex flex-auto">
                   <button style="outline:solid 1px var(--near-black);outline-offset:-1px" type="submit" class="bg-white dib bn pv3 ph5 mt3 flex-shrink-0 f5 grow">
                     {{ if .profile.Complete }}Update{{ else }}Next{{ end }}

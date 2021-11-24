@@ -13,15 +13,13 @@ import (
 )
 
 func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
-	sessionService, client, user, userSession, err := s.profileCommon(r)
+	sessionService, client, user, isUserAccountComplete, userSession, err := s.profileCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	w.Header().Set("X-CSRF-Token", csrf.Token(r))
-
-	isUserAccountComplete := s.isUserAccountComplete(user, userSession.AccessToken)
 
 	if !isUserAccountComplete {
 		err = sessionService.SetFlashMessage(&session.Flash{
@@ -67,8 +65,16 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 		string(initialState),
 	)
 
+	displayName := ""
+
+	if len(usergroups.Usergroup) > 0 {
+		displayName = usergroups.Usergroup[0].DisplayName
+	}
+
 	profile := &Profile{
 		Email:          user.Username,
+		DisplayName:    displayName,
+		LegacyID:       user.LegacyID,
 		FullName:       user.FullName,
 		FirstName:      user.FirstName,
 		LastName:       user.LastName,
@@ -101,25 +107,26 @@ func (s *Service) profileCommon(r *http.Request) (
 	session.ServiceInterface,
 	*model.Client,
 	*model.User,
+	bool,
 	*session.UserSession,
 	error,
 ) {
 	// Get the session service from the request context
 	sessionService, err := getSessionService(r)
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, false, nil, err
 	}
 
 	// Get the client from the request context
 	client, err := getClient(r)
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, false, nil, err
 	}
 
 	// Get the user session
 	userSession, err := sessionService.GetUserSession()
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, false, nil, err
 	}
 
 	// Fetch the user
@@ -127,8 +134,49 @@ func (s *Service) profileCommon(r *http.Request) (
 		userSession.Username,
 	)
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, false, nil, err
 	}
 
-	return sessionService, client, user, userSession, nil
+	// Check if user account is complete
+	isUserAccountComplete := s.isUserAccountComplete(userSession)
+
+	return sessionService, client, user, isUserAccountComplete, userSession, nil
+}
+
+func (s *Service) isUserAccountComplete(userSession *session.UserSession) bool {
+	user, err := s.oauthService.FindUserByUsername(userSession.Username)
+
+	if err != nil {
+		return false
+	}
+
+	// is email address confirmed
+	if !user.EmailConfirmed {
+		return false
+	}
+
+	result, err := s.getUserGroupList(user, userSession.AccessToken)
+
+	if err != nil {
+		return false
+	}
+
+	if len(result.Usergroup) == 0 {
+		return false
+	}
+
+	// listeners only need to confirm their email address
+	if user.RoleID == int32(model.UserRole) {
+		return true
+	}
+
+	// if user.FirstName == "" || user.LastName == "" || user.FullName == "" {
+	// 	return false
+	// }
+
+	if user.Country == "" {
+		return false
+	}
+
+	return true
 }

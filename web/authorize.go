@@ -11,7 +11,6 @@ import (
 
 	"github.com/gorilla/csrf"
 	"github.com/resonatecoop/id/session"
-	"github.com/resonatecoop/user-api-client/models"
 	"github.com/resonatecoop/user-api/model"
 )
 
@@ -27,13 +26,14 @@ func (s *Service) authorizeForm(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("X-CSRF-Token", csrf.Token(r))
 
-	isUserAccountComplete := s.isUserAccountComplete(user, userSession.AccessToken)
+	isUserAccountComplete := s.isUserAccountComplete(userSession)
 
 	// Render the template
 	flash, _ := sessionService.GetFlashMessage()
 	query := r.URL.Query()
 	query.Set("login_redirect_uri", r.URL.Path)
 
+	usergroups, _ := s.getUserGroupList(user, userSession.AccessToken)
 
 	initialState, err := json.Marshal(NewInitialState(
 		s.cnf,
@@ -41,7 +41,7 @@ func (s *Service) authorizeForm(w http.ResponseWriter, r *http.Request) {
 		user,
 		userSession,
 		isUserAccountComplete,
-		[]*models.UserUserGroupPrivateResponse{},
+		usergroups.Usergroup,
 	))
 
 	if err != nil {
@@ -58,6 +58,13 @@ func (s *Service) authorizeForm(w http.ResponseWriter, r *http.Request) {
 	profile := &Profile{
 		Email:          user.Username,
 		EmailConfirmed: user.EmailConfirmed,
+		LegacyID:       user.LegacyID,
+		Complete:       isUserAccountComplete,
+		Usergroups:     usergroups.Usergroup,
+	}
+
+	if len(usergroups.Usergroup) > 0 {
+		profile.DisplayName = usergroups.Usergroup[0].DisplayName
 	}
 
 	err = renderTemplate(w, "authorize.html", map[string]interface{}{

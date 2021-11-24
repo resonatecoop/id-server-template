@@ -22,13 +22,11 @@ import (
 )
 
 func (s *Service) accountForm(w http.ResponseWriter, r *http.Request) {
-	sessionService, client, user, userSession, err := s.profileCommon(r)
+	sessionService, client, user, isUserAccountComplete, userSession, err := s.profileCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	isUserAccountComplete := s.isUserAccountComplete(user, userSession.AccessToken)
 
 	w.Header().Set("X-CSRF-Token", csrf.Token(r))
 
@@ -62,15 +60,9 @@ func (s *Service) accountForm(w http.ResponseWriter, r *http.Request) {
 		string(initialState),
 	)
 
-	displayName := ""
-
-	if len(usergroups.Usergroup) > 0 {
-		displayName = usergroups.Usergroup[0].DisplayName
-	}
-
 	profile := &Profile{
 		Email:          user.Username,
-		DisplayName:    displayName,
+		LegacyID:       user.LegacyID,
 		FullName:       user.FullName,
 		FirstName:      user.FirstName,
 		LastName:       user.LastName,
@@ -78,6 +70,10 @@ func (s *Service) accountForm(w http.ResponseWriter, r *http.Request) {
 		EmailConfirmed: user.EmailConfirmed,
 		Complete:       isUserAccountComplete,
 		Usergroups:     usergroups.Usergroup,
+	}
+
+	if len(usergroups.Usergroup) > 0 {
+		profile.DisplayName = usergroups.Usergroup[0].DisplayName
 	}
 
 	err = renderTemplate(w, "account.html", map[string]interface{}{
@@ -100,7 +96,7 @@ func (s *Service) accountForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) account(w http.ResponseWriter, r *http.Request) {
-	sessionService, _, user, userSession, err := s.profileCommon(r)
+	sessionService, _, user, isUserAccountComplete, userSession, err := s.profileCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -218,7 +214,7 @@ func (s *Service) account(w http.ResponseWriter, r *http.Request) {
 				return
 			} else {
 				if len(result.Usergroup) == 0 {
-					err = s.createUserGroup(user, r.Form.Get("displayName"), userSession.AccessToken)
+					_, err = s.createUserGroup(user, r.Form.Get("displayName"), userSession.AccessToken)
 
 					if err != nil {
 						log.ERROR.Print(err)
@@ -230,10 +226,25 @@ func (s *Service) account(w http.ResponseWriter, r *http.Request) {
 		message = "Account updated"
 	}
 
+	redirectURI := "/web/account"
+
+	if !isUserAccountComplete {
+		// if account was completed now, redirects to profile
+		isUserAccountComplete = s.isUserAccountComplete(userSession)
+
+		if isUserAccountComplete {
+			redirectURI = "/web/profile"
+		}
+	}
+
 	if r.Header.Get("Accept") == "application/json" {
 		response.WriteJSON(w, map[string]interface{}{
 			"message": message,
-			"status":  http.StatusOK,
+			"data": map[string]interface{}{
+				"redirectToProfile": redirectURI == "/web/profile",
+				"complete":          isUserAccountComplete,
+			},
+			"status": http.StatusOK,
 		}, http.StatusOK)
 		return
 	}
@@ -247,39 +258,9 @@ func (s *Service) account(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	query := r.URL.Query()
-	redirectWithQueryString("/web/profile", query, w, r)
-}
 
-func (s *Service) isUserAccountComplete(user *model.User, accessToken string) bool {
-	// is email address confirmed
-	if !user.EmailConfirmed {
-		return false
-	}
-
-	result, err := s.getUserGroupList(user, accessToken)
-
-	if err != nil {
-		return false
-	}
-
-	if len(result.Usergroup) == 0 {
-		return false
-	}
-
-	// listeners only need to confirm their email address
-	if user.RoleID == int32(model.UserRole) {
-		return true
-	}
-
-	if user.FirstName == "" || user.LastName == "" || user.FullName == "" {
-		return false
-	}
-
-	if user.Country == "" {
-		return false
-	}
-
-	return true
+	redirectWithQueryString(redirectURI, query, w, r)
+	return
 }
 
 func (s *Service) getUserGroupList(user *model.User, accessToken string) (
@@ -305,7 +286,7 @@ func (s *Service) getUserGroupList(user *model.User, accessToken string) (
 	return result.Payload, err
 }
 
-func (s *Service) createUserGroup(user *model.User, displayName, accessToken string) error {
+func (s *Service) createUserGroup(user *model.User, displayName, accessToken string) (*models.UserUserRequest, error) {
 	client := config.NewAPIClient(s.cnf.UserAPIHostname, s.cnf.UserAPIPort)
 
 	bearer := httptransport.BearerToken(accessToken)
@@ -319,12 +300,11 @@ func (s *Service) createUserGroup(user *model.User, displayName, accessToken str
 		GroupType:   "persona",
 	}
 
-	_, err := client.Usergroups.ResonateUserAddUserGroup(params, bearer)
+	result, err := client.Usergroups.ResonateUserAddUserGroup(params, bearer)
 
 	if err != nil {
-		// silent
-		log.ERROR.Print(err)
+		return nil, err
 	}
 
-	return nil
+	return result.Payload, nil
 }

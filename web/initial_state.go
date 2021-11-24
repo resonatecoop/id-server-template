@@ -10,6 +10,7 @@ import (
 // user public profile
 type Profile struct {
 	ID             string                                 `json:"id"`
+	LegacyID       int32                                  `json:"legacyID"`
 	DisplayName    string                                 `json:"displayName"`
 	Email          string                                 `json:"email"`
 	FullName       string                                 `json:"fullName"`
