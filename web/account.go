@@ -47,7 +47,6 @@ func (s *Service) accountForm(w http.ResponseWriter, r *http.Request) {
 		client,
 		user,
 		userSession,
-		"",
 		isUserAccountComplete,
 		usergroups.Usergroup,
 	))

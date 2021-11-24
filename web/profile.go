@@ -45,12 +45,6 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 	q := gountries.New()
 	countries := q.FindAllCountries()
 
-	usergroup := r.URL.Query().Get("usergroup")
-
-	if usergroup == "" {
-		usergroup = s.getDefaultUserGroupType(user) // artist, label or user
-	}
-
 	usergroups, _ := s.getUserGroupList(user, userSession.AccessToken)
 
 	initialState, err := json.Marshal(NewInitialState(
@@ -58,7 +52,6 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 		client,
 		user,
 		userSession,
-		usergroup,
 		isUserAccountComplete,
 		usergroups.Usergroup,
 	))
@@ -74,16 +67,6 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 		string(initialState),
 	)
 
-	// default template
-	templateName := "profile.html"
-
-	switch usergroup {
-	case "artist":
-		templateName = "profile_artist.html"
-	case "label":
-		templateName = "profile_label.html"
-	}
-
 	profile := &Profile{
 		Email:          user.Username,
 		FullName:       user.FullName,
@@ -95,7 +78,7 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 		Usergroups:     usergroups.Usergroup,
 	}
 
-	err = renderTemplate(w, templateName, map[string]interface{}{
+	err = renderTemplate(w, "profile.html", map[string]interface{}{
 		"isUserAccountComplete": isUserAccountComplete,
 		"flash":                 flash,
 		"clientID":              client.Key,
@@ -110,19 +93,6 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-}
-
-func (s *Service) getDefaultUserGroupType(user *model.User) string {
-	var usergroup = "user"
-
-	switch (model.AccessRole)(user.RoleID) {
-	case model.ArtistRole:
-		usergroup = "artist"
-	case model.LabelRole:
-		usergroup = "label"
-	}
-
-	return usergroup
 }
 
 func (s *Service) profileCommon(r *http.Request) (

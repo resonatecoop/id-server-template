@@ -34,7 +34,6 @@ func (s *Service) clientForm(w http.ResponseWriter, r *http.Request) {
 		client,
 		user,
 		nil,
-		"",
 		false,
 		[]*models.UserUserGroupPrivateResponse{},
 	))

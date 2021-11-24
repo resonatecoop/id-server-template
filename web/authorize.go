@@ -34,18 +34,12 @@ func (s *Service) authorizeForm(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	query.Set("login_redirect_uri", r.URL.Path)
 
-	usergroup := r.URL.Query().Get("usergroup")
-
-	if usergroup == "" {
-		usergroup = s.getDefaultUserGroupType(user) // artist, label or user
-	}
 
 	initialState, err := json.Marshal(NewInitialState(
 		s.cnf,
 		client,
 		user,
 		userSession,
-		usergroup,
 		isUserAccountComplete,
 		[]*models.UserUserGroupPrivateResponse{},
 	))

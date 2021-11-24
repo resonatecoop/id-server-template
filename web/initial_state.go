@@ -35,7 +35,6 @@ func NewInitialState(
 	client *model.Client,
 	user *model.User,
 	userSession *session.UserSession,
-	usergroup string,
 	isUserAccountComplete bool,
 	usergroups []*models.UserUserGroupPrivateResponse,
 ) *InitialState {
@@ -68,7 +67,6 @@ func NewInitialState(
 		ClientID:        client.Key,
 		Clients:         cnf.Clients,
 		Profile:         profile,
-		UserGroup:       usergroup,
 		Token:           accessToken,
 	}
 }
