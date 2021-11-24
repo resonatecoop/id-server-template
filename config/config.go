@@ -64,4 +64,6 @@ type Config struct {
 	EmailTokenSecretKey string
 	UserAPIHostname     string
 	UserAPIPort         string
+	StaticURL           string
+	AppURL              string
 }

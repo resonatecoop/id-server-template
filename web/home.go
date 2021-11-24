@@ -23,6 +23,7 @@ func (s *Service) homeForm(w http.ResponseWriter, r *http.Request) {
 	)
 
 	err := renderTemplate(w, "home.html", map[string]interface{}{
+		"appURL":         s.cnf.AppURL,
 		"clients":        s.cnf.Clients,
 		"initialState":   template.HTML(fragment),
 		csrf.TemplateTag: csrf.TemplateField(r),

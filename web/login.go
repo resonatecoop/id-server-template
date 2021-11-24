@@ -35,6 +35,7 @@ func (s *Service) loginForm(w http.ResponseWriter, r *http.Request) {
 	flash, _ := sessionService.GetFlashMessage()
 
 	err = renderTemplate(w, "login.html", map[string]interface{}{
+		"appURL":         s.cnf.AppURL,
 		"flash":          flash,
 		"queryString":    getQueryString(r.URL.Query()),
 		"initialState":   template.HTML(fragment),

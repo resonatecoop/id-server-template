@@ -79,6 +79,8 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = renderTemplate(w, "profile.html", map[string]interface{}{
+		"appURL":                s.cnf.AppURL,
+		"staticURL":             s.cnf.StaticURL,
 		"isUserAccountComplete": isUserAccountComplete,
 		"flash":                 flash,
 		"clientID":              client.Key,

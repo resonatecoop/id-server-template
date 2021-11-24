@@ -57,6 +57,8 @@ var Cnf = &Config{
 	EmailTokenSecretKey: "super secret key",
 	UserAPIHostname:     "0.0.0.0",
 	UserAPIPort:         ":11000",
+	StaticURL:           "https://dash.resonate.coop",
+	AppURL:              "https://stream.resonate.coop",
 }
 
 // NewConfig loads configuration from etcd and returns *Config struct

@@ -61,6 +61,8 @@ func (s *Service) authorizeForm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = renderTemplate(w, "authorize.html", map[string]interface{}{
+		"appURL":                s.cnf.AppURL,
+		"staticURL":             s.cnf.StaticURL,
 		"isUserAccountComplete": isUserAccountComplete,
 		"flash":                 flash,
 		"clientID":              client.Key,
