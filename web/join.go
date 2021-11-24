@@ -160,7 +160,9 @@ func (s *Service) createUser(r *http.Request) (
 	_, err := client.Users.ResonateUserAddUser(params, nil)
 
 	if err != nil {
-		return nil, err
+		if casted, ok := err.(*users.ResonateUserAddUserDefault); ok {
+			return nil, casted
+		}
 	}
 
 	user, err := s.oauthService.FindUserByUsername(r.Form.Get("email"))
