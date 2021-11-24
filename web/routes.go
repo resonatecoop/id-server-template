@@ -177,17 +177,6 @@ func (s *Service) GetRoutes() []routes.Route {
 			},
 		},
 		{
-			Name:        "welcome_form",
-			Method:      "GET",
-			Pattern:     "/welcome",
-			HandlerFunc: s.welcomeForm,
-			Middlewares: []negroni.Handler{
-				new(parseFormMiddleware),
-				newLoggedInMiddleware(s),
-				newClientMiddleware(s),
-			},
-		},
-		{
 			Name:        "account_form",
 			Method:      "GET",
 			Pattern:     "/account",
