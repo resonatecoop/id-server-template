@@ -3,7 +3,8 @@ const compare = require('nanocomponent/compare')
 const html = require('choo/html')
 const icon = require('@resonate/icon-element')
 const morph = require('nanomorph')
-const imagePlaceholder = require('../../lib/image-placeholder')
+const imagePlaceholder = require('@resonate/svg-image-placeholder')
+const NIL_UUID = require('../../lib/nil')
 
 // ProfileSwitcher component class
 // [Profile switcher for Artists and Labels only...  multiple tabs, initially one only, scrolling if necessary...  If Label, label tab shown first in different colour, followed by artists on label ]
@@ -34,11 +35,11 @@ class ProfileSwitcher extends Component {
    */
   createElement (props = {}) {
     this.local.value = props.value
-    this.local.ownedGroups = props.ownedGroups || []
+    this.local.usergroups = props.usergroups || []
     this.onChangeCallback = typeof props.onChangeCallback === 'function'
       ? props.onChangeCallback
       : this.onChangeCallback
-    this.local.items = this.local.ownedGroups.map((item) => {
+    this.local.items = this.local.usergroups.map((item) => {
       return {
         value: item.id,
         name: item.displayName,
@@ -46,8 +47,6 @@ class ProfileSwitcher extends Component {
         avatar: item.avatar
       }
     })
-
-    console.log('props:', props)
 
     return html`
       <div class="mb5">
@@ -57,13 +56,17 @@ class ProfileSwitcher extends Component {
   }
 
   renderItems () {
+    const length = this.local.items.length
+
     return html`
-      <div class="items ml-3 mr-3">
-        <div class="cf flex flex-wrap">
+      <div class="items overflow-x-auto overflow-y-hidden bg-light-gray bw bb b--mid-gray">
+        <div class="cf flex${length <= 3 ? ' justify-center' : ''}">
           ${this.local.items.map((item, index) => {
             const { value, name, avatar } = item
 
             const id = 'usergroup-item-' + index
+            const length = this.local.items.length
+            const checked = value === this.local.value
 
             // input attrs
             const attrs = {
@@ -72,8 +75,8 @@ class ProfileSwitcher extends Component {
               tabindex: -1,
               name: 'usergroup',
               type: 'radio',
-              disabled: item.hidden ? 'disabled' : false,
-              checked: value === this.local.value,
+              disabled: length <= 1 ? 'disabled' : false,
+              checked: checked,
               value: value
             }
 
@@ -82,26 +85,34 @@ class ProfileSwitcher extends Component {
               class: 'flex flex-column fw4',
               style: 'outline:solid 1px var(--near-black);outline-offset:0px',
               tabindex: '0',
+              title: 'Select profile',
               onkeypress: this.handleKeyPress,
               for: id
             }
 
+            const src = avatar !== NIL_UUID
+              ? `https://${process.env.STATIC_HOSTNAME}/images/${avatar}-x300.jpg`
+              : imagePlaceholder(400, 400)
+
             // item background attrs
             const attrs3 = {
-              class: 'flex items-end pv3 aspect-ratio--object z-1',
-              style: `background: url(${avatar || imagePlaceholder(400, 400)}) center center / cover no-repeat;`
+              class: 'flex items-end pb2 aspect-ratio--object z-1',
+              style: `background: url(${src}) center center / cover no-repeat;`
             }
 
             return html`
-              <div class="fl w-33 grow ph3">
+              <div class="fl flex flex-column justify-center flex-shrink-0 w4 pt2 pb4 ph3${length > 1 ? ' grow' : ''}">
                 <input ${attrs}>
                 <label ${attrs2}>
                   <div class="aspect-ratio aspect-ratio--1x1">
                     <div ${attrs3}>
-                      <div class="flex flex-shrink-0 justify-center bg-white ba bw b--mid-gray items-center w2 h2 ml2">
-                        ${icon('check', { size: 'sm', class: 'fill-transparent' })}
-                      </div>
-                      <span class="absolute bottom-0" style="transform:translateY(100%)">${name}</span>
+                      ${length > 1
+                        ? html`
+                          <div class="flex flex-shrink-0 justify-center items-center ml2">
+                            ${icon('circle', { size: 'sm', class: 'fill-transparent' })}
+                          </div>`
+                        : ''}
+                      <span class="absolute truncate w-100 f5 bottom-0${checked ? ' b' : ''}" style="transform:translateY(100%)">${name}</span>
                     </div>
                   </div>
                 </label>
@@ -140,7 +151,7 @@ class ProfileSwitcher extends Component {
   onSubmit () {}
 
   update (props) {
-    return compare(this.local.ownedGroups, props.ownedGroups) ||
+    return compare(this.local.usergroups, props.usergroups) ||
       this.local.value !== props.value
   }
 }

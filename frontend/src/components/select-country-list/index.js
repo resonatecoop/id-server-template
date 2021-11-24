@@ -66,7 +66,7 @@ class SelectCountryList extends Component {
     const attrs = {
       id: 'select-country',
       required: this.local.required,
-      class: 'bn bg-black white bg-white--dark black--dark bg-black--light white--light pa3',
+      class: 'bn br0 bg-black white bg-white--dark black--dark bg-black--light white--light pa3',
       onchange: this._onchange,
       name: this.local.name
     }

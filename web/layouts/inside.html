@@ -80,8 +80,21 @@
               <div class="fl w-100 mw2">
                 <div class="db aspect-ratio aspect-ratio--1x1 bg-dark-gray bg-dark-gray--dark">
                   <figure class="ma0">
-                    <img src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg' width%3D'300' height%3D'300' viewBox%3D'0 0 300 300'%2F%3E" width="60" height="60" class="aspect-ratio--object z-1">
-                    <figcaption class="clip"></figcaption>
+                    {{ if .profile.Usergroups }}
+                    {{ $avatar := (index .profile.Usergroups 0).Avatar }}
+                    {{ if eq $avatar "00000000-0000-0000-0000-000000000000" }}
+                    <img src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg' width%3D'300' height%3D'300' viewBox%3D'0 0 300 300'%2F%3E">
+                    {{ else }}
+                    <picture>
+                      <source srcset="{{ .staticURL }}/images/{{ $avatar }}-x60.webp 60w, {{ .staticURL }}/images/{{ $avatar }}-x120.webp 120w" type="image/webp">
+                      <source srcset="{{ .staticURL }}/images/{{ $avatar }}-x60.jpg 60w, {{ .staticURL }}/images/{{ $avatar }}-x120.jpg 120w" type="image/jpeg">
+                      <img src="{{ .staticURL }}/images/{{ $avatar }}-x120.jpg">
+                    </picture>
+                    {{ end }}
+                    {{ else }}
+                    <img src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg' width%3D'300' height%3D'300' viewBox%3D'0 0 300 300'%2F%3E">
+                    {{ end }}
+                    <figcaption class="clip">User avatar</figcaption>
                   </figure>
                 </div>
               </div>
@@ -92,7 +105,13 @@
               </div>
             </span>
           </button>
-          <ul style="width:100vw;left:auto;max-width:18rem;margin-top:-1px;" role="menu" class="bg-white black bg-black--dark white--dark bg-white--light black--light ba bw b--mid-gray b--mid-gray--light b--near-black--dark list ma0 pa0 absolute right-0 dropdown z-999 bottom-100 top-100-l">
+          <ul id="usermenu" style="width:100vw;left:auto;max-width:18rem;margin-top:-1px;" role="menu" class="bg-white black bg-black--dark white--dark bg-white--light black--light ba bw b--mid-gray b--mid-gray--light b--near-black--dark list ma0 pa0 absolute right-0 dropdown z-999 bottom-100 top-100-l">
+            <li role="menuitem" class="pt3">
+              <div class="flex flex-auto items-center ph3">
+                <span class="b">{{ .profile.DisplayName }}</span>
+              </div>
+            </li>
+            <li class="bb bw b--mid-gray b--mid-gray--light b--near-black--dark mv3" role="separator"></li>
             <li role="menuitem" class="mb1">
               <a href="../web/account{{ .queryString }}" class="link db pv2 pl3">Update your account</a>
             </li>
@@ -186,7 +205,7 @@
       <path d="M50 100A50 50 0 1 0 50 0a50 50 0 0 0 0 100zm7.8-15.5H42V44.3h15.8v40.2zm.7-58.6c0 4.6-3.7 8-8.7 8-5 0-8.6-3.4-8.6-8 0-4.7 3.7-8.3 8.6-8.3 1.6 0 3 .4 4.3 1a8 8 0 0 1 4.4 7.3z"/>
     </symbol>
     <symbol viewBox="0 0 100 100" id="icon-circle">
-      <circle stroke="black" cx="50" cy="50" r="45" stroke-width="10" />
+      <circle stroke="var(--black)" cx="50" cy="50" r="45" stroke-width="10" />
     </symbol>
     <symbol viewBox="0 0 100 100" id="icon-dropdown">
       <path d="M0 40h20v20H0zM40 40h20v20H40zM80 40h20v20H80z"/>

@@ -39,8 +39,6 @@ app.use((state, emitter) => {
     member: false
   }
 
-  state.profile.ownedGroups = state.profile.ownedGroups || []
-
   state.profile.avatar = state.profile.avatar || {}
 
   state.clients = state.clients || [
@@ -51,7 +49,7 @@ app.use((state, emitter) => {
     },
     {
       connectUrl: 'https://dash.resonate.coop/api/user/connect/resonate',
-      name: 'Artist Dashboard',
+      name: 'Dashboard',
       description: 'dash.resonate.coop'
     }
   ]
@@ -59,11 +57,6 @@ app.use((state, emitter) => {
   emitter.on(state.events.DOMCONTENTLOADED, () => {
     emitter.emit(`route:${state.route}`)
     setMeta()
-  })
-
-  emitter.on('set:usergroup', (usergroup) => {
-    state.usergroup = usergroup
-    emitter.emit(state.events.RENDER)
   })
 
   emitter.on('route:account', () => {
@@ -81,7 +74,8 @@ app.use((state, emitter) => {
 
   async function getUserProfile () {
     try {
-      // get v2 api profile
+      // get v2 api profile for legacy values (old nickname, avatar)
+      // should get role value from id server backend instead
       const getClient = getAPIServiceClientWithAuth(state.token)
       const client = await getClient('profile')
       const result = await client.getUserProfile()
@@ -91,7 +85,6 @@ app.use((state, emitter) => {
 
       state.profile.nickname = userData.nickname
       state.profile.role = userData.role
-      state.profile.ownedGroups = userData.ownedGroups || []
       state.profile.avatar = userData.avatar || {}
 
       emitter.emit(state.events.RENDER)
@@ -107,7 +100,8 @@ app.use((state, emitter) => {
       '/': 'Apps',
       login: 'Log In',
       authorize: 'Authorize',
-      profile: 'Profile',
+      profile: 'Create your profile',
+      account: 'Update your account',
       'password-reset': 'Password reset',
       join: 'Join'
     }[state.route]
@@ -177,14 +171,13 @@ async function userMenuApp (initialState) {
   const usermenu = nanochoo()
 
   usermenu.use((state, emitter, app) => {
-    state.user = {
-      token: state.token
-    }
     state.params = {} // nanochoo does not have a router
   })
 
   usermenu.view((state, emit) => {
-    return state.cache(UserMenu, 'usermenu').render()
+    return state.cache(UserMenu, 'usermenu').render({
+      displayName: state.profile.displayName
+    })
   })
 
   usermenu.mount('#usermenu')

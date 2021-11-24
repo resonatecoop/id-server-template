@@ -4,9 +4,11 @@ const nanostate = require('nanostate')
 const isEmpty = require('validator/lib/isEmpty')
 const isLength = require('validator/lib/isLength')
 const isUUID = require('validator/lib/isUUID')
+// const isEmail = require('validator/lib/isEmail')
 const validateFormdata = require('validate-formdata')
 const icon = require('@resonate/icon-element')
 const morph = require('nanomorph')
+const isEqual = require('is-equal-shallow')
 
 const input = require('@resonate/input-element')
 const textarea = require('@resonate/textarea-element')
@@ -52,32 +54,32 @@ class ProfileForm extends Component {
         machine: nanostate('basicInfo', {
           basicInfo: { next: 'customInfo', end: 'recap' },
           customInfo: { next: 'recap', prev: 'basicInfo' },
-          recap: { prev: 'customInfo', start: 'basicInfo' }
+          recap: { prev: 'basicInfo' }
         })
       })
     })
 
     this.local.machine.on('machine:next', () => {
       if (!this.element) return
-      this.rerenderForm()
+      this.rerender()
       window.scrollTo(0, 0)
     })
 
     this.local.machine.on('machine:end', () => {
       if (!this.element) return
-      this.rerenderForm()
+      this.rerender()
       window.scrollTo(0, 0)
     })
 
     this.local.machine.on('machine:next', () => {
       if (!this.element) return
-      this.rerenderForm()
+      this.rerender()
       window.scrollTo(0, 0)
     })
 
     this.local.machine.on('machine:prev', () => {
       if (!this.element) return
-      this.rerenderForm()
+      this.rerender()
       window.scrollTo(0, 0)
     })
 
@@ -93,6 +95,7 @@ class ProfileForm extends Component {
             body: {
               displayName: this.local.data.displayName,
               description: this.local.data.description,
+              // groupEmail: this.local.data.groupEmail,
               shortBio: this.local.data.shortBio,
               address: this.local.data.location,
               avatar: this.local.data.avatar, // uuid
@@ -148,14 +151,16 @@ class ProfileForm extends Component {
         }
       }
 
-      this.rerenderForm()
+      this.rerender()
 
       this.local.machine.emit(`form:${this.local.form.valid ? 'valid' : 'invalid'}`)
     })
 
     this.local.data = {}
     this.local.usergroup = {}
-    this.local.profile = {}
+    this.local.profile = {
+      avatar: {}
+    }
 
     this.validator = validateFormdata()
     this.local.form = this.validator.state
@@ -163,13 +168,14 @@ class ProfileForm extends Component {
     this.renderBasicInfoForm = this.renderBasicInfoForm.bind(this)
     this.renderCustomInfoForm = this.renderCustomInfoForm.bind(this)
     this.renderRecap = this.renderRecap.bind(this)
-    this.rerenderForm = this.rerenderForm.bind(this)
 
     // cached swagger client
     this.swaggerClient = null
 
     this.getClient = this.getClient.bind(this)
     this.setUsergroup = this.setUsergroup.bind(this)
+
+    this.local.sticky = false // sticky profile switcher
   }
 
   /**
@@ -198,7 +204,7 @@ class ProfileForm extends Component {
    */
   createElement (props = {}) {
     this.local.profile = props.profile || {}
-    this.local.role = props.role
+    this.local.role = props.profile.role
 
     // initial persona
     if (!this.local.usergroup.id) {
@@ -224,16 +230,17 @@ class ProfileForm extends Component {
   setUsergroup (usergroupID) {
     const profile = Object.assign({}, this.local.profile)
 
-    const usergroup = profile.ownedGroups.find(ownedGroup => {
+    const avatar = profile.avatar || {}
+    const usergroup = profile.usergroups.find(usergroup => {
       // try find usergroup by id first
-      if (usergroupID) return ownedGroup.id === usergroupID
+      if (usergroupID) return usergroup.id === usergroupID
       // fallback to persona or label groupType
-      return ownedGroup.groupType === 'persona' || ownedGroup.groupType === 'label'
+      return usergroup.groupType === 'persona'
     }) || {
       // fallback to older profile data for returning members
       displayName: profile.nickname,
       description: profile.description || '',
-      avatar: profile.avatar['profile_photo-m'] || profile.avatar['profile_photo-l'] || imagePlaceholder(400, 400)
+      avatar: avatar['profile_photo-m'] || avatar['profile_photo-l'] || imagePlaceholder(400, 400)
     }
 
     if (usergroup.id) {
@@ -253,7 +260,7 @@ class ProfileForm extends Component {
   /**
    * Rerender only base form element
    */
-  rerenderForm () {
+  rerender () {
     const machine = {
       basicInfo: this.renderBasicInfoForm, // basic infos for everyone
       customInfo: this.renderCustomInfoForm, // label, artist infos
@@ -285,7 +292,7 @@ class ProfileForm extends Component {
           onchange: async (e) => {
             validator.validate(e.target.name, e.target.value)
             this.local.data.displayName = e.target.value
-            this.rerenderForm()
+            this.rerender()
 
             if (!this.local.usergroup.id) return
 
@@ -307,7 +314,9 @@ class ProfileForm extends Component {
           }
         })
 
-        const helpText = this.local.role && this.local.role !== 'user' ? `Your ${this.local.role} name` : 'Your username'
+        const helpText = this.local.role && this.local.role !== 'user'
+          ? `Your ${this.local.role} name`
+          : 'Your username'
 
         const labelOpts = {
           labelText: 'Name',
@@ -318,6 +327,56 @@ class ProfileForm extends Component {
 
         return inputField(el, form)(labelOpts)
       },
+      /**
+       * Secondary email
+       */
+      /*
+      groupEmail: (validator, form) => {
+        const { values, pristine, errors } = form
+
+        const el = input({
+          type: 'email',
+          name: 'groupEmail',
+          required: false,
+          invalid: errors.groupEmail && !pristine.groupEmail,
+          value: values.groupEmail,
+          onchange: async (e) => {
+            validator.validate(e.target.name, e.target.value)
+            this.local.data.groupEmail = e.target.value
+            this.rerender()
+
+            if (!this.local.usergroup.id) return
+
+            try {
+              await this.getClient(this.state.token)
+
+              await this.swaggerClient.apis.Usergroups.ResonateUser_UpdateUserGroup({
+                id: this.local.usergroup.id, // should be usergroup id
+                body: {
+                  groupEmail: this.local.data.groupEmail
+                }
+              })
+
+              this.emit('notify', { message: 'Secondary email saved' })
+            } catch (err) {
+              console.log(err)
+              this.emit('notify', { message: 'Failed saving secondary email' })
+            }
+          }
+        })
+
+        const helpText = 'A secondary email address for your profile'
+
+        const labelOpts = {
+          labelText: 'E-mail',
+          inputName: 'groupEmail',
+          helpText: helpText,
+          displayErrors: true
+        }
+
+        return inputField(el, form)(labelOpts)
+      },
+      */
       /**
        * Description/bio for user
        * @param {Object} validator Form data validator
@@ -339,7 +398,7 @@ class ProfileForm extends Component {
                 onchange: async (e) => {
                   validator.validate(e.target.name, e.target.value)
                   this.local.data.description = e.target.value
-                  this.rerenderForm()
+                  this.rerender()
 
                   if (!this.local.usergroup.id) return
 
@@ -387,7 +446,7 @@ class ProfileForm extends Component {
                 onchange: async (e) => {
                   validator.validate(e.target.name, e.target.value)
                   this.local.data.shortBio = e.target.value
-                  this.rerenderForm()
+                  this.rerender()
 
                   if (!this.local.usergroup.id) return
 
@@ -427,7 +486,7 @@ class ProfileForm extends Component {
           required: false,
           validator: validator,
           format: { width: 300, height: 300 }, // minimum accepted format values
-          src: this.local.usergroup.avatar,
+          src: `https://${process.env.STATIC_HOSTNAME}/images/${this.local.usergroup.avatar}-x600.jpg`,
           accept: 'image/jpeg,image/jpg,image/png',
           ratio: '1600x1600px',
           archive: this.state.profile.avatar['profile_photo-m'] || this.state.profile.avatar['profile_photo-l'], // last uploaded files, old wp cover photo...
@@ -476,10 +535,10 @@ class ProfileForm extends Component {
           config: 'banner',
           required: false,
           validator: validator,
-          src: this.local.usergroup.banner,
-          format: { width: 608, height: 147 },
+          src: `https://${process.env.STATIC_HOSTNAME}/images/${this.local.usergroup.banner}-x625.jpg`,
+          format: { width: 625, height: 125 },
           accept: 'image/jpeg,image/jpg,image/png',
-          ratio: '2480x520px',
+          ratio: '2500x500px',
           direction: 'column',
           archive: this.state.profile.avatar['cover_photo-m'], // last uploaded files, old wp cover photo...
           onFileUploaded: async (filename) => {
@@ -488,6 +547,8 @@ class ProfileForm extends Component {
             if (!this.local.usergroup.id) return
 
             try {
+              // TODO upload tool should update usergroup once file has been processed
+              // or we should check file status until the file is good?
               await this.getClient(this.state.token)
 
               await this.swaggerClient.apis.Usergroups.ResonateUser_UpdateUserGroup({
@@ -611,11 +672,7 @@ class ProfileForm extends Component {
       */
     }
 
-    const action = this.local.usergroup.id // usergroup id
-      ? 'Update'
-      : 'Create'
-
-    return this.renderForm(`${action} your ${this.local.role ? `${this.local.role} ` : ''}profile`, elements)
+    return this.renderForm(`Create your ${this.local.role ? `${this.local.role} ` : ''}profile`, elements)
   }
 
   /*
@@ -748,8 +805,13 @@ class ProfileForm extends Component {
    */
   renderRecap () {
     return html`
-      <div>
-        <p class="lh-copy fw1 f4">Thank you for completing your profile!</p>
+      <div class="base-form flex flex-column">
+        <div>
+          ${this.renderBackButton.bind(this)()}
+        </div>
+        <div class="flex flex-auto flex-column center mw6 w-auto-l">
+          <p class="lh-copy fw1 f4">Thank you for completing your profile!</p>
+        </div>
       </div>
     `
   }
@@ -759,11 +821,11 @@ class ProfileForm extends Component {
 
     return this.state.cache(ProfileSwitcher, 'profile-switcher').render({
       value: this.local.usergroup.id, // currently selected usergroup/persona
-      ownedGroups: this.local.profile.ownedGroups,
+      usergroups: this.local.profile.usergroups,
       onChangeCallback: (usergroupId) => {
         this.setUsergroup(usergroupId)
 
-        this.rerenderForm()
+        this.rerender()
       }
     })
   }
@@ -785,6 +847,14 @@ class ProfileForm extends Component {
       value: this.local.usergroup.groupType || groupType,
       onChangeCallback: async (groupType) => {
         if (!this.local.usergroup.id) return
+
+        this.local.usergroup.groupType = groupType
+        this.local.usergroups = this.local.usergroups.map((usergroup) => {
+          if (usergroup.id === this.local.usergroup.id) {
+            usergroup.groupType = groupType
+          }
+          return usergroup
+        })
 
         try {
           await this.getClient(this.state.token)
@@ -837,49 +907,51 @@ class ProfileForm extends Component {
       `
     }
 
-    const backButton = () => {
-      if (this.local.machine.state.machine === 'basicInfo') return
+    return html`
+      <div class="base-form flex flex-column">
+        <div class=${this.local.sticky ? 'sticky z-2' : ''} style=${this.local.sticky ? 'top:3rem' : ''}>
+          ${this.renderProfileSwitcher.bind(this)()}
+        </div>
+        <div class="flex flex-auto flex-column center mw6 w-auto-l">
+          <div>
+            ${this.renderBackButton.bind(this)()}
+          </div>
+          ${messages(this.state, this.local.form)}
+          <h2 class="lh-title f3 fw1 mb5">${title}</h2>
+          <div>
+            ${this.renderRoleSwitcher.bind(this)()}
+          </div>
+          <form ${attrs}>
+            ${Object.entries(elements)
+              .map(([name, el]) => {
+                // possibility to filter by name
+                return el(this.validator, this.local.form)
+              })}
 
-      const attrs = {
-        class: 'bg-white near-black dib bn b pv3 ph5 flex-shrink-0 f5 grow',
-        style: 'outline:solid 1px var(--near-black);outline-offset:-1px',
-        onclick: (e) => {
-          e.preventDefault()
+            ${submitButton()}
+          </form>
+        </div>
+      </div>
+    `
+  }
 
-          this.local.machine.emit('machine:prev')
-        }
+  renderBackButton () {
+    if (this.local.machine.state.machine === 'basicInfo') return
+
+    const attrs = {
+      class: 'bg-white near-black dib bn b pv3 ph5 flex-shrink-0 f5 grow',
+      style: 'outline:solid 1px var(--near-black);outline-offset:-1px',
+      onclick: (e) => {
+        e.preventDefault()
+
+        this.local.machine.emit('machine:prev')
       }
-
-      return html`
-        <button ${attrs}>
-          ${icon('arrow')}
-        </button>
-      `
     }
 
     return html`
-      <div class="base-form flex flex-column">
-        <div>
-          ${backButton()}
-        </div>
-        ${messages(this.state, this.local.form)}
-        <h2 class="lh-title f3 fw1 mb5">${title}</h2>
-        <div>
-          ${this.renderProfileSwitcher.bind(this)()}
-        </div>
-        <div>
-          ${this.renderRoleSwitcher.bind(this)()}
-        </div>
-        <form ${attrs}>
-          ${Object.entries(elements)
-            .map(([name, el]) => {
-              // possibility to filter by name
-              return el(this.validator, this.local.form)
-            })}
-
-          ${submitButton()}
-        </form>
-      </div>
+      <button ${attrs}>
+        ${icon('arrow')}
+      </button>
     `
   }
 
@@ -908,6 +980,11 @@ class ProfileForm extends Component {
       if (isEmpty(data)) return new Error('Display name is required')
       if (!isLength(data, { min: 1, max: 100 })) return new Error('Name should be no more than 100 characters')
     })
+    /*
+    this.validator.field('groupEmail', { required: false }, (data) => {
+      if (!isEmail(data)) return new Error('Email is invalid')
+    })
+    */
     this.validator.field('description', { required: false }, (data) => {
       if (!isLength(data, { min: 0, max: 2000 })) return new Error('Description should be no more than 2000 characters')
     })
@@ -931,8 +1008,8 @@ class ProfileForm extends Component {
    * Basic info form update handler
    * @returns {Boolean}
    */
-  update (props = {}) {
-    return props.role !== this.local.role
+  update (props) {
+    return !isEqual(props.profile, this.local.profile)
   }
 }
 

@@ -83,10 +83,10 @@ class AccountForm extends Component {
           },
           body: new URLSearchParams({
             email: this.local.data.email || '',
-            displayName: this.local.data.displayName || '',
-            fullName: this.local.data.fullName || '',
-            firstName: this.local.data.firstName || '',
-            lastName: this.local.data.lastName || ''
+            displayName: this.local.data.displayName || ''
+            // fullName: this.local.data.fullName || '',
+            // firstName: this.local.data.firstName || '',
+            // lastName: this.local.data.lastName || ''
           })
         })
 
@@ -96,12 +96,21 @@ class AccountForm extends Component {
         if (status >= 400 && contentType && contentType.indexOf('application/json') !== -1) {
           const { error } = await response.json()
           this.local.error.message = error
-          return this.local.machine.emit('request:error')
+          this.local.machine.emit('request:error')
+        } else {
+          this.emit('notify', { message: 'Your account info has been successfully updated' })
+
+          this.local.machine.emit('request:resolve')
+
+          response = await response.json()
+          const { data } = response
+
+          if (data.redirectToProfile) {
+            setTimeout(() => {
+              window.location = '/web/profile'
+            }, 0)
+          }
         }
-
-        this.emit('notify', { message: 'Your account info has been successfully updated' })
-
-        this.local.machine.emit('request:resolve')
       } catch (err) {
         this.local.machine.emit('request:reject')
         console.log(err)
@@ -246,25 +255,25 @@ class AccountForm extends Component {
                   this.state.profile.country = country
                 }
               })
-            },
-            {
-              type: 'text',
-              name: 'fullName',
-              required: false,
-              placeholder: 'Full name'
-            },
-            {
-              type: 'text',
-              name: 'firstName',
-              required: false,
-              placeholder: 'First name'
-            },
-            {
-              type: 'text',
-              name: 'lastName',
-              required: false,
-              placeholder: 'Last name'
             }
+            // {
+            //   type: 'text',
+            //   name: 'fullName',
+            //   required: false,
+            //   placeholder: 'Full name'
+            // },
+            // {
+            //   type: 'text',
+            //   name: 'firstName',
+            //   required: false,
+            //   placeholder: 'First name'
+            // },
+            // {
+            //   type: 'text',
+            //   name: 'lastName',
+            //   required: false,
+            //   placeholder: 'Last name'
+            // }
           ]
         })}
       </div>
@@ -279,15 +288,15 @@ class AccountForm extends Component {
     this.validator.field('displayName', { required: true }, (data) => {
       if (isEmpty(data)) return new Error('Name is required')
     })
-    this.validator.field('fullName', { required: false }, (data) => {
-      if (isEmpty(data)) return new Error('Full name is required')
-    })
-    this.validator.field('firstName', { required: false }, (data) => {
-      if (isEmpty(data)) return new Error('First name is required')
-    })
-    this.validator.field('lastName', { required: false }, (data) => {
-      if (isEmpty(data)) return new Error('Last name is required')
-    })
+    // this.validator.field('fullName', { required: false }, (data) => {
+    //   if (isEmpty(data)) return new Error('Full name is required')
+    // })
+    // this.validator.field('firstName', { required: false }, (data) => {
+    //   if (isEmpty(data)) return new Error('First name is required')
+    // })
+    // this.validator.field('lastName', { required: false }, (data) => {
+    //   if (isEmpty(data)) return new Error('Last name is required')
+    // })
   }
 
   update (props) {
