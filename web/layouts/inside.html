@@ -19,6 +19,8 @@
   <link href="/css/{{ .stylesheet }}" rel="stylesheet">
   
   <script type="text/javascript" defer src="/js/{{ .javascript }}"></script>
+  <script src="https://polyfill.io/v3/polyfill.min.js?version=3.52.1&features=fetch"></script>
+  <script src="https://js.stripe.com/v3/"></script>
 </head>
 <body class="ff-no-fouc color-scheme--light">
   {{ if .isUserAccountComplete }}

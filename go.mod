@@ -35,6 +35,7 @@ require (
 	github.com/rs/xid v1.3.0
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/stretchr/testify v1.7.0
+	github.com/stripe/stripe-go/v72 v72.77.0 // indirect
 	github.com/test-go/testify v1.1.4 // indirect
 	github.com/thanhpk/randstr v1.0.4
 	github.com/trustelem/zxcvbn v1.0.1

@@ -1,0 +1,20 @@
+{{ define "title"}}Cancelled checkout{{ end }}
+
+{{ define "content" }}
+
+<div id="app">
+  <div class="flex pb6">
+    <div class="flex flex-column justify-center items-center w-100 mh3 mh0-ns">
+      <section id="account-settings" class="flex flex-column">
+        <div class="flex flex-column flex-auto pt4 ph3 mw6 ph0-l">
+          {{ if not .isUserAccountComplete }}
+          <svg viewBox="0 0 16 16" class="icon icon--lg icon icon--lg fill-black fill-white--dark fill-black--light">
+            <use xlink:href="#icon-logo" />
+          </svg>
+          {{ end }}
+          <h2 class="lh-title f3 fw1">Cancelled checkout</h2>
+      </section>
+    </div>
+  </div>
+</div>
+{{ end }}

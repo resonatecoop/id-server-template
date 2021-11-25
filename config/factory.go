@@ -59,6 +59,12 @@ var Cnf = &Config{
 	UserAPIPort:         ":11000",
 	StaticURL:           "https://dash.resonate.coop",
 	AppURL:              "https://stream.resonate.coop",
+	Stripe: StripeConfig{
+		Domain:                      "id.resonate.coop",
+		Secret:                      "sk_test_xxx",
+		Token:                       "pk_test_xxx",
+		ListenerSubscriptionPriceID: "price_xx",
+	},
 }
 
 // NewConfig loads configuration from etcd and returns *Config struct

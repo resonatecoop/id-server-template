@@ -230,6 +230,53 @@ func (s *Service) GetRoutes() []routes.Route {
 			},
 		},
 		{
+			Name:        "checkout_form",
+			Method:      "GET",
+			Pattern:     "/checkout",
+			HandlerFunc: s.checkoutForm,
+			Middlewares: []negroni.Handler{
+				new(parseFormMiddleware),
+				newLoggedInMiddleware(s),
+				newClientMiddleware(s),
+			},
+		},
+		{
+			Name:        "checkout_success_form",
+			Method:      "GET",
+			Pattern:     "/checkout/success",
+			HandlerFunc: s.checkoutSuccessForm,
+			Middlewares: []negroni.Handler{
+				new(parseFormMiddleware),
+				newLoggedInMiddleware(s),
+				newClientMiddleware(s),
+			},
+		},
+		{
+			Name:        "checkout_cancel_form",
+			Method:      "GET",
+			Pattern:     "/checkout/cancel",
+			HandlerFunc: s.checkoutCancelForm,
+			Middlewares: []negroni.Handler{
+				new(parseFormMiddleware),
+				newLoggedInMiddleware(s),
+				newClientMiddleware(s),
+			},
+		},
+		{
+			Name:        "checkout",
+			Method:      "POST",
+			Pattern:     "/checkout",
+			HandlerFunc: s.checkout,
+			Middlewares: []negroni.Handler{
+				tollbooth_negroni.LimitHandler(
+					tollbooth.NewLimiter(1, nil),
+				),
+				new(parseFormMiddleware),
+				newLoggedInMiddleware(s),
+				newClientMiddleware(s),
+			},
+		},
+		{
 			Name:        "profile_form",
 			Method:      "GET",
 			Pattern:     "/profile",

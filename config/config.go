@@ -48,6 +48,13 @@ type SessionConfig struct {
 	SameSite bool
 }
 
+type StripeConfig struct {
+	Domain                      string
+	Token                       string
+	Secret                      string
+	ListenerSubscriptionPriceID string
+}
+
 // Config stores all configuration options
 type Config struct {
 	Hostname            string
@@ -66,4 +73,5 @@ type Config struct {
 	UserAPIPort         string
 	StaticURL           string
 	AppURL              string
+	Stripe              StripeConfig
 }
