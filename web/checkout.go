@@ -121,7 +121,7 @@ func (s *Service) checkoutCancelForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) checkout(w http.ResponseWriter, r *http.Request) {
-	_, _, _, _, _, err := s.profileCommon(r)
+	_, _, user, _, _, err := s.profileCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -140,9 +140,10 @@ func (s *Service) checkout(w http.ResponseWriter, r *http.Request) {
 				Quantity: stripe.Int64(1),
 			},
 		},
-		Mode:       stripe.String(string(stripe.CheckoutSessionModeSubscription)),
-		SuccessURL: stripe.String("https://" + domain + "/checkout/success"),
-		CancelURL:  stripe.String("https://" + domain + "/checkout/cancel"),
+		CustomerEmail: stripe.String(user.Username),
+		Mode:          stripe.String(string(stripe.CheckoutSessionModeSubscription)),
+		SuccessURL:    stripe.String("https://" + domain + "/checkout/success"),
+		CancelURL:     stripe.String("https://" + domain + "/checkout/cancel"),
 	}
 
 	checkoutSession, err := session.New(params)
