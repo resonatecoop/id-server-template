@@ -1,0 +1,30 @@
+{{ define "title"}}Checkout{{ end }}
+
+{{ define "content" }}
+
+<div id="app">
+  <div class="flex pb6">
+    <div class="flex flex-column justify-center items-center w-100 mh3 mh0-ns">
+      <section id="account-settings" class="flex flex-column">
+        <div class="flex flex-column flex-auto pt4 ph3 mw6 ph0-l">
+          {{ if not .isUserAccountComplete }}
+          <svg viewBox="0 0 16 16" class="icon icon--lg icon icon--lg fill-black fill-white--dark fill-black--light">
+            <use xlink:href="#icon-logo" />
+          </svg>
+          {{ end }}
+          <h2 class="lh-title f3 fw1">Listener Subscription</h2>
+          <p class="lh-copy">Annual subscription to Resonate as a Listener Member</p>
+          <div>
+            <div class="flex flex-column flex-auto pb6">
+              <form action="" method="POST">
+                {{ .csrfField }}
+                <button type="submit" style="outline:solid 1px var(--near-black);outline-offset:-1px" type="submit" class="bg-white dib bn pv3 ph5 mt3 flex-shrink-0 f5 grow">Checkout</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+{{ end }}
