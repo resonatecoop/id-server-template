@@ -9,12 +9,20 @@ import (
 
 	"github.com/gorilla/csrf"
 	"github.com/pariz/gountries"
+	"github.com/resonatecoop/id/config"
+	"github.com/resonatecoop/id/log"
 	"github.com/resonatecoop/id/session"
 	"github.com/resonatecoop/id/util/response"
+	"github.com/resonatecoop/user-api/model"
+
+	"github.com/resonatecoop/user-api-client/client/usergroups"
+	"github.com/resonatecoop/user-api-client/models"
+
+	httptransport "github.com/go-openapi/runtime/client"
 )
 
 func (s *Service) accountForm(w http.ResponseWriter, r *http.Request) {
-	sessionService, client, user, userSession, err := s.profileCommon(r)
+	sessionService, client, user, isUserAccountComplete, userSession, err := s.profileCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -30,12 +38,15 @@ func (s *Service) accountForm(w http.ResponseWriter, r *http.Request) {
 	q := gountries.New()
 	countries := q.FindAllCountries()
 
+	usergroups, _ := s.getUserGroupList(user, userSession.AccessToken)
+
 	initialState, err := json.Marshal(NewInitialState(
 		s.cnf,
 		client,
 		user,
 		userSession,
-		"",
+		isUserAccountComplete,
+		usergroups.Usergroup,
 	))
 
 	if err != nil {
@@ -51,22 +62,32 @@ func (s *Service) accountForm(w http.ResponseWriter, r *http.Request) {
 
 	profile := &Profile{
 		Email:          user.Username,
+		LegacyID:       user.LegacyID,
 		FullName:       user.FullName,
 		FirstName:      user.FirstName,
 		LastName:       user.LastName,
 		Country:        user.Country,
 		EmailConfirmed: user.EmailConfirmed,
+		Complete:       isUserAccountComplete,
+		Usergroups:     usergroups.Usergroup,
 	}
 
-	err = renderTemplate(w, "account_settings.html", map[string]interface{}{
-		"flash":           flash,
-		"clientID":        client.Key,
-		"countries":       countries,
-		"applicationName": client.ApplicationName.String,
-		"profile":         profile,
-		"queryString":     getQueryString(query),
-		"initialState":    template.HTML(fragment),
-		csrf.TemplateTag:  csrf.TemplateField(r),
+	if len(usergroups.Usergroup) > 0 {
+		profile.DisplayName = usergroups.Usergroup[0].DisplayName
+	}
+
+	err = renderTemplate(w, "account.html", map[string]interface{}{
+		"appURL":                s.cnf.AppURL,
+		"staticURL":             s.cnf.StaticURL,
+		"isUserAccountComplete": isUserAccountComplete,
+		"flash":                 flash,
+		"clientID":              client.Key,
+		"countries":             countries,
+		"applicationName":       client.ApplicationName.String,
+		"profile":               profile,
+		"queryString":           getQueryString(query),
+		"initialState":          template.HTML(fragment),
+		csrf.TemplateTag:        csrf.TemplateField(r),
 	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -75,7 +96,7 @@ func (s *Service) accountForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) account(w http.ResponseWriter, r *http.Request) {
-	sessionService, _, user, userSession, err := s.profileCommon(r)
+	sessionService, _, user, isUserAccountComplete, userSession, err := s.profileCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -172,13 +193,58 @@ func (s *Service) account(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		message = "Profile updated"
+		if r.Form.Get("displayName") != "" {
+			result, err := s.getUserGroupList(user, userSession.AccessToken)
+
+			if err != nil {
+				switch r.Header.Get("Accept") {
+				case "application/json":
+					response.Error(w, err.Error(), http.StatusBadRequest)
+				default:
+					err = sessionService.SetFlashMessage(&session.Flash{
+						Type:    "Error",
+						Message: err.Error(),
+					})
+					if err != nil {
+						http.Error(w, err.Error(), http.StatusInternalServerError)
+						return
+					}
+					http.Redirect(w, r, r.RequestURI, http.StatusFound)
+				}
+				return
+			} else {
+				if len(result.Usergroup) == 0 {
+					_, err = s.createUserGroup(user, r.Form.Get("displayName"), userSession.AccessToken)
+
+					if err != nil {
+						log.ERROR.Print(err)
+					}
+				}
+			}
+		}
+
+		message = "Account updated"
+	}
+
+	redirectURI := "/web/account"
+
+	if !isUserAccountComplete {
+		// if account was completed now, redirects to profile
+		isUserAccountComplete = s.isUserAccountComplete(userSession)
+
+		if isUserAccountComplete {
+			redirectURI = "/web/profile"
+		}
 	}
 
 	if r.Header.Get("Accept") == "application/json" {
 		response.WriteJSON(w, map[string]interface{}{
 			"message": message,
-			"status":  http.StatusOK,
+			"data": map[string]interface{}{
+				"redirectToProfile": redirectURI == "/web/profile",
+				"complete":          isUserAccountComplete,
+			},
+			"status": http.StatusOK,
 		}, http.StatusOK)
 		return
 	}
@@ -191,5 +257,54 @@ func (s *Service) account(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	http.Redirect(w, r, r.RequestURI, http.StatusFound)
+	query := r.URL.Query()
+
+	redirectWithQueryString(redirectURI, query, w, r)
+	return
+}
+
+func (s *Service) getUserGroupList(user *model.User, accessToken string) (
+	*models.UserUserGroupListResponse,
+	error,
+) {
+	client := config.NewAPIClient(s.cnf.UserAPIHostname, s.cnf.UserAPIPort)
+
+	bearer := httptransport.BearerToken(accessToken)
+
+	params := usergroups.NewResonateUserListUsersUserGroupsParams()
+
+	params.WithID(user.ID.String())
+
+	result, err := client.Usergroups.ResonateUserListUsersUserGroups(params, bearer)
+
+	if err != nil {
+		if casted, ok := err.(*usergroups.ResonateUserListUsersUserGroupsDefault); ok {
+			return nil, casted
+		}
+	}
+
+	return result.Payload, err
+}
+
+func (s *Service) createUserGroup(user *model.User, displayName, accessToken string) (*models.UserUserRequest, error) {
+	client := config.NewAPIClient(s.cnf.UserAPIHostname, s.cnf.UserAPIPort)
+
+	bearer := httptransport.BearerToken(accessToken)
+
+	params := usergroups.NewResonateUserAddUserGroupParams()
+
+	params.WithID(user.ID.String())
+
+	params.Body = &models.UserUserGroupCreateRequest{
+		DisplayName: displayName,
+		GroupType:   "persona",
+	}
+
+	result, err := client.Usergroups.ResonateUserAddUserGroup(params, bearer)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return result.Payload, nil
 }

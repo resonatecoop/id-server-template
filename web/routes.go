@@ -177,20 +177,9 @@ func (s *Service) GetRoutes() []routes.Route {
 			},
 		},
 		{
-			Name:        "welcome_form",
-			Method:      "GET",
-			Pattern:     "/welcome",
-			HandlerFunc: s.welcomeForm,
-			Middlewares: []negroni.Handler{
-				new(parseFormMiddleware),
-				newLoggedInMiddleware(s),
-				newClientMiddleware(s),
-			},
-		},
-		{
 			Name:        "account_form",
 			Method:      "GET",
-			Pattern:     "/account-settings",
+			Pattern:     "/account",
 			HandlerFunc: s.accountForm,
 			Middlewares: []negroni.Handler{
 				new(parseFormMiddleware),
@@ -201,7 +190,7 @@ func (s *Service) GetRoutes() []routes.Route {
 		{
 			Name:        "account",
 			Method:      "POST",
-			Pattern:     "/account-settings",
+			Pattern:     "/account",
 			HandlerFunc: s.account,
 			Middlewares: []negroni.Handler{
 				tollbooth_negroni.LimitHandler(
@@ -215,7 +204,7 @@ func (s *Service) GetRoutes() []routes.Route {
 		{
 			Name:        "account_update",
 			Method:      "PUT",
-			Pattern:     "/account-settings",
+			Pattern:     "/account",
 			HandlerFunc: s.account,
 			Middlewares: []negroni.Handler{
 				tollbooth_negroni.LimitHandler(
@@ -229,7 +218,7 @@ func (s *Service) GetRoutes() []routes.Route {
 		{
 			Name:        "account_delete",
 			Method:      "DELETE",
-			Pattern:     "/account-settings",
+			Pattern:     "/account",
 			HandlerFunc: s.account,
 			Middlewares: []negroni.Handler{
 				tollbooth_negroni.LimitHandler(
@@ -300,7 +289,7 @@ func (s *Service) GetRoutes() []routes.Route {
 					tollbooth.NewLimiter(1, nil),
 				),
 				new(parseFormMiddleware),
-				newLoggedInMiddleware(s),
+				newGuestMiddleware(s),
 				newClientMiddleware(s),
 			},
 		},

@@ -11,6 +11,7 @@ const validateFormdata = require('validate-formdata')
 const PasswordMeter = require('../password-meter')
 const CountrySelect = require('../select-country-list')
 const zxcvbnAsync = require('zxcvbn-async')
+const RoleSwitcher = require('./roleSwitcher')
 
 class Signup extends Component {
   constructor (id, state, emit) {
@@ -62,6 +63,8 @@ class Signup extends Component {
 
     this.validator = validateFormdata()
     this.local.form = this.validator.state
+    this.local.role = 'user'
+    this.local.roleId = 6
   }
 
   createElement (props) {
@@ -96,6 +99,14 @@ class Signup extends Component {
             errors: {}
           },
           fields: [
+            {
+              component: this.state.cache(RoleSwitcher, 'role-switcher').render({
+                value: this.local.role,
+                onChangeCallback: async (value) => {
+                  this.local.role = value
+                }
+              })
+            },
             {
               type: 'email',
               placeholder: 'E-mail'
@@ -153,7 +164,8 @@ class Signup extends Component {
                 body: new URLSearchParams({
                   email: data.email.value,
                   password: data.password.value,
-                  country: data.country.value
+                  country: data.country.value,
+                  role: this.local.role
                 })
               })
 
@@ -178,7 +190,8 @@ class Signup extends Component {
                 const redirectURL = new URL('/login', 'http://localhost')
 
                 redirectURL.search = new URLSearchParams({
-                  login_redirect_uri: '/web/welcome'
+                  confirm: true,
+                  login_redirect_uri: '/web/account'
                 })
 
                 this.emit(this.state.events.PUSHSTATE, redirectURL.pathname + redirectURL.search)

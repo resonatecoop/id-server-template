@@ -22,7 +22,7 @@ var (
 )
 
 // GetValidEmailToken ...
-func (s *Service) GetValidEmailToken(token string) (*model.EmailToken, string, error) {
+func (s *Service) GetValidEmailToken(token string) (*model.EmailToken, *model.User, error) {
 	ctx := context.Background()
 	claims := &model.EmailTokenClaims{}
 
@@ -33,11 +33,11 @@ func (s *Service) GetValidEmailToken(token string) (*model.EmailToken, string, e
 	})
 
 	if err != nil {
-		return nil, "", err
+		return nil, nil, err
 	}
 
 	if !tkn.Valid {
-		return nil, "", ErrEmailTokenInvalid
+		return nil, nil, ErrEmailTokenInvalid
 	}
 
 	emailToken := new(model.EmailToken)
@@ -50,10 +50,16 @@ func (s *Service) GetValidEmailToken(token string) (*model.EmailToken, string, e
 
 	// Not Found!
 	if err != nil {
-		return nil, "", ErrEmailTokenNotFound
+		return nil, nil, ErrEmailTokenNotFound
 	}
 
-	return emailToken, claims.Username, nil
+	user, err := s.FindUserByUsername(claims.Username)
+
+	if err != nil {
+		return nil, nil, ErrEmailTokenNotFound
+	}
+
+	return emailToken, user, nil
 }
 
 // SendEmailToken ...

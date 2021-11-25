@@ -40,5 +40,4 @@ type ServiceInterface interface {
 	logout(w http.ResponseWriter, r *http.Request)
 	joinForm(w http.ResponseWriter, r *http.Request)
 	join(w http.ResponseWriter, r *http.Request)
-	welcomeForm(w http.ResponseWriter, r *http.Request)
 }

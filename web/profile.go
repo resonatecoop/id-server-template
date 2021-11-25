@@ -13,13 +13,27 @@ import (
 )
 
 func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
-	sessionService, client, user, userSession, err := s.profileCommon(r)
+	sessionService, client, user, isUserAccountComplete, userSession, err := s.profileCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	w.Header().Set("X-CSRF-Token", csrf.Token(r))
+
+	if !isUserAccountComplete {
+		err = sessionService.SetFlashMessage(&session.Flash{
+			Type:    "Info",
+			Message: "Account not complete",
+		})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		query := r.URL.Query()
+		redirectWithQueryString("/web/account", query, w, r)
+		return
+	}
 
 	// Render the template
 	flash, _ := sessionService.GetFlashMessage()
@@ -29,18 +43,15 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 	q := gountries.New()
 	countries := q.FindAllCountries()
 
-	usergroup := r.URL.Query().Get("usergroup")
-
-	if usergroup == "" {
-		usergroup = s.getDefaultUserGroupType(user) // artist, label or user
-	}
+	usergroups, _ := s.getUserGroupList(user, userSession.AccessToken)
 
 	initialState, err := json.Marshal(NewInitialState(
 		s.cnf,
 		client,
 		user,
 		userSession,
-		usergroup,
+		isUserAccountComplete,
+		usergroups.Usergroup,
 	))
 
 	if err != nil {
@@ -54,34 +65,37 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 		string(initialState),
 	)
 
-	// default template
-	templateName := "profile.html"
+	displayName := ""
 
-	switch usergroup {
-	case "artist":
-		templateName = "profile_artist.html"
-	case "label":
-		templateName = "profile_label.html"
+	if len(usergroups.Usergroup) > 0 {
+		displayName = usergroups.Usergroup[0].DisplayName
 	}
 
 	profile := &Profile{
 		Email:          user.Username,
+		DisplayName:    displayName,
+		LegacyID:       user.LegacyID,
 		FullName:       user.FullName,
 		FirstName:      user.FirstName,
 		LastName:       user.LastName,
 		Country:        user.Country,
 		EmailConfirmed: user.EmailConfirmed,
+		Complete:       isUserAccountComplete,
+		Usergroups:     usergroups.Usergroup,
 	}
 
-	err = renderTemplate(w, templateName, map[string]interface{}{
-		"flash":           flash,
-		"clientID":        client.Key,
-		"countries":       countries,
-		"applicationName": client.ApplicationName.String,
-		"profile":         profile,
-		"queryString":     getQueryString(query),
-		"initialState":    template.HTML(fragment),
-		csrf.TemplateTag:  csrf.TemplateField(r),
+	err = renderTemplate(w, "profile.html", map[string]interface{}{
+		"appURL":                s.cnf.AppURL,
+		"staticURL":             s.cnf.StaticURL,
+		"isUserAccountComplete": isUserAccountComplete,
+		"flash":                 flash,
+		"clientID":              client.Key,
+		"countries":             countries,
+		"applicationName":       client.ApplicationName.String,
+		"profile":               profile,
+		"queryString":           getQueryString(query),
+		"initialState":          template.HTML(fragment),
+		csrf.TemplateTag:        csrf.TemplateField(r),
 	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -89,42 +103,30 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Service) getDefaultUserGroupType(user *model.User) string {
-	var usergroup = "user"
-
-	switch (model.AccessRole)(user.RoleID) {
-	case model.ArtistRole:
-		usergroup = "artist"
-	case model.LabelRole:
-		usergroup = "label"
-	}
-
-	return usergroup
-}
-
 func (s *Service) profileCommon(r *http.Request) (
 	session.ServiceInterface,
 	*model.Client,
 	*model.User,
+	bool,
 	*session.UserSession,
 	error,
 ) {
 	// Get the session service from the request context
 	sessionService, err := getSessionService(r)
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, false, nil, err
 	}
 
 	// Get the client from the request context
 	client, err := getClient(r)
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, false, nil, err
 	}
 
 	// Get the user session
 	userSession, err := sessionService.GetUserSession()
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, false, nil, err
 	}
 
 	// Fetch the user
@@ -132,8 +134,49 @@ func (s *Service) profileCommon(r *http.Request) (
 		userSession.Username,
 	)
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, false, nil, err
 	}
 
-	return sessionService, client, user, userSession, nil
+	// Check if user account is complete
+	isUserAccountComplete := s.isUserAccountComplete(userSession)
+
+	return sessionService, client, user, isUserAccountComplete, userSession, nil
+}
+
+func (s *Service) isUserAccountComplete(userSession *session.UserSession) bool {
+	user, err := s.oauthService.FindUserByUsername(userSession.Username)
+
+	if err != nil {
+		return false
+	}
+
+	// is email address confirmed
+	if !user.EmailConfirmed {
+		return false
+	}
+
+	result, err := s.getUserGroupList(user, userSession.AccessToken)
+
+	if err != nil {
+		return false
+	}
+
+	if len(result.Usergroup) == 0 {
+		return false
+	}
+
+	// listeners only need to confirm their email address
+	if user.RoleID == int32(model.UserRole) {
+		return true
+	}
+
+	// if user.FirstName == "" || user.LastName == "" || user.FullName == "" {
+	// 	return false
+	// }
+
+	if user.Country == "" {
+		return false
+	}
+
+	return true
 }

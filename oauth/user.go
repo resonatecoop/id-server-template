@@ -58,6 +58,8 @@ var (
 	ErrEmailAsLogin = errors.New("Username cannot be an email address")
 	// ErrCountryNotFound
 	ErrCountryNotFound = errors.New("Country cannot be found")
+	// ErrEmailNotConfirmed
+	ErrEmailNotConfirmed = errors.New("Please confirm your email address")
 )
 
 // UserExists returns true if user exists
@@ -290,15 +292,15 @@ func (s *Service) updateUserCommon(db *bun.DB, user *model.User, fullName, first
 		}
 	}
 
-	if fullName != user.FullName {
+	if fullName != user.FullName && fullName != "" {
 		update.Set("full_name = ?", fullName)
 	}
 
-	if firstName != user.FirstName {
+	if firstName != user.FirstName && firstName != "" {
 		update.Set("first_name = ?", firstName)
 	}
 
-	if lastName != user.LastName {
+	if lastName != user.LastName && lastName != "" {
 		update.Set("last_name = ?", lastName)
 	}
 

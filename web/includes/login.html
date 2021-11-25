@@ -2,72 +2,61 @@
 
 {{ define "content" }}
 <div id="app">
-  <main class="flex flex-auto relative">
-    <div class="flex flex-column flex-auto w-100">
-      <div class="flex flex-column flex-auto items-center justify-center min-vh-100 mh3 pt6 pb6">
-        <div class="bg-white black bg-black--dark white--dark bg-white--light black--light z-1 w-100 w-auto-l ph4 pt4 pb3">
-          <div class="flex flex-column flex-auto">
-            <svg viewBox="0 0 16 16" class="icon icon-logo icon--sm icon icon--lg fill-black fill-white--dark fill-black--light">
-              <use xlink:href="#icon-logo"></use>
-            </svg>
-            <div class="flex flex-column">
-              <h2 class="f3 fw1 mt3 near-black near-black--light light-gray--dark lh-title">Log In</h2>
-              {{ if .flash }}
-              <div>
-                <p{{ if eq .flash.Type "Error" }} class="red"{{ end }}>{{ .flash.Message }}</p>
+  <main class="flex flex-column flex-auto items-center justify-center min-vh-100 mh3 pt6 pb6">
+    <div class="flex flex-column w-100 w-auto-l ph4 pt4 pb3">
+      <h2 class="f3 fw1 mt3 near-black near-black--light light-gray--dark lh-title">Log In</h2>
+      {{ if .flash }}
+      <div>
+        <p{{ if eq .flash.Type "Error" }} class="red"{{ end }}>{{ .flash.Message }}</p>
+      </div>
+      {{ end }}
+      <div class="flex flex-column flex-auto">
+        <div class="flex flex-column flex-auto">
+          <form id="login" action="" method="POST" class="flex flex-column flex-auto ma0 pa0">
+            {{ .csrfField }}
+            <div>
+              <div class="flex flex-column mb3">
+                <div class="relative">
+                  <input
+                    autofocus="autofocus"
+                    value=""
+                    autocomplete="false"
+                    id="email"
+                    type="email"
+                    name="email"
+                    placeholder="E-mail"
+                    required="required"
+                    class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid"
+                  />
+                </div>
               </div>
-              {{ end }}
-              <div class="flex flex-column flex-auto">
-                <div class="flex flex-column flex-auto">
-                  <form id="login" action="" method="POST" class="flex flex-column flex-auto ma0 pa0">
-                    {{ .csrfField }}
-                    <div>
-                      <div class="flex flex-column mb3">
-                        <div class="relative">
-                          <input
-                            autofocus="autofocus"
-                            value=""
-                            autocomplete="false"
-                            id="email"
-                            type="email"
-                            name="email"
-                            placeholder="E-mail"
-                            required="required"
-                            class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid"
-                          />
-                        </div>
-                      </div>
-                      <div class="flex flex-column mb3">
-                        <div class="relative">
-                          <input
-                            value=""
-                            autocomplete="false"
-                            id="password"
-                            type="password"
-                            name="password"
-                            placeholder="Password"
-                            required="required"
-                            class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid"
-                          />
-                        </div>
-                        <div class="flex justify-end">
-                          <a href="../web/password-reset" class="link underline lightGrey f7 ma0 mt1">Forgot your password?</a>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="flex mt3">
-                      <div class="flex mr3">
-                        <p class="f5 lh-copy">Don't have an account? <a href="../web/join" class="link b">Join</a>.</p>
-                      </div>
-                      <div class="flex flex-auto justify-end pr1">
-                        <button type="submit" class="bg-white dib grow ba bw b--near-black b pv2 ph4 flex-shrink-0 f5">Log In</button>
-                      </div>
-                    </div>
-                  </form>
+              <div class="flex flex-column mb3">
+                <div class="relative">
+                  <input
+                    value=""
+                    autocomplete="false"
+                    id="password"
+                    type="password"
+                    name="password"
+                    placeholder="Password"
+                    required="required"
+                    class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid"
+                  />
+                </div>
+                <div class="flex justify-end">
+                  <a href="../web/password-reset" class="link underline lightGrey f7 ma0 mt1">Forgot your password?</a>
                 </div>
               </div>
             </div>
-          </div>
+            <div class="flex mt3">
+              <div class="flex mr3">
+                <p class="f5 lh-copy">Don't have an account? <a href="../web/join" class="link b">Join</a>.</p>
+              </div>
+              <div class="flex flex-auto justify-end pr1">
+                <button type="submit" class="bg-white dib grow ba bw b--near-black b pv2 ph4 flex-shrink-0 f5">Log In</button>
+              </div>
+            </div>
+          </form>
         </div>
       </div>
     </div>

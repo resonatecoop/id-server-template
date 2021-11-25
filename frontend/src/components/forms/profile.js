@@ -13,7 +13,12 @@ const isEmail = require('validator/lib/isEmail')
 const validateFormdata = require('validate-formdata')
 const nanostate = require('nanostate')
 
-class ProfileForm extends Component {
+const SwaggerClient = require('swagger-client')
+const CountrySelect = require('../select-country-list')
+const RoleSwitcher = require('./roleSwitcher')
+
+// AccountForm class
+class AccountForm extends Component {
   constructor (id, state, emit) {
     super(id)
 
@@ -78,9 +83,10 @@ class ProfileForm extends Component {
           },
           body: new URLSearchParams({
             email: this.local.data.email || '',
-            fullName: this.local.data.fullName || '',
-            firstName: this.local.data.firstName || '',
-            lastName: this.local.data.lastName || ''
+            displayName: this.local.data.displayName || ''
+            // fullName: this.local.data.fullName || '',
+            // firstName: this.local.data.firstName || '',
+            // lastName: this.local.data.lastName || ''
           })
         })
 
@@ -90,12 +96,21 @@ class ProfileForm extends Component {
         if (status >= 400 && contentType && contentType.indexOf('application/json') !== -1) {
           const { error } = await response.json()
           this.local.error.message = error
-          return this.local.machine.emit('request:error')
+          this.local.machine.emit('request:error')
+        } else {
+          this.emit('notify', { message: 'Your account info has been successfully updated' })
+
+          this.local.machine.emit('request:resolve')
+
+          response = await response.json()
+          const { data } = response
+
+          if (data.redirectToProfile) {
+            setTimeout(() => {
+              window.location = '/web/profile'
+            }, 0)
+          }
         }
-
-        this.emit('notify', { message: 'Your account info has been successfully updated' })
-
-        this.local.machine.emit('request:resolve')
       } catch (err) {
         this.local.machine.emit('request:reject')
         console.log(err)
@@ -151,7 +166,7 @@ class ProfileForm extends Component {
           id: 'account-form',
           method: 'POST',
           action: '',
-          buttonText: 'Update',
+          buttonText: this.state.profile.complete ? 'Update' : 'Next',
           validate: (props) => {
             this.local.data[props.name] = props.value
             this.validator.validate(props.name, props.value)
@@ -170,27 +185,95 @@ class ProfileForm extends Component {
           },
           fields: [
             {
+              component: this.state.cache(RoleSwitcher, 'role-switcher').render({
+                help: true,
+                value: this.state.profile.role,
+                onChangeCallback: async (value) => {
+                  const specUrl = new URL('/user/user.swagger.json', 'https://' + process.env.API_DOMAIN)
+
+                  this.swaggerClient = await new SwaggerClient({
+                    url: specUrl.href,
+                    authorizations: {
+                      bearer: 'Bearer ' + this.state.token
+                    }
+                  })
+
+                  const roles = [
+                    'superadmin',
+                    'admin',
+                    'tenantadmin',
+                    'label', // 4
+                    'artist', // 5
+                    'user' // 6
+                  ]
+
+                  await this.swaggerClient.apis.Users.ResonateUser_UpdateUser({
+                    id: this.state.profile.id, // user-api user uuid
+                    body: {
+                      role_id: roles.indexOf(value) + 1
+                    }
+                  })
+                }
+              })
+            },
+            {
+              type: 'text',
+              name: 'displayName',
+              required: true,
+              placeholder: 'Name'
+            },
+            {
               type: 'email',
-              placeholder: 'E-mail'
+              placeholder: 'E-mail',
+              readonly: true // can't change email address here
             },
             {
-              type: 'text',
-              name: 'fullName',
-              required: false,
-              placeholder: 'Full name'
-            },
-            {
-              type: 'text',
-              name: 'firstName',
-              required: false,
-              placeholder: 'First name'
-            },
-            {
-              type: 'text',
-              name: 'lastName',
-              required: false,
-              placeholder: 'Last name'
+              component: this.state.cache(CountrySelect, 'update-country').render({
+                country: this.state.profile.country || '',
+                onchange: async (props) => {
+                  const { country, code } = props
+
+                  let response = await fetch('')
+
+                  const csrfToken = response.headers.get('X-CSRF-Token')
+
+                  response = await fetch('', {
+                    method: 'PUT',
+                    headers: {
+                      Accept: 'application/json',
+                      'X-CSRF-Token': csrfToken
+                    },
+                    body: new URLSearchParams({
+                      country: code
+                    })
+                  })
+
+                  if (response.status >= 400) {
+                    throw new Error('Something went wrong')
+                  }
+
+                  this.state.profile.country = country
+                }
+              })
             }
+            // {
+            //   type: 'text',
+            //   name: 'fullName',
+            //   required: false,
+            //   placeholder: 'Full name'
+            // },
+            // {
+            //   type: 'text',
+            //   name: 'firstName',
+            //   required: false,
+            //   placeholder: 'First name'
+            // },
+            // {
+            //   type: 'text',
+            //   name: 'lastName',
+            //   required: false,
+            //   placeholder: 'Last name'
+            // }
           ]
         })}
       </div>
@@ -202,15 +285,18 @@ class ProfileForm extends Component {
       if (isEmpty(data)) return new Error('Email is required')
       if (!isEmail(data)) return new Error('Email is invalid')
     })
-    this.validator.field('fullName', { required: false }, (data) => {
-      if (isEmpty(data)) return new Error('Full name is required')
+    this.validator.field('displayName', { required: true }, (data) => {
+      if (isEmpty(data)) return new Error('Name is required')
     })
-    this.validator.field('firstName', { required: false }, (data) => {
-      if (isEmpty(data)) return new Error('First name is required')
-    })
-    this.validator.field('lastName', { required: false }, (data) => {
-      if (isEmpty(data)) return new Error('Last name is required')
-    })
+    // this.validator.field('fullName', { required: false }, (data) => {
+    //   if (isEmpty(data)) return new Error('Full name is required')
+    // })
+    // this.validator.field('firstName', { required: false }, (data) => {
+    //   if (isEmpty(data)) return new Error('First name is required')
+    // })
+    // this.validator.field('lastName', { required: false }, (data) => {
+    //   if (isEmpty(data)) return new Error('Last name is required')
+    // })
   }
 
   update (props) {
@@ -222,4 +308,4 @@ class ProfileForm extends Component {
   }
 }
 
-module.exports = ProfileForm
+module.exports = AccountForm

@@ -18,27 +18,30 @@ import (
 var ErrIncorrectResponseType = errors.New("Response type not one of token or code")
 
 func (s *Service) authorizeForm(w http.ResponseWriter, r *http.Request) {
-	sessionService, client, user, responseType, _, err := s.authorizeCommon(r)
+	sessionService, client, user, userSession, responseType, _, err := s.authorizeCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	csrfToken := csrf.Token(r)
+	w.Header().Set("X-CSRF-Token", csrf.Token(r))
 
-	w.Header().Set("X-CSRF-Token", csrfToken)
+	isUserAccountComplete := s.isUserAccountComplete(userSession)
 
 	// Render the template
 	flash, _ := sessionService.GetFlashMessage()
 	query := r.URL.Query()
 	query.Set("login_redirect_uri", r.URL.Path)
 
+	usergroups, _ := s.getUserGroupList(user, userSession.AccessToken)
+
 	initialState, err := json.Marshal(NewInitialState(
 		s.cnf,
 		client,
 		user,
-		nil,
-		"",
+		userSession,
+		isUserAccountComplete,
+		usergroups.Usergroup,
 	))
 
 	if err != nil {
@@ -55,17 +58,27 @@ func (s *Service) authorizeForm(w http.ResponseWriter, r *http.Request) {
 	profile := &Profile{
 		Email:          user.Username,
 		EmailConfirmed: user.EmailConfirmed,
+		LegacyID:       user.LegacyID,
+		Complete:       isUserAccountComplete,
+		Usergroups:     usergroups.Usergroup,
+	}
+
+	if len(usergroups.Usergroup) > 0 {
+		profile.DisplayName = usergroups.Usergroup[0].DisplayName
 	}
 
 	err = renderTemplate(w, "authorize.html", map[string]interface{}{
-		"flash":           flash,
-		"clientID":        client.Key,
-		"applicationName": client.ApplicationName.String,
-		"profile":         profile,
-		"queryString":     getQueryString(query),
-		"token":           responseType == "token",
-		"initialState":    template.HTML(fragment),
-		csrf.TemplateTag:  csrf.TemplateField(r),
+		"appURL":                s.cnf.AppURL,
+		"staticURL":             s.cnf.StaticURL,
+		"isUserAccountComplete": isUserAccountComplete,
+		"flash":                 flash,
+		"clientID":              client.Key,
+		"applicationName":       client.ApplicationName.String,
+		"profile":               profile,
+		"queryString":           getQueryString(query),
+		"token":                 responseType == "token",
+		"initialState":          template.HTML(fragment),
+		csrf.TemplateTag:        csrf.TemplateField(r),
 	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -74,7 +87,7 @@ func (s *Service) authorizeForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) authorize(w http.ResponseWriter, r *http.Request) {
-	_, client, user, responseType, redirectURI, err := s.authorizeCommon(r)
+	_, client, user, _, responseType, redirectURI, err := s.authorizeCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -164,6 +177,7 @@ func (s *Service) authorizeCommon(r *http.Request) (
 	session.ServiceInterface,
 	*model.Client,
 	*model.User,
+	*session.UserSession,
 	string,
 	*url.URL,
 	error,
@@ -171,19 +185,19 @@ func (s *Service) authorizeCommon(r *http.Request) (
 	// Get the session service from the request context
 	sessionService, err := getSessionService(r)
 	if err != nil {
-		return nil, nil, nil, "", nil, err
+		return nil, nil, nil, nil, "", nil, err
 	}
 
 	// Get the client from the request context
 	client, err := getClient(r)
 	if err != nil {
-		return nil, nil, nil, "", nil, err
+		return nil, nil, nil, nil, "", nil, err
 	}
 
 	// Get the user session
 	userSession, err := sessionService.GetUserSession()
 	if err != nil {
-		return nil, nil, nil, "", nil, err
+		return nil, nil, nil, nil, "", nil, err
 	}
 
 	// Fetch the user
@@ -191,7 +205,7 @@ func (s *Service) authorizeCommon(r *http.Request) (
 		userSession.Username,
 	)
 	if err != nil {
-		return nil, nil, nil, "", nil, err
+		return nil, nil, nil, nil, "", nil, err
 	}
 
 	// Fetch the user
@@ -216,7 +230,7 @@ func (s *Service) authorizeCommon(r *http.Request) (
 	}
 
 	if responseType != "code" && responseType != "token" {
-		return nil, nil, nil, "", nil, ErrIncorrectResponseType
+		return nil, nil, nil, nil, "", nil, ErrIncorrectResponseType
 	}
 
 	// Fallback to the client redirect URI if not in query string
@@ -228,8 +242,8 @@ func (s *Service) authorizeCommon(r *http.Request) (
 	// // Parse the redirect URL
 	parsedRedirectURI, err := url.ParseRequestURI(redirectURI)
 	if err != nil {
-		return nil, nil, nil, "", nil, err
+		return nil, nil, nil, nil, "", nil, err
 	}
 
-	return sessionService, client, user, responseType, parsedRedirectURI, nil
+	return sessionService, client, user, userSession, responseType, parsedRedirectURI, nil
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/csrf"
 	"github.com/resonatecoop/id/session"
 	"github.com/resonatecoop/id/util/response"
+	"github.com/resonatecoop/user-api/model"
 )
 
 func (s *Service) loginForm(w http.ResponseWriter, r *http.Request) {
@@ -34,6 +35,7 @@ func (s *Service) loginForm(w http.ResponseWriter, r *http.Request) {
 	flash, _ := sessionService.GetFlashMessage()
 
 	err = renderTemplate(w, "login.html", map[string]interface{}{
+		"appURL":         s.cnf.AppURL,
 		"flash":          flash,
 		"queryString":    getQueryString(r.URL.Query()),
 		"initialState":   template.HTML(fragment),
@@ -81,6 +83,41 @@ func (s *Service) login(w http.ResponseWriter, r *http.Request) {
 			}
 			http.Redirect(w, r, r.RequestURI, http.StatusFound)
 		}
+		return
+	}
+
+	// Email should be confirmed (click autologin link in email)
+	if !user.EmailConfirmed {
+		switch r.Header.Get("Accept") {
+		case "application/json":
+			response.Error(w, "Please confirm your email", http.StatusBadRequest)
+		default:
+			err = sessionService.SetFlashMessage(&session.Flash{
+				Type:    "Error",
+				Message: "Please confirm your email",
+			})
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			http.Redirect(w, r, r.RequestURI, http.StatusFound)
+		}
+
+		// resend email
+		// TODO resend only if a last token has expired
+		email := model.NewOauthEmail(
+			user.Username,
+			"Confirm your email",
+			"email-confirmation",
+		)
+		_, _ = s.oauthService.SendEmailToken(
+			email,
+			fmt.Sprintf(
+				"https://%s/email-confirmation",
+				s.cnf.Hostname,
+			),
+		)
+
 		return
 	}
 

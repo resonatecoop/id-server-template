@@ -1,4 +1,4 @@
-/* global XMLHttpRequest, FileReader, Image, Blob, FormData */
+/* global XMLHttpRequest, fetch, FileReader, Image, Blob, FormData */
 
 const Component = require('choo/component')
 
@@ -9,20 +9,32 @@ const ProgressBar = require('../progress-bar')
 const input = require('@resonate/input-element')
 const imagePlaceholder = require('../../lib/image-placeholder')
 
-const uploadFile = (url, opts = {}, onProgress) => {
+/**
+ * @function uploadFile
+ * @description Upload file util function
+ * @param {String} url Upload path (method POST by default)
+ * @param {Object} opts xhr opts (method, headers, body)
+ * @param {Function} onProgress optional onProgress callback function
+ * @param {Function} onLoadEnd optional onLoadEnd callback function
+ * @returns {Promise} Upload data response
+ */
+const uploadFile = (url = '/upload', opts = {}, onProgress = () => {}, loadend = () => {}) => {
   return new Promise((resolve, reject) => {
+    const {
+      headers = {},
+      method = 'POST'
+    } = opts
+
     const xhr = new XMLHttpRequest()
 
     xhr.upload.addEventListener('progress', onProgress)
-    xhr.upload.addEventListener('loadend', () => {
-      console.log('Ended')
-    })
+    xhr.upload.addEventListener('loadend', loadend)
 
-    xhr.open(opts.method || 'POST', url, true)
+    xhr.open(method, url, true)
     xhr.withCredentials = true
 
-    for (const k in opts.headers || {}) {
-      xhr.setRequestHeader(k, opts.headers[k])
+    for (const k in headers) {
+      xhr.setRequestHeader(k, headers[k])
     }
 
     xhr.onload = e => {
@@ -35,8 +47,20 @@ const uploadFile = (url, opts = {}, onProgress) => {
   })
 }
 
+const uploadStatus = async (id, opts = {}) => {
+  return await (await fetch(`/upload/${id}`, {
+    method: 'GET',
+    headers: {
+      Pragma: 'no-cache',
+      'Cache-Control': 'no-cache',
+      Authorization: 'Bearer ' + opts.token
+    }
+  })).json()
+}
+
 const MAX_FILE_SIZE_IMAGE = 1024 * 1024 * 10
 
+// ImageUpload component class
 class ImageUpload extends Component {
   constructor (id, state, emit) {
     super(id)
@@ -50,6 +74,7 @@ class ImageUpload extends Component {
     this.onDragOver = this.onDragOver.bind(this)
     this.onDragleave = this.onDragleave.bind(this)
     this.onChange = this.onChange.bind(this)
+    this.getUploadStatus = this.getUploadStatus.bind(this)
 
     this.machine = nanostate('idle', {
       idle: { drag: 'dragging', resolve: 'data' },
@@ -57,6 +82,8 @@ class ImageUpload extends Component {
       data: { drag: 'dragging', resolve: 'data', reject: 'error' },
       error: { drag: 'idle', resolve: 'data' }
     })
+
+    this.local.checks = 0
 
     this.validator = validateFormdata()
     this.form = this.validator.state
@@ -98,7 +125,7 @@ class ImageUpload extends Component {
       data: 'Fetch Again?'
     }[this.machine.state]
 
-    const image = this.local.base64ImageData || this.local.src || this.local.archive
+    const image = this.local.objectURL || this.local.src || this.local.archive
 
     const fileInput = (options) => {
       const attrs = Object.assign({
@@ -120,7 +147,7 @@ class ImageUpload extends Component {
         <div class="flex flex-${this.local.direction} ${this.machine.state === 'dragging' ? 'dragging' : ''}" unresolved>
           <div class="w-100">
             <div class="bg-image-placeholder flex relative" style="padding-top:calc(${props.format.height / props.format.width} * 100%);">
-              <div style="background: url(${image || imagePlaceholder(400, 400)}) center center / cover no-repeat;" class="upload absolute top-0 w-100 h-100 flex-auto">
+              <div style="background: url(${image || imagePlaceholder(400, 400)}) center center / cover no-repeat;" class="absolute top-0 w-100 h-100 flex-auto z-1">
                 <div class="relative w-100 h-100" ondragover=${this.onDragOver} ondrop=${this.onDrop} ondragleave=${this.onDragleave}>
                   ${fileInput({ id: `inputFile-${this._name}` })}
                   <label class="absolute o-0 w-100 h-100 top-0 left-0 right-0 bottom-0 z-1" style="cursor:pointer" for="inputFile-${this._name}">
@@ -187,6 +214,15 @@ class ImageUpload extends Component {
     e.preventDefault()
     e.stopPropagation()
 
+    this.local.uploading = true
+
+    window.addEventListener('beforeunload', e => {
+      if (!this.local.uploading) return
+
+      e.preventDefault()
+      e.returnValue = 'Upload in progress'
+    })
+
     this.machine.emit('resolve')
 
     const files = e.target.files
@@ -213,15 +249,13 @@ class ImageUpload extends Component {
           type: file.type
         })
 
+        this.local.objectURL = URL.createObjectURL(blob)
+
         reader.onload = async e => {
           try {
-            const base64FileData = reader.result.toString()
-
-            this.local.base64ImageData = base64FileData
-
             const image = new Image()
 
-            image.src = base64FileData
+            image.src = this.local.objectURL
             image.onload = () => {
               this.width = image.width
               this.height = image.height
@@ -230,9 +264,11 @@ class ImageUpload extends Component {
             }
 
             const formData = new FormData()
+
             formData.append('uploads', file)
             formData.append('config', this.local.config)
 
+            // upload file using upload tool (expect path /upload to be proxied to upload tool API)
             const response = await uploadFile('/upload', {
               method: 'POST',
               headers: {
@@ -241,9 +277,15 @@ class ImageUpload extends Component {
               body: formData
             }, event => {
               if (event.lengthComputable) {
+                // current progress by precentage
                 const progress = event.loaded / event.total * 100
+
                 this.local.progress = progress
-                this.state.components[this._name + '-image-upload-progress'].slider.update({
+                const componentID = this._name + '-image-upload-progress'
+                // get slider component by reference
+                const component = this.state.components[componentID]
+                // update slider progress
+                component.slider.update({
                   value: this.local.progress
                 })
               }
@@ -255,6 +297,8 @@ class ImageUpload extends Component {
 
             this.rerender()
 
+            this.getUploadStatus(this.local.filename)
+
             this.onFileUploaded(this.local.filename)
           } catch (err) {
             this.emit('error', err)
@@ -263,6 +307,25 @@ class ImageUpload extends Component {
 
         reader.readAsDataURL(blob)
       }
+    }
+  }
+
+  async getUploadStatus () {
+    this.local.checks = this.local.checks + 1
+
+    try {
+      const response = await uploadStatus(this.local.filename, { token: this.state.token })
+
+      if (response.status === 'ok') {
+        this.local.uploading = false
+        this.local.checks = 0
+      } else if (this.local.checks <= 10) {
+        setTimeout(() => {
+          return this.getUploadStatus()
+        }, 1000)
+      }
+    } catch (err) {
+      this.emit('error', err)
     }
   }
 
@@ -301,7 +364,8 @@ class ImageUpload extends Component {
 
   update (props) {
     return props.src !== this.local.src ||
-      props.config !== this.local.config
+      props.config !== this.local.config ||
+      props.archive !== this.local.archive
   }
 }
 
