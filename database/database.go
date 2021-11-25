@@ -26,7 +26,7 @@ func NewDatabase(cnf *config.Config) (*bun.DB, error) {
 	dbconfig, err := pgx.ParseConfig(cnf.Database.PSN)
 
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	dbconfig.PreferSimpleProtocol = true
@@ -40,7 +40,7 @@ func NewDatabase(cnf *config.Config) (*bun.DB, error) {
 	}
 
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	_, err = db.Exec("SELECT 1=1")
