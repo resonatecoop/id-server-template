@@ -36,10 +36,11 @@ type Service struct {
 
 // UserSession has user data stored in a session after logging in
 type UserSession struct {
-	ClientID     string
-	Username     string
-	AccessToken  string
-	RefreshToken string
+	ClientID          string
+	Username          string
+	AccessToken       string
+	RefreshToken      string
+	CheckoutSessionID string
 }
 
 var (

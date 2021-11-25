@@ -121,7 +121,7 @@ func (s *Service) checkoutCancelForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) checkout(w http.ResponseWriter, r *http.Request) {
-	_, _, user, _, _, err := s.profileCommon(r)
+	_, _, user, _, userSession, err := s.profileCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -152,6 +152,8 @@ func (s *Service) checkout(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	userSession.CheckoutSessionID = checkoutSession.ID
 
 	query := r.URL.Query()
 
