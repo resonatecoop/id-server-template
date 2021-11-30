@@ -60,10 +60,25 @@ var Cnf = &Config{
 	StaticURL:           "https://dash.resonate.coop",
 	AppURL:              "https://stream.resonate.coop",
 	Stripe: StripeConfig{
-		Domain:                      "id.resonate.coop",
-		Secret:                      "sk_test_xxx",
-		Token:                       "pk_test_xxx",
-		ListenerSubscriptionPriceID: "price_xx",
+		WebHookSecret: "wh_",
+		Domain:        "id.resonate.coop",
+		Secret:        "sk_test_xxx",
+		Token:         "pk_test_xxx",
+		ListenerSubscription: Product{
+			ID:       "",
+			PriceID:  "price_xx",
+			Quantity: int64(1),
+		},
+		SupporterShares: Product{
+			ID:       "",
+			PriceID:  "price_xx",
+			Quantity: int64(0),
+		},
+		MusicMakerMembership: Product{
+			ID:       "",
+			PriceID:  "price_xx",
+			Quantity: int64(1),
+		},
 	},
 }
 

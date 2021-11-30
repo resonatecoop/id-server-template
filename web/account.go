@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gorilla/csrf"
@@ -107,6 +108,8 @@ func (s *Service) account(w http.ResponseWriter, r *http.Request) {
 	method := strings.ToLower(r.Form.Get("_method"))
 
 	message := "Profile not updated"
+	membership := false
+	shares := int64(0)
 
 	if method == "delete" || r.Method == http.MethodDelete {
 		if s.oauthService.DeleteUser(
@@ -144,6 +147,23 @@ func (s *Service) account(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if method == "put" || r.Method == http.MethodPut {
+		if r.Form.Get("membership") != "" && user.Member == false && user.RoleID == int32(model.UserRole) {
+			// process listener membership
+			membership = true // get membership
+		}
+
+		if r.Form.Get("shares") != "" {
+			// process supporter shares
+			casted, err := strconv.ParseInt(r.Form.Get("shares"), 10, 64)
+
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			shares = casted
+		}
+
 		// username is always email
 		if r.Form.Get("email") != "" && r.Form.Get("email") != user.Username {
 			if err = s.oauthService.UpdateUsername(
@@ -175,6 +195,7 @@ func (s *Service) account(w http.ResponseWriter, r *http.Request) {
 			r.Form.Get("firstName"),
 			r.Form.Get("lastName"),
 			r.Form.Get("country"),
+			r.Form.Get("newsletter") == "subscribe",
 		); err != nil {
 			switch r.Header.Get("Accept") {
 			case "application/json":
@@ -237,16 +258,52 @@ func (s *Service) account(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if r.Header.Get("Accept") == "application/json" {
-		response.WriteJSON(w, map[string]interface{}{
-			"message": message,
-			"data": map[string]interface{}{
-				"redirectToProfile": redirectURI == "/web/profile",
-				"complete":          isUserAccountComplete,
-			},
-			"status": http.StatusOK,
-		}, http.StatusOK)
-		return
+	products := []config.Product{}
+
+	if membership == true {
+		listenerSubscription := s.cnf.Stripe.ListenerSubscription
+		products = append(products, listenerSubscription)
+	}
+
+	if shares > 0 {
+		supporterShares := s.cnf.Stripe.SupporterShares
+		supporterShares.Quantity = shares
+		products = append(products, supporterShares)
+	}
+
+	if len(products) > 0 {
+		// Starts checkout session with price id
+		// TODO store product as config.Product{} in Checkout session
+		checkoutSession := &session.CheckoutSession{
+			// ID: "xxx", checkout session id is set at checkout submission
+			Products: products,
+		}
+		if err := sessionService.SetCheckoutSession(checkoutSession); err != nil {
+			err = sessionService.SetFlashMessage(&session.Flash{
+				Type:    "Error",
+				Message: err.Error(),
+			})
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			http.Redirect(w, r, r.RequestURI, http.StatusFound)
+			return
+		}
+		redirectURI = "/web/checkout"
+	} else {
+		if r.Header.Get("Accept") == "application/json" {
+			response.WriteJSON(w, map[string]interface{}{
+				"message": message,
+				"data": map[string]interface{}{
+					"success_redirect_url": redirectURI,
+					"profile_redirection":  redirectURI == "/web/profile",
+					"account_complete":     isUserAccountComplete,
+				},
+				"status": http.StatusOK,
+			}, http.StatusOK)
+			return
+		}
 	}
 
 	err = sessionService.SetFlashMessage(&session.Flash{

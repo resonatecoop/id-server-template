@@ -48,11 +48,23 @@ type SessionConfig struct {
 	SameSite bool
 }
 
+type Product struct {
+	ID          string
+	PriceID     string
+	Name        string
+	Description string
+	Quantity    int64
+}
+
 type StripeConfig struct {
-	Domain                      string
-	Token                       string
-	Secret                      string
-	ListenerSubscriptionPriceID string
+	Domain               string
+	Token                string
+	Secret               string
+	Products             []Product
+	WebHookSecret        string
+	ListenerSubscription Product
+	SupporterShares      Product
+	MusicMakerMembership Product
 }
 
 // Config stores all configuration options

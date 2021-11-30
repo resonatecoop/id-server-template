@@ -16,6 +16,59 @@ const nanostate = require('nanostate')
 const SwaggerClient = require('swagger-client')
 const CountrySelect = require('../select-country-list')
 const RoleSwitcher = require('./roleSwitcher')
+const inputField = require('../../elements/input-field')
+
+class CheckBox extends Component {
+  constructor (id, state, emit) {
+    super(id)
+
+    this.emit = emit
+    this.state = state
+
+    this.local = state.components[id] = {}
+
+    this.local.checked = 'off'
+
+    this.validator = validateFormdata()
+    this.local.form = this.validator.state
+  }
+
+  createElement (props = {}) {
+    this.local.form = props.form || this.local.form || this.validator.state
+    this.onchange = props.onchange // optional callback
+
+    const values = this.local.form.values
+
+    const attrs = {
+      checked: this.local.checked === 'on' ? 'checked' : false,
+      id: props.id || props.name,
+      required: false,
+      onchange: (e) => {
+        this.local.checked = e.target.checked ? 'on' : 'off'
+        this.rerender()
+
+        typeof this.onchange === 'function' && this.onchange(this.local.checked === 'on')
+      },
+      value: values[props.name],
+      class: 'o-0',
+      style: 'width:0;height:0;',
+      name: props.name,
+      type: 'checkbox'
+    }
+
+    return inputField(html`<input ${attrs}>`, this.local.form)({
+      prefix: 'flex flex-column mb3',
+      labelText: props.labelText || '',
+      labelIconName: 'check',
+      inputName: props.name,
+      displayErrors: true
+    })
+  }
+
+  update () {
+    return false
+  }
+}
 
 // AccountForm class
 class AccountForm extends Component {
@@ -74,6 +127,12 @@ class AccountForm extends Component {
         let response = await fetch('')
 
         const csrfToken = response.headers.get('X-CSRF-Token')
+        const payload = {
+          email: this.local.data.email || '',
+          displayName: this.local.data.displayName || '',
+          membership: this.local.data.member || false,
+          newsletter: this.local.data.newsletter || false
+        }
 
         response = await fetch('', {
           method: 'PUT',
@@ -81,13 +140,7 @@ class AccountForm extends Component {
             Accept: 'application/json',
             'X-CSRF-Token': csrfToken
           },
-          body: new URLSearchParams({
-            email: this.local.data.email || '',
-            displayName: this.local.data.displayName || ''
-            // fullName: this.local.data.fullName || '',
-            // firstName: this.local.data.firstName || '',
-            // lastName: this.local.data.lastName || ''
-          })
+          body: new URLSearchParams(payload)
         })
 
         const status = response.status
@@ -102,10 +155,15 @@ class AccountForm extends Component {
 
           this.local.machine.emit('request:resolve')
 
+          if (response.redirected) {
+            window.location.href = response.url
+          }
+
           response = await response.json()
+
           const { data } = response
 
-          if (data.redirectToProfile) {
+          if (data.profile_redirection) {
             setTimeout(() => {
               window.location = '/web/profile'
             }, 0)
@@ -253,6 +311,38 @@ class AccountForm extends Component {
                   }
 
                   this.state.profile.country = country
+                }
+              })
+            },
+            {
+              component: this.state.cache(CheckBox, 'membership').render({
+                id: 'membership',
+                name: 'membership',
+                form: this.local.form,
+                labelText: html`
+                  <dl>
+                    <dt class="f5">Become a member?</dt>
+                    <dd class="f6 ma0">5 Euros a year (listener) / Membership is free for artists (and label owners)</dd>
+                  </dl>
+                `,
+                onchange: (value) => {
+                  this.local.data.member = value
+                }
+              })
+            },
+            {
+              component: this.state.cache(CheckBox, 'newsletter-notification').render({
+                id: 'newsletter',
+                name: 'newsletter',
+                form: this.local.form,
+                labelText: html`
+                  <dl>
+                    <dt class="f5">Subscribe to our newsletter</dt>
+                    <dd class="f6 ma0">We would like to keep in touch using your email address. Is that OK?</dd>
+                  </dl>
+                `,
+                onchange: (value) => {
+                  this.local.data.newsletter = value
                 }
               })
             }

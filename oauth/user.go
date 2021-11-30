@@ -161,9 +161,45 @@ func (s *Service) ConfirmUserEmail(email string) error {
 	return err
 }
 
+// GrantMemberStatus
+func (s *Service) GrantMemberStatus(email string) error {
+	ctx := context.Background()
+	user, err := s.FindUserByUsername(email)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = s.db.NewUpdate().
+		Model(user).
+		Set("member = ?", true).
+		WherePK().
+		Exec(ctx)
+
+	return err
+}
+
+// TerminateMemberStatus
+func (s *Service) TerminateMemberStatus(email string) error {
+	ctx := context.Background()
+	user, err := s.FindUserByUsername(email)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = s.db.NewUpdate().
+		Model(user).
+		Set("member = ?", false).
+		WherePK().
+		Exec(ctx)
+
+	return err
+}
+
 // UpdateUser ...
-func (s *Service) UpdateUser(user *model.User, fullName, firstName, lastName, country string) error {
-	return s.updateUserCommon(s.db, user, fullName, firstName, lastName, country)
+func (s *Service) UpdateUser(user *model.User, fullName, firstName, lastName, country string, newsletter bool) error {
+	return s.updateUserCommon(s.db, user, fullName, firstName, lastName, country, newsletter)
 }
 
 // SetUserCountry ...
@@ -268,7 +304,7 @@ func (s *Service) setPasswordCommon(db *bun.DB, user *model.User, password strin
 }
 
 // updateUserCommon
-func (s *Service) updateUserCommon(db *bun.DB, user *model.User, fullName, firstName, lastName, country string) error {
+func (s *Service) updateUserCommon(db *bun.DB, user *model.User, fullName, firstName, lastName, country string, newsletter bool) error {
 	ctx := context.Background()
 
 	update := db.NewUpdate().Model(user)
@@ -290,6 +326,10 @@ func (s *Service) updateUserCommon(db *bun.DB, user *model.User, fullName, first
 		if country != user.Country {
 			update.Set("country = ?", country)
 		}
+	}
+
+	if newsletter != user.NewsletterNotification {
+		update.Set("newsletter_notification = ?", newsletter)
 	}
 
 	if fullName != user.FullName && fullName != "" {

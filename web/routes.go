@@ -202,6 +202,45 @@ func (s *Service) GetRoutes() []routes.Route {
 			},
 		},
 		{
+			Name:        "membership_form",
+			Method:      "GET",
+			Pattern:     "/membership",
+			HandlerFunc: s.membershipForm,
+			Middlewares: []negroni.Handler{
+				new(parseFormMiddleware),
+				newLoggedInMiddleware(s),
+				newClientMiddleware(s),
+			},
+		},
+		{
+			Name:        "membership",
+			Method:      "POST",
+			Pattern:     "/membership",
+			HandlerFunc: s.membership,
+			Middlewares: []negroni.Handler{
+				tollbooth_negroni.LimitHandler(
+					tollbooth.NewLimiter(1, nil),
+				),
+				new(parseFormMiddleware),
+				newLoggedInMiddleware(s),
+				newClientMiddleware(s),
+			},
+		},
+		{
+			Name:        "cancel_subscription",
+			Method:      "DELETE",
+			Pattern:     "/subscription",
+			HandlerFunc: s.cancelSubscription,
+			Middlewares: []negroni.Handler{
+				tollbooth_negroni.LimitHandler(
+					tollbooth.NewLimiter(1, nil),
+				),
+				new(parseFormMiddleware),
+				newLoggedInMiddleware(s),
+				newClientMiddleware(s),
+			},
+		},
+		{
 			Name:        "account_update",
 			Method:      "PUT",
 			Pattern:     "/account",

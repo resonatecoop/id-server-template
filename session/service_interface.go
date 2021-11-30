@@ -8,6 +8,9 @@ type ServiceInterface interface {
 	StartSession() error
 	GetUserSession() (*UserSession, error)
 	SetUserSession(userSession *UserSession) error
+	GetCheckoutSession() (*CheckoutSession, error)
+	SetCheckoutSession(userSession *CheckoutSession) error
+	ClearCheckoutSession() error
 	ClearUserSession() error
 	SetFlashMessage(flash *Flash) error
 	GetFlashMessage() (interface{}, error)

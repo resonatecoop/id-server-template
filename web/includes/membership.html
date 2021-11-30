@@ -1,26 +1,33 @@
-{{ define "title"}}Checkout{{ end }}
+{{ define "title"}}
+Your membership
+{{ end }}
 
 {{ define "content" }}
 
 <div id="app">
   <div class="flex pb6">
     <div class="flex flex-column justify-center items-center w-100 mh3 mh0-ns">
-      <section id="account-settings" class="flex flex-column">
+      <section id="membership-settings" class="flex flex-column">
         <div class="flex flex-column flex-auto pt4 ph3 mw6 ph0-l">
           {{ if not .isUserAccountComplete }}
           <svg viewBox="0 0 16 16" class="icon icon--lg icon icon--lg fill-black fill-white--dark fill-black--light">
             <use xlink:href="#icon-logo" />
           </svg>
           {{ end }}
-          {{range $product := .products }} 
-          <h2 class="lh-title f3 fw1">{{ $product.Name }}</h2>
-          <p class="lh-copy">{{ $product.Description }}</p>
-          {{end}}
+          <h2 class="lh-title f3 fw1">Your memberships</h2>
           <div>
             <div class="flex flex-column flex-auto pb6">
+              {{ .customer.Email }}
+              {{ .subscription.ID }}
+              
               <form action="" method="POST">
                 {{ .csrfField }}
-                <button type="submit" style="outline:solid 1px var(--near-black);outline-offset:-1px" type="submit" class="bg-white dib bn pv3 ph5 mt3 flex-shrink-0 f5 grow">Checkout</button>
+                <input type="hidden" name="_method" value="DELETE" />
+                <div class="flex flex-auto">
+                  <button style="outline:solid 1px var(--near-black);outline-offset:-1px" type="submit" class="bg-white dib bn pv3 ph5 mt3 flex-shrink-0 f5 grow">
+                    Cancel
+                  </button>
+                </div>
               </form>
             </div>
           </div>

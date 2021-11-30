@@ -12,6 +12,7 @@ function routes (app) {
   app.route('/login', layoutNarrow(require('./views/login')))
   app.route('/password-reset', layoutNarrow(require('./views/password-reset')))
   app.route('/email-confirmation', layoutNarrow(require('./views/email-confirmation')))
+  app.route('/checkout', layoutNarrow(require('./views/checkout')))
   app.route('/profile', layout(require('./views/profile')))
   app.route('/account', layout(require('./views/account')))
   app.route('*', layoutNarrow(require('./views/404')))

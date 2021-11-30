@@ -23,8 +23,8 @@ function inputField (inputComponent, form = {}) {
     return html`
       <div class=${prefix}>
         <div class="flex flex-column">
-          ${renderLabel(labelText, labelIconName, labelPrefix)}
           ${inputComponent}
+          ${renderLabel(labelText, labelIconName, labelPrefix)}
           ${renderHelp(helpText)}
         </div>
         ${displayErrors ? renderErrors(inputName) : ''}
@@ -73,11 +73,13 @@ function inputField (inputComponent, form = {}) {
     }
 
     function renderErrors (inputName) {
-      return html`
-        <p class="lh-copy f5 red">
-          ${errors[inputName] && !pristine[inputName] ? errors[inputName].message : ''}
-        </p>
-      `
+      if (errors[inputName] && !pristine[inputName]) {
+        return html`
+          <p class="lh-copy f5 red">
+            ${errors[inputName].message}
+          </p>
+        `
+      }
     }
   }
 }

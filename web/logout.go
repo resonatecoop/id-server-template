@@ -29,6 +29,13 @@ func (s *Service) logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Delete the checkout session
+	err = sessionService.ClearCheckoutSession()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	// Redirect back to the login page
 	redirectWithQueryString("/web/login", r.URL.Query(), w, r)
 }

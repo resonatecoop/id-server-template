@@ -34,13 +34,20 @@ type Service struct {
 	w              http.ResponseWriter
 }
 
+// CheckoutSession has stripe checkout data
+type CheckoutSession struct {
+	ID       string
+	Products []config.Product
+}
+
 // UserSession has user data stored in a session after logging in
 type UserSession struct {
-	ClientID          string
-	Username          string
-	AccessToken       string
-	RefreshToken      string
-	CheckoutSessionID string
+	ClientID               string
+	Username               string
+	AccessToken            string
+	RefreshToken           string
+	CheckoutSessionID      string
+	CheckoutSessionPriceID string
 }
 
 var (
@@ -48,6 +55,8 @@ var (
 	StorageSessionName = "go_oauth2_server_session"
 	// UserSessionKey ...
 	UserSessionKey = "go_oauth2_server_user"
+	// CheckoutSessionKey ...
+	CheckoutSessionKey = "go_oauth2_server_checkout"
 	// ErrSessonNotStarted ...
 	ErrSessonNotStarted = errors.New("Session not started")
 )
@@ -56,6 +65,7 @@ func init() {
 	gob.Register(new(Flash))
 	// Register a new datatype for storage in sessions
 	gob.Register(new(UserSession))
+	gob.Register(new(CheckoutSession))
 }
 
 // NewService returns a new Service instance
@@ -127,6 +137,46 @@ func (s *Service) ClearUserSession() error {
 
 	// Delete the user session
 	delete(s.session.Values, UserSessionKey)
+	return s.session.Save(s.r, s.w)
+}
+
+// GetCheckoutSession returns the checkout session
+func (s *Service) GetCheckoutSession() (*CheckoutSession, error) {
+	// Make sure StartSession has been called
+	if s.session == nil {
+		return nil, ErrSessonNotStarted
+	}
+
+	// Retrieve our checkout session struct and type-assert it
+	checkoutSession, ok := s.session.Values[CheckoutSessionKey].(*CheckoutSession)
+	if !ok {
+		return nil, errors.New("Checkout session type assertion error")
+	}
+
+	return checkoutSession, nil
+}
+
+// SetCheckoutSession saves the checkout session
+func (s *Service) SetCheckoutSession(checkoutSession *CheckoutSession) error {
+	// Make sure StartSession has been called
+	if s.session == nil {
+		return ErrSessonNotStarted
+	}
+
+	// Set a new checkout session
+	s.session.Values[CheckoutSessionKey] = checkoutSession
+	return s.session.Save(s.r, s.w)
+}
+
+// ClearCheckoutSession deletes the checkout session
+func (s *Service) ClearCheckoutSession() error {
+	// Make sure StartSession has been called
+	if s.session == nil {
+		return ErrSessonNotStarted
+	}
+
+	// Delete the checkout session
+	delete(s.session.Values, CheckoutSessionKey)
 	return s.session.Save(s.r, s.w)
 }
 

@@ -115,6 +115,7 @@ func loadTemplates() {
 			"./web/includes/authorize.html",
 			"./web/includes/client.html",
 			"./web/includes/account.html",
+			"./web/includes/membership.html",
 			"./web/includes/profile.html",
 			"./web/includes/checkout.html",
 			"./web/includes/checkout_cancel.html",
