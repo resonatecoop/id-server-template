@@ -111,7 +111,6 @@ class UserMenu extends Nanocomponent {
             <input disabled tabindex="-1" name="credits" type="number" value=${this.local.credits} readonly class="bn br0 bg-transparent b ${this.local.credits < 0.128 ? 'red' : ''}">
           </Div>
           <div class="flex flex-auto justify-end">
-            <button type="button" onclick=${(e) => { e.preventDefault(); this.local.machine.emit('creditsDialog:open') }} style="outline:solid 1px var(--near-black);outline-offset:-1px" class="pv2 ph3 ttu near-black near-black--light near-white--dark bg-transparent bn bn b flex-shrink-0 f6 grow">Add credits</button>
           </div>
         </li>
         <li class="bb bw b--mid-gray b--mid-gray--light b--near-black--dark mt3 mb2" role="separator"></li>

@@ -30,8 +30,8 @@ require (
 	github.com/pariz/gountries v0.0.0-20200430155801-1c6a393df9c7
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/phyber/negroni-gzip v1.0.0
-	github.com/resonatecoop/user-api v0.0.0-20211116113902-5bb9dee7abea
-	github.com/resonatecoop/user-api-client v0.0.0-20211122175920-46d64affcc6f
+	github.com/resonatecoop/user-api v1.0.0-3
+	github.com/resonatecoop/user-api-client v0.0.0-20211208125639-09593c2f55ba
 	github.com/rs/xid v1.3.0
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/stretchr/testify v1.7.0
@@ -40,9 +40,9 @@ require (
 	github.com/thanhpk/randstr v1.0.4
 	github.com/trustelem/zxcvbn v1.0.1
 	github.com/unrolled/secure v1.0.9
-	github.com/uptrace/bun v0.3.2
-	github.com/uptrace/bun/dialect/pgdialect v0.3.2
-	github.com/uptrace/bun/extra/bundebug v0.3.2
+	github.com/uptrace/bun v0.3.0
+	github.com/uptrace/bun/dialect/pgdialect v0.3.0
+	github.com/uptrace/bun/extra/bundebug v0.3.0
 	github.com/urfave/cli v1.22.5
 	github.com/urfave/negroni v1.0.0
 	go.etcd.io/etcd v0.0.0-20191023171146-3cf2f69b5738

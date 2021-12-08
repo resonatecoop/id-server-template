@@ -16,6 +16,24 @@ import (
 	"github.com/stripe/stripe-go/v72/product"
 )
 
+// Product is a subset of stripe.Product
+type Product struct {
+	Name        string   `json:"name"`
+	Images      []string `json:"images"`
+	Description string   `json:"description"`
+	Quantity    int64    `json:"quantity"`
+}
+
+// New product creates new Product based on stripe.Product
+func (*Service) NewProduct(p *stripe.Product, quantity int64) Product {
+	return Product{
+		Name:        p.Name,
+		Description: p.Description,
+		Images:      p.Images,
+		Quantity:    quantity,
+	}
+}
+
 func (s *Service) checkoutForm(w http.ResponseWriter, r *http.Request) {
 	sessionService, client, user, isUserAccountComplete, userSession, err := s.profileCommon(r)
 	if err != nil {
@@ -23,7 +41,9 @@ func (s *Service) checkoutForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("X-CSRF-Token", csrf.Token(r))
+	csrfToken := csrf.Token(r)
+
+	w.Header().Set("X-CSRF-Token", csrfToken)
 
 	stripe.Key = s.cnf.Stripe.Secret
 
@@ -67,7 +87,7 @@ func (s *Service) checkoutForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	products := []stripe.Product{}
+	products := []Product{}
 
 	for _, item := range checkoutSession.Products {
 		p, err := product.Get(item.ID, nil)
@@ -76,7 +96,9 @@ func (s *Service) checkoutForm(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		products = append(products, *p)
+		product := s.NewProduct(p, item.Quantity)
+
+		products = append(products, product)
 	}
 
 	if err != nil {
@@ -93,25 +115,6 @@ func (s *Service) checkoutForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// cs, err := stripeCheckoutSession.Get(
-	// 	checkoutSession.ID,
-	// 	nil,
-	// )
-	//
-	// if err != nil {
-	// 	http.Error(w, err.Error(), http.StatusBadRequest)
-	// 	return
-	// }
-	//
-	// params := &stripe.CheckoutSessionListLineItemsParams{}
-	//
-	// params.Filters.AddFilter("limit", "", "5")
-	// i := stripeCheckoutSession.ListLineItems(cs.ID, params)
-	//
-	// for i.Next() {
-	// 	li = i.LineItem()
-	// }
-
 	flash, _ := sessionService.GetFlashMessage()
 	query := r.URL.Query()
 	query.Set("login_redirect_uri", r.URL.Path)
@@ -125,6 +128,10 @@ func (s *Service) checkoutForm(w http.ResponseWriter, r *http.Request) {
 		userSession,
 		isUserAccountComplete,
 		usergroups.Usergroup,
+		nil,
+		nil,
+		products,
+		csrfToken,
 	))
 
 	if err != nil {
@@ -170,8 +177,9 @@ func (s *Service) checkoutForm(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Service) checkoutSuccessForm(w http.ResponseWriter, r *http.Request) {
-	sessionService, client, user, isUserAccountComplete, userSession, err := s.profileCommon(r)
+// checkoutSuccess
+func (s *Service) checkoutSuccess(w http.ResponseWriter, r *http.Request) {
+	sessionService, _, _, _, _, err := s.profileCommon(r)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -180,7 +188,14 @@ func (s *Service) checkoutSuccessForm(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("X-CSRF-Token", csrf.Token(r))
 
-	flash, _ := sessionService.GetFlashMessage()
+	stripe.Key = s.cnf.Stripe.Secret
+
+	stripe.SetAppInfo(&stripe.AppInfo{
+		Name:    "resonatecoop/id",
+		Version: "0.0.1",
+		URL:     "https://github.com/resonatecoop/id",
+	})
+
 	query := r.URL.Query()
 	query.Set("login_redirect_uri", r.URL.Path)
 
@@ -197,6 +212,52 @@ func (s *Service) checkoutSuccessForm(w http.ResponseWriter, r *http.Request) {
 		}
 		query := r.URL.Query()
 		redirectWithQueryString("/web/account", query, w, r)
+		return
+	}
+
+	if checkoutSession.ID == "" {
+		err = sessionService.SetFlashMessage(&session.Flash{
+			Type:    "Error",
+			Message: "Checkout session has not started yet",
+		})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		query := r.URL.Query()
+		redirectWithQueryString("/web/account", query, w, r)
+		return
+	}
+
+	cs, err := stripeCheckoutSession.Get(checkoutSession.ID, nil)
+
+	if err != nil {
+		// checkout session not started/empty
+		err = sessionService.SetFlashMessage(&session.Flash{
+			Type:    "Error",
+			Message: err.Error(),
+		})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		query := r.URL.Query()
+		redirectWithQueryString("/web/account", query, w, r)
+		return
+	}
+
+	if cs.Status != "complete" {
+		// checkout session still in progress
+		err = sessionService.SetFlashMessage(&session.Flash{
+			Type:    "Error",
+			Message: fmt.Sprintf("Checkout session status is: %s", cs.Status),
+		})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		query := r.URL.Query()
+		redirectWithQueryString("/web/checkout", query, w, r)
 		return
 	}
 
@@ -233,62 +294,23 @@ func (s *Service) checkoutSuccessForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	usergroups, _ := s.getUserGroupList(user, userSession.AccessToken)
-
-	initialState, err := json.Marshal(NewInitialState(
-		s.cnf,
-		client,
-		user,
-		userSession,
-		isUserAccountComplete,
-		usergroups.Usergroup,
-	))
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Inject initial state into choo app
-	fragment := fmt.Sprintf(
-		`<script>window.initialState=JSON.parse('%s')</script>`,
-		string(initialState),
-	)
-
-	profile := &Profile{
-		Email:          user.Username,
-		LegacyID:       user.LegacyID,
-		Country:        user.Country,
-		EmailConfirmed: user.EmailConfirmed,
-		Complete:       isUserAccountComplete,
-		Usergroups:     usergroups.Usergroup,
-	}
-
-	if len(usergroups.Usergroup) > 0 {
-		profile.DisplayName = usergroups.Usergroup[0].DisplayName
-	}
-
-	err = renderTemplate(w, "checkout_success.html", map[string]interface{}{
-		"products":              products,
-		"appURL":                s.cnf.AppURL,
-		"staticURL":             s.cnf.StaticURL,
-		"isUserAccountComplete": isUserAccountComplete,
-		"flash":                 flash,
-		"clientID":              client.Key,
-		"applicationName":       client.ApplicationName.String,
-		"profile":               profile,
-		"queryString":           getQueryString(query),
-		"initialState":          template.HTML(fragment),
-		csrf.TemplateTag:        csrf.TemplateField(r),
+	err = sessionService.SetFlashMessage(&session.Flash{
+		Type:    "Info",
+		Message: "Checkout completed. You should receive an email shortly.",
 	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	query = r.URL.Query()
+	redirectWithQueryString("/web/account", query, w, r)
+	return
 }
 
-func (s *Service) checkoutCancelForm(w http.ResponseWriter, r *http.Request) {
-	sessionService, client, user, isUserAccountComplete, userSession, err := s.profileCommon(r)
+// checkoutCancel
+func (s *Service) checkoutCancel(w http.ResponseWriter, r *http.Request) {
+	sessionService, _, _, _, _, err := s.profileCommon(r)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -297,7 +319,14 @@ func (s *Service) checkoutCancelForm(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("X-CSRF-Token", csrf.Token(r))
 
-	flash, _ := sessionService.GetFlashMessage()
+	stripe.Key = s.cnf.Stripe.Secret
+
+	stripe.SetAppInfo(&stripe.AppInfo{
+		Name:    "resonatecoop/id",
+		Version: "0.0.1",
+		URL:     "https://github.com/resonatecoop/id",
+	})
+
 	query := r.URL.Query()
 	query.Set("login_redirect_uri", r.URL.Path)
 
@@ -307,6 +336,20 @@ func (s *Service) checkoutCancelForm(w http.ResponseWriter, r *http.Request) {
 		err = sessionService.SetFlashMessage(&session.Flash{
 			Type:    "Error",
 			Message: "Checkout session is empty",
+		})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		query := r.URL.Query()
+		redirectWithQueryString("/web/account", query, w, r)
+		return
+	}
+
+	if checkoutSession.ID == "" {
+		err = sessionService.SetFlashMessage(&session.Flash{
+			Type:    "Error",
+			Message: "Checkout session has not started yet",
 		})
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -343,6 +386,27 @@ func (s *Service) checkoutCancelForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// expire checkout session
+	_, err = stripeCheckoutSession.Expire(
+		checkoutSession.ID,
+		nil,
+	)
+
+	if err != nil {
+		// checkout session not started/empty
+		err = sessionService.SetFlashMessage(&session.Flash{
+			Type:    "Error",
+			Message: err.Error(),
+		})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		query := r.URL.Query()
+		redirectWithQueryString("/web/account", query, w, r)
+		return
+	}
+
 	// Delete the checkout session
 	err = sessionService.ClearCheckoutSession()
 	if err != nil {
@@ -350,58 +414,18 @@ func (s *Service) checkoutCancelForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	usergroups, _ := s.getUserGroupList(user, userSession.AccessToken)
-
-	initialState, err := json.Marshal(NewInitialState(
-		s.cnf,
-		client,
-		user,
-		userSession,
-		isUserAccountComplete,
-		usergroups.Usergroup,
-	))
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Inject initial state into choo app
-	fragment := fmt.Sprintf(
-		`<script>window.initialState=JSON.parse('%s')</script>`,
-		string(initialState),
-	)
-
-	profile := &Profile{
-		Email:          user.Username,
-		LegacyID:       user.LegacyID,
-		Country:        user.Country,
-		EmailConfirmed: user.EmailConfirmed,
-		Complete:       isUserAccountComplete,
-		Usergroups:     usergroups.Usergroup,
-	}
-
-	if len(usergroups.Usergroup) > 0 {
-		profile.DisplayName = usergroups.Usergroup[0].DisplayName
-	}
-
-	err = renderTemplate(w, "checkout_cancel.html", map[string]interface{}{
-		"products":              products,
-		"appURL":                s.cnf.AppURL,
-		"staticURL":             s.cnf.StaticURL,
-		"isUserAccountComplete": isUserAccountComplete,
-		"flash":                 flash,
-		"clientID":              client.Key,
-		"applicationName":       client.ApplicationName.String,
-		"profile":               profile,
-		"queryString":           getQueryString(query),
-		"initialState":          template.HTML(fragment),
-		csrf.TemplateTag:        csrf.TemplateField(r),
+	err = sessionService.SetFlashMessage(&session.Flash{
+		Type:    "Info",
+		Message: "Checkout was canceled",
 	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	query = r.URL.Query()
+	redirectWithQueryString("/web/account", query, w, r)
+	return
 }
 
 func (s *Service) checkout(w http.ResponseWriter, r *http.Request) {
@@ -467,17 +491,9 @@ func (s *Service) checkout(w http.ResponseWriter, r *http.Request) {
 		customer = i.Customer()
 	}
 
-	// set checkout session params
+	// set stripe checkout session params
 	params := &stripe.CheckoutSessionParams{
-		// SubmitType: stripe.String("donate"),
-		// BillingAddressCollection: stripe.String("auto"),
-		// LineItems: []*stripe.CheckoutSessionLineItemParams{
-		// 	&stripe.CheckoutSessionLineItemParams{
-		// 		Price:    stripe.String(s.cnf.Stripe.ListenerSubscription.PriceID),
-		// 		Quantity: stripe.Int64(1),
-		// 	},
-		// },
-		Mode:       stripe.String(string(stripe.CheckoutSessionModeSubscription)),
+		Mode:       stripe.String(string(stripe.CheckoutSessionModePayment)),
 		SuccessURL: stripe.String("https://" + domain + "/checkout/success"),
 		CancelURL:  stripe.String("https://" + domain + "/checkout/cancel"),
 	}
@@ -492,18 +508,37 @@ func (s *Service) checkout(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
+		quantity := int64(1) // 1 single share
+		credits := int64(0)  // 0 credits amount
 		products = append(products, p)
 
-		if item.ID == s.cnf.Stripe.ListenerSubscription.ID {
+		if item.ID == s.cnf.Stripe.ListenerSubscription.ID ||
+			item.ID == s.cnf.Stripe.ArtistMembership.ID ||
+			item.ID == s.cnf.Stripe.LabelMembership.ID {
+			params.Mode = stripe.String(string(stripe.CheckoutSessionModeSubscription))
 			params.AddMetadata("product_id", item.ID)
 		}
-
-		quantity := int64(1)
 
 		if item.ID == s.cnf.Stripe.SupporterShares.ID {
 			s := strconv.FormatInt(item.Quantity, 10)
 			params.AddMetadata("shares", s)
 			quantity = item.Quantity
+		}
+
+		switch item.ID {
+		case s.cnf.Stripe.StreamCredit5.ID:
+			credits = 5
+		case s.cnf.Stripe.StreamCredit10.ID:
+			credits = 10
+		case s.cnf.Stripe.StreamCredit20.ID:
+			credits = 20
+		case s.cnf.Stripe.StreamCredit50.ID:
+			credits = 50
+		}
+
+		if credits > 0 {
+			s := strconv.FormatInt(credits, 10)
+			params.AddMetadata("credits", s)
 		}
 
 		lineItems = append(lineItems, &stripe.CheckoutSessionLineItemParams{
@@ -544,6 +579,19 @@ func (s *Service) checkout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	checkoutSession.ID = cs.ID
+
+	if err := sessionService.SetCheckoutSession(checkoutSession); err != nil {
+		err = sessionService.SetFlashMessage(&session.Flash{
+			Type:    "Error",
+			Message: err.Error(),
+		})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		http.Redirect(w, r, r.RequestURI, http.StatusFound)
+		return
+	}
 
 	http.Redirect(w, r, cs.URL, http.StatusFound)
 	return

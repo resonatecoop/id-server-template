@@ -36,6 +36,10 @@ func (s *Service) clientForm(w http.ResponseWriter, r *http.Request) {
 		nil,
 		false,
 		[]*models.UserUserGroupPrivateResponse{},
+		nil,
+		nil,
+		nil,
+		"",
 	))
 
 	if err != nil {

@@ -37,7 +37,7 @@ type ServiceInterface interface {
 	ConfirmUserEmail(email string) error
 	SetPassword(user *model.User, password string) error
 	SetPasswordTx(tx *bun.DB, user *model.User, password string) error
-	GrantMemberStatus(email string) error
+	GrantMemberStatus(email string, status bool) error
 	UpdateUsername(user *model.User, username string) error
 	UpdateUsernameTx(db *bun.DB, user *model.User, username string) error
 	UpdateUser(user *model.User, fullName, firstName, lastName, country string, newsletter bool) error

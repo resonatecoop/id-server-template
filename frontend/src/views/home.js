@@ -6,12 +6,12 @@ module.exports = (state, emit) => {
       <article class="mh2 mt3 cf">
         ${state.clients.map(({ connectUrl, name, description }) => {
           return html`
-            <div class="fl w-50 w-33-l pa2">
-              <a href=${connectUrl} class="link db aspect-ratio aspect-ratio--1x1 dim ba bw b--mid-gray">
-                <div class="flex flex-column justify-center aspect-ratio--object pa2 pa3-ns pa4-l">
-                  <span class="f3 lh-title">${name}</span>
-                  <span class="f4 lh-copy">${description}</span>
-                </div>
+            <div class="fl w-100 w-50-ns w-33-l pa2">
+              <a href=${connectUrl} class="link db aspect-ratio aspect-ratio--1x1 dim ba bw b--near-black">
+                <dl class="flex flex-column justify-center aspect-ratio--object pa3 pa4-l">
+                  <dt class="f3 lh-title">${name}</dt>
+                  <dd class="ma0 f4 f5-ns f4-l lh-copy">${description}</dd>
+                </dl>
               </a>
             </div>
           `

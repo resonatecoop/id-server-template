@@ -36,8 +36,8 @@ type Service struct {
 
 // CheckoutSession has stripe checkout data
 type CheckoutSession struct {
-	ID       string
-	Products []config.Product
+	ID       string           // stripe checkout session id
+	Products []config.Product // stripe products
 }
 
 // UserSession has user data stored in a session after logging in

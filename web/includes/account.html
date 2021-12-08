@@ -5,7 +5,7 @@
 {{ define "content" }}
 
 {{ if .flash }}
-<div class="mb3 flex {{ if eq .flash.Type "Error" }}bg-red white{{ else }}bb b--light-gray black{{ end }}">
+<div class="sticky z-1 mb3 flex {{ if eq .flash.Type "Error" }}bg-red white{{ else }}bb b--light-gray black{{ end }}" style="top:3rem">
   <p class="ma0 pa3 w-100">{{ .flash.Message }}</p>
   {{ if not .isUserAccountComplete }}
   <p class="ma0 pa3 tr w-100">
@@ -38,6 +38,8 @@
               <form action="" method="POST">
                 {{ .csrfField }}
                 <input type="hidden" name="_method" value="PUT" />
+                <input type="hidden" name="membership" value="yes" />
+                <input type="hidden" name="shares" value="5" />
                 <div class="mb3">
                   <div class="flex flex-column flex-column-reverse">
                     <input

@@ -48,6 +48,10 @@ func (s *Service) accountForm(w http.ResponseWriter, r *http.Request) {
 		userSession,
 		isUserAccountComplete,
 		usergroups.Usergroup,
+		nil,
+		nil,
+		nil,
+		"",
 	))
 
 	if err != nil {
@@ -62,15 +66,17 @@ func (s *Service) accountForm(w http.ResponseWriter, r *http.Request) {
 	)
 
 	profile := &Profile{
-		Email:          user.Username,
-		LegacyID:       user.LegacyID,
-		FullName:       user.FullName,
-		FirstName:      user.FirstName,
-		LastName:       user.LastName,
-		Country:        user.Country,
-		EmailConfirmed: user.EmailConfirmed,
-		Complete:       isUserAccountComplete,
-		Usergroups:     usergroups.Usergroup,
+		Email:                  user.Username,
+		LegacyID:               user.LegacyID,
+		FullName:               user.FullName,
+		FirstName:              user.FirstName,
+		LastName:               user.LastName,
+		Member:                 user.Member,
+		Country:                user.Country,
+		NewsletterNotification: user.NewsletterNotification,
+		EmailConfirmed:         user.EmailConfirmed,
+		Complete:               isUserAccountComplete,
+		Usergroups:             usergroups.Usergroup,
 	}
 
 	if len(usergroups.Usergroup) > 0 {
@@ -110,6 +116,7 @@ func (s *Service) account(w http.ResponseWriter, r *http.Request) {
 	message := "Profile not updated"
 	membership := false
 	shares := int64(0)
+	credits := int64(0)
 
 	if method == "delete" || r.Method == http.MethodDelete {
 		if s.oauthService.DeleteUser(
@@ -147,9 +154,19 @@ func (s *Service) account(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if method == "put" || r.Method == http.MethodPut {
-		if r.Form.Get("membership") != "" && user.Member == false && user.RoleID == int32(model.UserRole) {
-			// process listener membership
+		if r.Form.Get("membership") != "" && user.Member == false {
 			membership = true // get membership
+		}
+
+		if r.Form.Get("credits") != "" {
+			casted, err := strconv.ParseInt(r.Form.Get("credits"), 10, 64)
+
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			credits = casted
 		}
 
 		if r.Form.Get("shares") != "" {
@@ -196,6 +213,7 @@ func (s *Service) account(w http.ResponseWriter, r *http.Request) {
 			r.Form.Get("lastName"),
 			r.Form.Get("country"),
 			r.Form.Get("newsletter") == "subscribe",
+			// credits ?
 		); err != nil {
 			switch r.Header.Get("Accept") {
 			case "application/json":
@@ -260,22 +278,49 @@ func (s *Service) account(w http.ResponseWriter, r *http.Request) {
 
 	products := []config.Product{}
 
-	if membership == true {
-		listenerSubscription := s.cnf.Stripe.ListenerSubscription
-		products = append(products, listenerSubscription)
+	if credits > 0 {
+		product := config.Product{}
+
+		switch credits {
+		case 5:
+			product = s.cnf.Stripe.StreamCredit5
+		case 10:
+			product = s.cnf.Stripe.StreamCredit10
+		case 20:
+			product = s.cnf.Stripe.StreamCredit20
+		case 50:
+			product = s.cnf.Stripe.StreamCredit50
+		}
+
+		if product.ID != "" {
+			products = append(products, product)
+		}
 	}
 
-	if shares > 0 {
+	// should get membership
+	if membership == true {
+		product := config.Product{}
+
+		switch user.RoleID {
+		case int32(model.ArtistRole):
+			product = s.cnf.Stripe.ArtistMembership
+		case int32(model.LabelRole):
+			product = s.cnf.Stripe.LabelMembership
+		default:
+			product = s.cnf.Stripe.ListenerSubscription
+		}
+
+		products = append(products, product)
+	}
+
+	if shares > 0 && shares%5 == 0 {
 		supporterShares := s.cnf.Stripe.SupporterShares
 		supporterShares.Quantity = shares
 		products = append(products, supporterShares)
 	}
 
 	if len(products) > 0 {
-		// Starts checkout session with price id
-		// TODO store product as config.Product{} in Checkout session
 		checkoutSession := &session.CheckoutSession{
-			// ID: "xxx", checkout session id is set at checkout submission
 			Products: products,
 		}
 		if err := sessionService.SetCheckoutSession(checkoutSession); err != nil {
@@ -291,19 +336,19 @@ func (s *Service) account(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		redirectURI = "/web/checkout"
-	} else {
-		if r.Header.Get("Accept") == "application/json" {
-			response.WriteJSON(w, map[string]interface{}{
-				"message": message,
-				"data": map[string]interface{}{
-					"success_redirect_url": redirectURI,
-					"profile_redirection":  redirectURI == "/web/profile",
-					"account_complete":     isUserAccountComplete,
-				},
-				"status": http.StatusOK,
-			}, http.StatusOK)
-			return
-		}
+	}
+
+	if r.Header.Get("Accept") == "application/json" {
+		response.WriteJSON(w, map[string]interface{}{
+			"message": message,
+			"data": map[string]interface{}{
+				"success_redirect_url": redirectURI,
+				"profile_redirection":  redirectURI == "/web/profile",
+				"account_complete":     isUserAccountComplete,
+			},
+			"status": http.StatusOK,
+		}, http.StatusOK)
+		return
 	}
 
 	err = sessionService.SetFlashMessage(&session.Flash{

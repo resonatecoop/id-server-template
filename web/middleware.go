@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/context"
+	"github.com/gorilla/csrf"
 	"github.com/resonatecoop/id/session"
 )
 
@@ -16,6 +17,23 @@ func (m *parseFormMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, 
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	next(w, r)
+}
+
+// skipCSRFMiddleware just initialises session
+type skipCSRFMiddleware struct {
+	service ServiceInterface
+}
+
+// newSkipCSRFMiddleware creates a new skipCSRFMiddleware instance
+func newSkipCSRFMiddleware(service ServiceInterface) *skipCSRFMiddleware {
+	return &skipCSRFMiddleware{service: service}
+}
+
+// ServeHTTP as per the negroni.Handler interface
+func (m *skipCSRFMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	r = csrf.UnsafeSkipCheck(r)
 
 	next(w, r)
 }

@@ -3,6 +3,7 @@
 const html = require('choo/html')
 const Component = require('choo/component')
 const Form = require('./generic')
+const icon = require('@resonate/icon-element')
 
 const isEqual = require('is-equal-shallow')
 const logger = require('nanologger')
@@ -10,14 +11,142 @@ const log = logger('form:updateProfile')
 
 const isEmpty = require('validator/lib/isEmpty')
 const isEmail = require('validator/lib/isEmail')
+const isInt = require('validator/lib/isInt')
+const isDivisibleBy = require('validator/lib/isDivisibleBy')
 const validateFormdata = require('validate-formdata')
 const nanostate = require('nanostate')
+const morph = require('nanomorph')
 
 const SwaggerClient = require('swagger-client')
 const CountrySelect = require('../select-country-list')
 const RoleSwitcher = require('./roleSwitcher')
 const inputField = require('../../elements/input-field')
 
+// prices for credits
+const prices = [
+  {
+    amount: 7,
+    credits: 50,
+    hours: 16
+  },
+  {
+    amount: 12,
+    credits: 10,
+    hours: 32
+  },
+  {
+    amount: 22,
+    credits: 20,
+    hours: 64
+  },
+  {
+    amount: 50,
+    credits: 50,
+    hours: 128
+  }
+]
+
+class Credits extends Component {
+  constructor (id, state, emit) {
+    super(id)
+
+    this.emit = emit
+    this.state = state
+
+    this.local = state.components[id] = {}
+
+    this.local.data = {}
+
+    this.validator = validateFormdata()
+    this.local.form = this.validator.state
+  }
+
+  createElement (props = {}) {
+    this.local.form = props.form || this.local.form || this.validator.state
+    this.onchange = props.onchange // optional callback
+
+    return html`
+      <fieldset class="bg-light-gray ba bw b--mid-gray ma0 pa0 pb4 mb2">
+        <legend class="clip">Add credits</legend>
+        <div class="flex">
+          <div class="pa3 flex w-100 flex-auto">
+          </div>
+          <div class="pa3 flex w-100 flex-auto f5 b dark-gray">
+            Cost
+          </div>
+          <div class="pa3 flex w-100 flex-auto f5 b dark-gray">
+            Credits
+          </div>
+          <div class="pa3 flex w-100 flex-auto f5 b dark-gray">
+            ~Listen
+          </div>
+        </div>
+        ${prices.map((item, index) => {
+          const { amount, credits, hours } = item
+          const attrs = {
+            style: 'opacity: 0;width: 0;height: 0;',
+            onchange: (e) => {
+              const val = Number(e.target.value)
+              log.info(`select:${val}`)
+              const index = prices.findIndex((item) => item.amount === val)
+              this.local.data = prices[index]
+
+              typeof this.onchange === 'function' && this.onchange(this.local.data.credits)
+            },
+            tabindex: -1,
+            id: 'amount-' + index,
+            name: 'amount',
+            type: 'radio',
+            checked: amount === this.local.data.amount,
+            value: amount
+          }
+
+          // label attrs
+          const attrs2 = {
+            class: 'flex items-center justify-center w-100 dim',
+            tabindex: 0,
+            onkeypress: e => {
+              if (e.keyCode === 13 && !e.target.control.checked) {
+                e.preventDefault()
+                e.target.control.checked = !e.target.control.checked
+                const val = parseInt(e.target.control.value, 10)
+                const index = prices.findIndex((item) => item.amount === val)
+                this.local.data = prices[index]
+              }
+            },
+            for: 'amount-' + index
+          }
+
+          return html`
+            <div class="flex w-100 flex-auto">
+              <input ${attrs}>
+              <label ${attrs2}>
+                <div class="pa3 flex w-100 items-center justify-center flex-auto">
+                  ${icon('circle', { size: 'sm', class: 'fill-transparent' })}
+                </div>
+                <div class="pa3 flex w-100 flex-auto f3">
+                  €${amount}
+                </div>
+                <div class="pa3 flex w-100 flex-auto f4 dark-gray">
+                  ${credits}
+                </div>
+                <div class="pa3 flex w-100 flex-auto f4 dark-gray">
+                  ${hours}h
+                </div>
+              </label>
+            </div>
+          `
+        })}
+      </fieldset>
+    `
+  }
+
+  update () {
+    return false
+  }
+}
+
+// CheckBox component class
 class CheckBox extends Component {
   constructor (id, state, emit) {
     super(id)
@@ -37,7 +166,11 @@ class CheckBox extends Component {
     this.local.form = props.form || this.local.form || this.validator.state
     this.onchange = props.onchange // optional callback
 
+    this.local.checked = props.value ? 'on' : 'off'
+
     const values = this.local.form.values
+
+    values[props.name] = this.local.checked
 
     const attrs = {
       checked: this.local.checked === 'on' ? 'checked' : false,
@@ -45,7 +178,8 @@ class CheckBox extends Component {
       required: false,
       onchange: (e) => {
         this.local.checked = e.target.checked ? 'on' : 'off'
-        this.rerender()
+        values[props.name] = this.local.checked
+        e.target.setAttribute('checked', e.target.checked ? 'checked' : false)
 
         typeof this.onchange === 'function' && this.onchange(this.local.checked === 'on')
       },
@@ -56,13 +190,95 @@ class CheckBox extends Component {
       type: 'checkbox'
     }
 
+    if (props.disabled) {
+      attrs.disabled = 'disabled'
+    }
+
     return inputField(html`<input ${attrs}>`, this.local.form)({
       prefix: 'flex flex-column mb3',
+      disabled: props.disabled,
       labelText: props.labelText || '',
       labelIconName: 'check',
       inputName: props.name,
+      helpText: props.helpText,
       displayErrors: true
     })
+  }
+
+  update () {
+    return false
+  }
+}
+
+class SharesAmount extends Component {
+  constructor (id, state, emit) {
+    super(id)
+
+    this.emit = emit
+    this.state = state
+
+    this.local = state.components[id] = {}
+
+    this.validator = validateFormdata()
+    this.local.form = this.validator.state
+  }
+
+  createElement (props = {}) {
+    this.local.form = props.form || this.local.form || this.validator.state
+    this.onchange = props.onchange // optional callback
+
+    return inputField(this.renderInput.bind(this)(props), this.local.form)({
+      prefix: 'flex flex-column mb3',
+      disabled: props.disabled,
+      labelText: props.labelText || '',
+      inputName: props.name,
+      flexRow: true,
+      helpText: props.helpText,
+      displayErrors: true
+    })
+  }
+
+  renderInput (props) {
+    const values = this.local.form.values
+
+    values[props.name] = props.value
+
+    const attrs = {
+      id: props.id || props.name,
+      required: false,
+      step: 5,
+      class: 'ba bw b--mid-gray bg-gray mr2 tr',
+      style: 'height:3rem;width:4rem;',
+      min: 0,
+      max: 10000,
+      placeholder: 0,
+      onchange: (e) => {
+        const { value } = e.target
+        if (value > 10000) {
+          this.local.amount = 10000
+        } else if (value < 0) {
+          this.local.amount = 0
+        } else if (value > 0 && value < 5) {
+          this.local.amount = 5 // positive val starts at 5 minimum
+        } else {
+          this.local.amount = Math.round(e.target.value / 5) * 5
+        }
+
+        values[props.name] = this.local.amount
+
+        morph(
+          this.element.querySelector('input[type="number"]'),
+          this.renderInput.bind(this)(Object.assign({}, props, { value: this.local.amount }))
+        )
+
+        typeof this.onchange === 'function' && this.onchange(this.local.amount)
+      },
+      value: values[props.name],
+      name: props.name,
+      type: 'number'
+    }
+
+    return html`<input ${attrs}>`
   }
 
   update () {
@@ -130,8 +346,10 @@ class AccountForm extends Component {
         const payload = {
           email: this.local.data.email || '',
           displayName: this.local.data.displayName || '',
-          membership: this.local.data.member || false,
-          newsletter: this.local.data.newsletter || false
+          membership: this.local.data.member || '',
+          newsletter: this.local.data.newsletterNotification ? 'subscribe' : '',
+          shares: this.local.shares || '',
+          credits: this.local.data.credits || ''
         }
 
         response = await fetch('', {
@@ -155,17 +373,13 @@ class AccountForm extends Component {
 
           this.local.machine.emit('request:resolve')
 
-          if (response.redirected) {
-            window.location.href = response.url
-          }
-
           response = await response.json()
 
           const { data } = response
 
-          if (data.profile_redirection) {
+          if (data.success_redirect_url) {
             setTimeout(() => {
-              window.location = '/web/profile'
+              window.location = data.success_redirect_url
             }, 0)
           }
         }
@@ -207,6 +421,7 @@ class AccountForm extends Component {
 
     this.validator = validateFormdata()
     this.local.form = this.validator.state
+    this.local.shares = 0
   }
 
   createElement (props = {}) {
@@ -315,25 +530,64 @@ class AccountForm extends Component {
               })
             },
             {
+              component: this.state.cache(Credits, 'credits-chooser').render({
+                form: this.local.form,
+                onchange: (value) => {
+                  this.local.data.credits = value
+                }
+              })
+            },
+            {
               component: this.state.cache(CheckBox, 'membership').render({
                 id: 'membership',
                 name: 'membership',
+                value: this.local.data.member,
+                disabled: this.local.data.member, // already member
                 form: this.local.form,
                 labelText: html`
                   <dl>
-                    <dt class="f5">Become a member?</dt>
-                    <dd class="f6 ma0">5 Euros a year (listener) / Membership is free for artists (and label owners)</dd>
+                    <dt class="f5">${this.local.data.member ? 'You are a member' : 'Become a member?'}</dt>
+                    <dd class="f6 ma0">
+                      ${this.local.data.member
+                        ? 'Your membership is currently valid until: xxx'
+                        : '5 Euros a year (listener) / Membership is free for artists (and label owners)'
+                      }
+                    </dd>
                   </dl>
                 `,
+                helpText: this.local.data.member
+                  ? html`
+                    <a class="link dim" href="/membership">Access your membership details</a>
+                  `
+                  : '',
                 onchange: (value) => {
                   this.local.data.member = value
                 }
               })
             },
             {
+              component: this.state.cache(SharesAmount, 'shares-amount').render({
+                id: 'shares',
+                name: 'shares',
+                labelText: html`
+                  <dl>
+                    <dt class="f5">Buy supporter shares</dt>
+                    <dd class="f6 ma0">
+                      1 Euro per share
+                    </dd>
+                  </dl>
+                `,
+                form: this.local.form,
+                onchange: (value) => {
+                  this.local.shares = value
+                }
+              })
+            },
+            {
               component: this.state.cache(CheckBox, 'newsletter-notification').render({
-                id: 'newsletter',
-                name: 'newsletter',
+                id: 'newsletterNotification',
+                name: 'newsletterNotification',
+                value: this.local.data.newsletterNotification,
                 form: this.local.form,
                 labelText: html`
                   <dl>
@@ -342,7 +596,7 @@ class AccountForm extends Component {
                   </dl>
                 `,
                 onchange: (value) => {
-                  this.local.data.newsletter = value
+                  this.local.data.newsletterNotification = value
                 }
               })
             }
@@ -377,6 +631,10 @@ class AccountForm extends Component {
     })
     this.validator.field('displayName', { required: true }, (data) => {
       if (isEmpty(data)) return new Error('Name is required')
+    })
+    this.validator.field('shares', { required: false }, (data) => {
+      if (!isInt(data, { min: 0, max: 10000 })) return new Error('Invalid shares amount')
+      if (!isDivisibleBy(data, 5)) return new Error('Invalid shares amount')
     })
     // this.validator.field('fullName', { required: false }, (data) => {
     //   if (isEmpty(data)) return new Error('Full name is required')

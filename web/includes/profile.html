@@ -1,6 +1,20 @@
 {{ define "title"}}Create your profile{{ end }}
 
 {{ define "content" }}
+{{ if .profile.Usergroups }}
+{{ $banner := (index .profile.Usergroups 0).Banner }}
+{{ if ne $banner "00000000-0000-0000-0000-000000000000" }}
+<!--<div class="flex flex-column flex-auto sticky top-0" style="z-index:-1;">
+  <figure class="ma0 db aspect-ratio aspect-ratio--110x26 bg-dark-gray" style="padding-bottom: calc(23.6364%);">
+    <span role="img" style="background:url({{ .staticURL }}/images/{{ $banner }}-x1250.jpg) center no-repeat" class="aspect-ratio--object cover"></span>
+    <figcaption class="clip">
+      {{ .profile.DisplayName }}
+    </figcaption>
+  </figure>
+</div>
+-->
+{{ end }}
+{{ end }}
 <div id="app">
   <main class="flex flex-auto relative min-vh-100">
     <div class="flex flex-column flex-auto w-100">

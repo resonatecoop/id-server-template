@@ -118,8 +118,6 @@ func loadTemplates() {
 			"./web/includes/membership.html",
 			"./web/includes/profile.html",
 			"./web/includes/checkout.html",
-			"./web/includes/checkout_cancel.html",
-			"./web/includes/checkout_success.html",
 		},
 	}
 

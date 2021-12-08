@@ -162,7 +162,7 @@ func (s *Service) ConfirmUserEmail(email string) error {
 }
 
 // GrantMemberStatus
-func (s *Service) GrantMemberStatus(email string) error {
+func (s *Service) GrantMemberStatus(email string, status bool) error {
 	ctx := context.Background()
 	user, err := s.FindUserByUsername(email)
 
@@ -172,25 +172,7 @@ func (s *Service) GrantMemberStatus(email string) error {
 
 	_, err = s.db.NewUpdate().
 		Model(user).
-		Set("member = ?", true).
-		WherePK().
-		Exec(ctx)
-
-	return err
-}
-
-// TerminateMemberStatus
-func (s *Service) TerminateMemberStatus(email string) error {
-	ctx := context.Background()
-	user, err := s.FindUserByUsername(email)
-
-	if err != nil {
-		return err
-	}
-
-	_, err = s.db.NewUpdate().
-		Model(user).
-		Set("member = ?", false).
+		Set("member = ?", status).
 		WherePK().
 		Exec(ctx)
 

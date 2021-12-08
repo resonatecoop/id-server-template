@@ -280,10 +280,10 @@ func (s *Service) GetRoutes() []routes.Route {
 			},
 		},
 		{
-			Name:        "checkout_success_form",
+			Name:        "checkout_success",
 			Method:      "GET",
 			Pattern:     "/checkout/success",
-			HandlerFunc: s.checkoutSuccessForm,
+			HandlerFunc: s.checkoutSuccess,
 			Middlewares: []negroni.Handler{
 				new(parseFormMiddleware),
 				newLoggedInMiddleware(s),
@@ -294,7 +294,7 @@ func (s *Service) GetRoutes() []routes.Route {
 			Name:        "checkout_cancel_form",
 			Method:      "GET",
 			Pattern:     "/checkout/cancel",
-			HandlerFunc: s.checkoutCancelForm,
+			HandlerFunc: s.checkoutCancel,
 			Middlewares: []negroni.Handler{
 				new(parseFormMiddleware),
 				newLoggedInMiddleware(s),

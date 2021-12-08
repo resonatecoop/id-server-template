@@ -1,13 +1,6 @@
-/* global fetch */
-
 const html = require('choo/html')
-
 const icon = require('@resonate/icon-element')
-// const Dialog = require('@resonate/dialog-component')
-// const Button = require('@resonate/button-component')
-
 const UpdateProfileForm = require('../components/forms/profile')
-// const UpdatePasswordForm = require('../components/forms/passwordUpdate')
 
 /**
  * Account settings

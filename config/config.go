@@ -60,11 +60,15 @@ type StripeConfig struct {
 	Domain               string
 	Token                string
 	Secret               string
-	Products             []Product
 	WebHookSecret        string
 	ListenerSubscription Product
 	SupporterShares      Product
-	MusicMakerMembership Product
+	ArtistMembership     Product
+	LabelMembership      Product
+	StreamCredit50       Product
+	StreamCredit20       Product
+	StreamCredit10       Product
+	StreamCredit5        Product
 }
 
 // Config stores all configuration options

@@ -1,5 +1,5 @@
 const html = require('choo/html')
-const ProfileForm = require('../../components/forms/basic-info')
+const ProfileForm = require('../components/forms/basic-info')
 
 /**
  * Render view for artist, label and other profile forms
@@ -8,7 +8,7 @@ const ProfileForm = require('../../components/forms/basic-info')
  */
 module.exports = (state, emit) => {
   return html`
-    <div class="flex flex-column flex-auto">
+    <div class="flex flex-column flex-auto min-vh-100">
       ${state.cache(ProfileForm, 'profile-form').render({
         profile: state.profile || {}
       })}

@@ -64,6 +64,22 @@ var Cnf = &Config{
 		Domain:        "id.resonate.coop",
 		Secret:        "sk_test_xxx",
 		Token:         "pk_test_xxx",
+		StreamCredit5: Product{
+			ID:      "",
+			PriceID: "price_xx",
+		},
+		StreamCredit10: Product{
+			ID:      "",
+			PriceID: "price_xx",
+		},
+		StreamCredit20: Product{
+			ID:      "",
+			PriceID: "price_xx",
+		},
+		StreamCredit50: Product{
+			ID:      "",
+			PriceID: "price_xx",
+		},
 		ListenerSubscription: Product{
 			ID:       "",
 			PriceID:  "price_xx",
@@ -74,7 +90,12 @@ var Cnf = &Config{
 			PriceID:  "price_xx",
 			Quantity: int64(0),
 		},
-		MusicMakerMembership: Product{
+		ArtistMembership: Product{
+			ID:       "",
+			PriceID:  "price_xx",
+			Quantity: int64(1),
+		},
+		LabelMembership: Product{
 			ID:       "",
 			PriceID:  "price_xx",
 			Quantity: int64(1),

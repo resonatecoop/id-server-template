@@ -52,6 +52,10 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 		userSession,
 		isUserAccountComplete,
 		usergroups.Usergroup,
+		nil,
+		nil,
+		nil,
+		"",
 	))
 
 	if err != nil {

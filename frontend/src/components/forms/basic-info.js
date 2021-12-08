@@ -4,7 +4,6 @@ const nanostate = require('nanostate')
 const isEmpty = require('validator/lib/isEmpty')
 const isLength = require('validator/lib/isLength')
 const isUUID = require('validator/lib/isUUID')
-// const isEmail = require('validator/lib/isEmail')
 const validateFormdata = require('validate-formdata')
 const icon = require('@resonate/icon-element')
 const morph = require('nanomorph')
@@ -14,12 +13,8 @@ const input = require('@resonate/input-element')
 const textarea = require('@resonate/textarea-element')
 const messages = require('./messages')
 
-const button = require('@resonate/button')
-const Dialog = require('@resonate/dialog-component')
 const Uploader = require('../image-upload')
 const AutocompleteTypeahead = require('../autocomplete-typeahead')
-// const Links = require('../links-input')
-// const Tags = require('../tags-input')
 
 const imagePlaceholder = require('../../lib/image-placeholder')
 const inputField = require('../../elements/input-field')
@@ -235,7 +230,7 @@ class ProfileForm extends Component {
       // try find usergroup by id first
       if (usergroupID) return usergroup.id === usergroupID
       // fallback to persona or label groupType
-      return usergroup.groupType === 'persona'
+      return usergroup
     }) || {
       // fallback to older profile data for returning members
       displayName: profile.nickname,
@@ -516,6 +511,7 @@ class ProfileForm extends Component {
         const labelOpts = {
           labelText: 'Profile picture',
           labelPrefix: 'f4 fw1 db mb2',
+          columnReverse: true,
           inputName: 'profile-picture',
           displayErrors: true
         }
@@ -568,6 +564,7 @@ class ProfileForm extends Component {
         const labelOpts = {
           labelText: 'Header image',
           labelPrefix: 'f4 fw1 db mb2',
+          columnReverse: true,
           inputName: 'header-image',
           displayErrors: true
         }
@@ -672,7 +669,13 @@ class ProfileForm extends Component {
       */
     }
 
-    return this.renderForm(`Create your ${this.local.role ? `${this.local.role} ` : ''}profile`, elements)
+    const role = {
+      user: 'Listener',
+      artist: 'Artist',
+      label: 'Label'
+    }[this.local.role]
+
+    return this.renderForm(`Create your ${this.local.role ? `${role} ` : ''}profile`, elements)
   }
 
   /*
@@ -681,7 +684,7 @@ class ProfileForm extends Component {
   renderCustomInfoForm () {
     const elements = {
       /**
-       * Links for user (artist|label)
+       * Add artists to profile
        * @param {Object} validator Form data validator
        * @param {Object} form Form data object
        */
@@ -694,100 +697,17 @@ class ProfileForm extends Component {
           title: 'Artists',
           eachItem: function (item, index) {
             return html`
-              <div onclick=${(e) => {
-                e.preventDefault()
-
-                const validator = validateFormdata()
-                const form = validator.state
-
-                validator.field('displayName', (data) => {
-                  if (isEmpty(data)) return new Error('Display name is required')
-                })
-
-                validator.field('role', (data) => {
-                  if (isEmpty(data)) return new Error('Role is required')
-                })
-
-                const pristine = form.pristine
-                const errors = form.errors
-                const values = form.values
-
-                const dialogEl = this.state.cache(Dialog, 'member-role').render({
-                  title: 'Set member display name and role',
-                  onClose: function (e) {
-                    e.preventDefault()
-
-                    for (const field of e.target.elements) {
-                      const isRequired = field.required
-                      const name = field.name || ''
-                      const value = field.value || ''
-
-                      if (isRequired) {
-                        validator.validate(name, value)
-                      }
-                    }
-
-                    morph(this.element.querySelector('.content'), this.content())
-
-                    if (this.local.form.valid) {
-                      this.close()
-                    }
-                  },
-                  content: html`
-                    <div class="content flex flex-column">
-                      <p class="ph1">${item}</p>
-
-                      <div class="mb2">
-                        <label for="displayName" class="f6">Display Name</label>
-                        ${input({
-                          type: 'text',
-                          name: 'displayName',
-                          invalid: errors.displayName && !pristine.displayName,
-                          required: 'required',
-                          value: values.displayName,
-                          onchange: (e) => {
-                            validator.validate(e.target.name, e.target.value)
-                            // morph(this.element.querySelector('.content'), content())
-                          }
-                        })}
-                        <p class="ma0 pa0 message warning">${errors.displayName && !pristine.displayName ? errors.displayName.message : ''}</p>
-                      </div>
-
-                      <div class="mb2">
-                        <label for="role" class="f6">Role</label>
-                        ${input({
-                          type: 'text',
-                          name: 'role',
-                          required: 'required',
-                          placeholder: 'E.g.Bass Guitar',
-                          invalid: errors.role && !pristine.role,
-                          value: values.role,
-                          onchange: (e) => {
-                            validator.validate(e.target.name, e.target.value)
-                            // morph(this.element.querySelector('.content'), content())
-                          }
-                        })}
-                        <p class="ma0 pa0 message warning">${errors.role && !pristine.role ? errors.role.message : ''}</p>
-                      </div>
-
-                      <div class="flex">
-                        ${button({ type: 'submit', text: 'Continue' })}
-                      </div>
-                    </div>
-                  `
-                })
-
-                document.body.appendChild(dialogEl)
-              }}>
-              ${item}
-            </div>`
+              <div>
+                ${item}
+              </div>
+            `
           },
           placeholder: 'Members name',
-          items: ['AGF']
+          items: ['Item 1', 'Item 2']
         })
 
         const labelOpts = {
-          labelText: 'Artists',
+          labelText: 'Add artists to be featured in your label profile and on the player.',
           inputName: 'artists'
         }
 
@@ -806,11 +726,12 @@ class ProfileForm extends Component {
   renderRecap () {
     return html`
       <div class="base-form flex flex-column">
-        <div>
-          ${this.renderBackButton.bind(this)()}
-        </div>
-        <div class="flex flex-auto flex-column center mw6 w-auto-l">
-          <p class="lh-copy fw1 f4">Thank you for completing your profile!</p>
+        <div class="flex flex-auto flex-column center mw6 w-auto-l ph3">
+          <h2 class="lh-title fw1 f2">Thank you for completing your profile!</h2>
+
+          <p>
+            <a style="outline:solid 1px var(--near-black);outline-offset:-1px" class="link bg-white near-black b pv3 ph5 flex-shrink-0 f5" href="${process.env.APP_HOST}/api/v2/user/connect/resonate">Listen</a>
+          </p>
         </div>
       </div>
     `
@@ -849,7 +770,7 @@ class ProfileForm extends Component {
         if (!this.local.usergroup.id) return
 
         this.local.usergroup.groupType = groupType
-        this.local.usergroups = this.local.usergroups.map((usergroup) => {
+        this.local.profile.usergroups = this.local.profile.usergroups.map((usergroup) => {
           if (usergroup.id === this.local.usergroup.id) {
             usergroup.groupType = groupType
           }
@@ -912,12 +833,14 @@ class ProfileForm extends Component {
         <div class=${this.local.sticky ? 'sticky z-2' : ''} style=${this.local.sticky ? 'top:3rem' : ''}>
           ${this.renderProfileSwitcher.bind(this)()}
         </div>
-        <div class="flex flex-auto flex-column center mw6 w-auto-l">
-          <div>
+        <div class="flex flex-auto flex-column center mw6 w-auto-l ph3">
+          ${messages(this.state, this.local.form)}
+          <div class="relative flex items-center">
+            <h2 class="lh-title f3 fw1">
+              ${title}
+            </h2>
             ${this.renderBackButton.bind(this)()}
           </div>
-          ${messages(this.state, this.local.form)}
-          <h2 class="lh-title f3 fw1 mb5">${title}</h2>
           <div>
             ${this.renderRoleSwitcher.bind(this)()}
           </div>
@@ -939,8 +862,8 @@ class ProfileForm extends Component {
     if (this.local.machine.state.machine === 'basicInfo') return
 
     const attrs = {
-      class: 'bg-white near-black dib bn b pv3 ph5 flex-shrink-0 f5 grow',
-      style: 'outline:solid 1px var(--near-black);outline-offset:-1px',
+      class: 'bg-white dib bn b flex-shrink-0 grow absolute',
+      style: 'top: 50%;left:-1rem;transform: translate3d(-100%, -50%, 0)',
       onclick: (e) => {
         e.preventDefault()
 
