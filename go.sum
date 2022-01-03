@@ -701,6 +701,8 @@ github.com/resonatecoop/user-api v0.0.0-20211116113902-5bb9dee7abea h1:w+p4095Q6
 github.com/resonatecoop/user-api v0.0.0-20211116113902-5bb9dee7abea/go.mod h1:GJvmzPEXo5vOtnjJUrCfHKLMwQopEDKHfp/n+vyqoOk=
 github.com/resonatecoop/user-api v1.0.0-3 h1:vioBcCODZrQdSv3KSevvuePS8ZfRfszGvwGFPejHMb4=
 github.com/resonatecoop/user-api v1.0.0-3/go.mod h1:GJvmzPEXo5vOtnjJUrCfHKLMwQopEDKHfp/n+vyqoOk=
+github.com/resonatecoop/user-api v1.0.0-4 h1:Wdwgdblan0J/iwX3tZxAWKe0t56vLHXwd8p5TDfxytQ=
+github.com/resonatecoop/user-api v1.0.0-4/go.mod h1:GJvmzPEXo5vOtnjJUrCfHKLMwQopEDKHfp/n+vyqoOk=
 github.com/resonatecoop/user-api-client v0.0.0-20211122175920-46d64affcc6f h1:e8Q3YQdVfho/WpU6/5MnUylNQBasjYeQ2PElrwo8tnI=
 github.com/resonatecoop/user-api-client v0.0.0-20211122175920-46d64affcc6f/go.mod h1:ViOCepauseeb3gH5PsdgR/Qj3zGTNyEdSX1L/6RpDh4=
 github.com/resonatecoop/user-api-client v0.0.0-20211208125639-09593c2f55ba h1:xqaG2PhIwHresB926BqsI/WVYn4NcDhpaLlWaTCIACg=

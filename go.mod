@@ -30,7 +30,7 @@ require (
 	github.com/pariz/gountries v0.0.0-20200430155801-1c6a393df9c7
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/phyber/negroni-gzip v1.0.0
-	github.com/resonatecoop/user-api v1.0.0-3
+	github.com/resonatecoop/user-api v1.0.0-4
 	github.com/resonatecoop/user-api-client v0.0.0-20211208125639-09593c2f55ba
 	github.com/rs/xid v1.3.0
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
