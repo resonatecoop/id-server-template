@@ -162,7 +162,8 @@ func (s *Service) createUser(r *http.Request) (
 
 	if err != nil {
 		if casted, ok := err.(*users.ResonateUserAddUserDefault); ok {
-			return nil, casted
+			err = errors.New(casted.Payload.Message)
+			return nil, err
 		}
 	}
 
