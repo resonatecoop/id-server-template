@@ -114,6 +114,15 @@
               </div>
             </li>
             <li class="bb bw b--mid-gray b--mid-gray--light b--near-black--dark mv3" role="separator"></li>
+            <li class="flex items-center ph3" role="menuitem">
+              <div class="flex flex-column">
+                <label for="credits">Credits</label>
+                <input disabled tabindex="-1" name="credits" type="number" value="{{ .profile.Credits }}" readonly class="bn br0 bg-transparent b">
+              </Div>
+              <div class="flex flex-auto justify-end">
+              </div>
+            </li>
+            <li class="bb bw b--mid-gray b--mid-gray--light b--near-black--dark mt3 mb2" role="separator"></li>
             <li role="menuitem" class="mb1">
               <a href="../web/account{{ .queryString }}" class="link db pv2 pl3">Update your account</a>
             </li>

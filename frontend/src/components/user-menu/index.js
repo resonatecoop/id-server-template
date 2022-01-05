@@ -1,12 +1,8 @@
 const Nanocomponent = require('nanocomponent')
 const html = require('nanohtml')
-const icon = require('@resonate/icon-element')
 const Dialog = require('@resonate/dialog-component')
 const button = require('@resonate/button')
 const nanostate = require('nanostate')
-const { getAPIServiceClientWithAuth } = require('@resonate/api-service')({
-  apiHost: process.env.APP_HOST
-})
 const imagePlaceholder = require('../../lib/image-placeholder')
 
 // UserMenu class
@@ -108,7 +104,7 @@ class UserMenu extends Nanocomponent {
         <li class="flex items-center ph3" role="menuitem">
           <div class="flex flex-column">
             <label for="credits">Credits</label>
-            <input disabled tabindex="-1" name="credits" type="number" value=${this.local.credits} readonly class="bn br0 bg-transparent b ${this.local.credits < 0.128 ? 'red' : ''}">
+            <input disabled tabindex="-1" name="credits" type="number" value=${this.state.profile.credits} readonly class="bn br0 bg-transparent b ${this.state.profile.credits < 0.128 ? 'red' : ''}">
           </Div>
           <div class="flex flex-auto justify-end">
           </div>
@@ -140,26 +136,6 @@ class UserMenu extends Nanocomponent {
           </li>
       </ul>
     `
-  }
-
-  async load (el) {
-    try {
-      // get v2 api profile
-      // TODO remove this when we can get credits from id server backend
-      const getClient = getAPIServiceClientWithAuth(this.state.token)
-      const client = await getClient('profile')
-      const result = await client.getUserProfile()
-
-      const { body: response } = result
-      const { data: userdata } = response
-
-      this.local.credits = userdata.credits
-
-      this.rerender()
-    } catch (err) {
-      console.log(err.message)
-      console.log(err)
-    }
   }
 }
 

@@ -80,7 +80,7 @@ func (s *Service) NewMembership(subscription *stripe.Subscription) Membership {
 
 // membershipForm
 func (s *Service) membershipForm(w http.ResponseWriter, r *http.Request) {
-	sessionService, client, user, isUserAccountComplete, userSession, err := s.profileCommon(r)
+	sessionService, client, user, isUserAccountComplete, credits, userSession, err := s.profileCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -238,6 +238,7 @@ func (s *Service) membershipForm(w http.ResponseWriter, r *http.Request) {
 		user,
 		userSession,
 		isUserAccountComplete,
+		credits,
 		usergroups.Usergroup,
 		memberships,
 		shares,

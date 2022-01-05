@@ -35,7 +35,7 @@ func (*Service) NewProduct(p *stripe.Product, quantity int64) Product {
 }
 
 func (s *Service) checkoutForm(w http.ResponseWriter, r *http.Request) {
-	sessionService, client, user, isUserAccountComplete, userSession, err := s.profileCommon(r)
+	sessionService, client, user, isUserAccountComplete, credits, userSession, err := s.profileCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -127,6 +127,7 @@ func (s *Service) checkoutForm(w http.ResponseWriter, r *http.Request) {
 		user,
 		userSession,
 		isUserAccountComplete,
+		credits,
 		usergroups.Usergroup,
 		nil,
 		nil,
@@ -179,7 +180,7 @@ func (s *Service) checkoutForm(w http.ResponseWriter, r *http.Request) {
 
 // checkoutSuccess
 func (s *Service) checkoutSuccess(w http.ResponseWriter, r *http.Request) {
-	sessionService, _, _, _, _, err := s.profileCommon(r)
+	sessionService, _, _, _, _, _, err := s.profileCommon(r)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -310,7 +311,7 @@ func (s *Service) checkoutSuccess(w http.ResponseWriter, r *http.Request) {
 
 // checkoutCancel
 func (s *Service) checkoutCancel(w http.ResponseWriter, r *http.Request) {
-	sessionService, _, _, _, _, err := s.profileCommon(r)
+	sessionService, _, _, _, _, _, err := s.profileCommon(r)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -429,7 +430,7 @@ func (s *Service) checkoutCancel(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) checkout(w http.ResponseWriter, r *http.Request) {
-	sessionService, _, user, _, _, err := s.profileCommon(r)
+	sessionService, _, user, _, _, _, err := s.profileCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

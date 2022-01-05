@@ -13,6 +13,7 @@ type Profile struct {
 	LegacyID               int32                                  `json:"legacyID"`
 	DisplayName            string                                 `json:"displayName"`
 	Email                  string                                 `json:"email"`
+	Credits                string                                 `json:"credits"`
 	FullName               string                                 `json:"fullName"`
 	FirstName              string                                 `json:"firstName"`
 	LastName               string                                 `json:"lastName"`
@@ -43,6 +44,7 @@ func NewInitialState(
 	user *model.User,
 	userSession *session.UserSession,
 	isUserAccountComplete bool,
+	credits string,
 	usergroups []*models.UserUserGroupPrivateResponse,
 	memberships []Membership,
 	shares []Share,
@@ -68,6 +70,7 @@ func NewInitialState(
 		FullName:               user.FullName,
 		FirstName:              user.FirstName,
 		LastName:               user.LastName,
+		Credits:                credits,
 		Country:                user.Country,
 		NewsletterNotification: user.NewsletterNotification,
 		EmailConfirmed:         user.EmailConfirmed,

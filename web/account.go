@@ -17,13 +17,14 @@ import (
 	"github.com/resonatecoop/user-api/model"
 
 	"github.com/resonatecoop/user-api-client/client/usergroups"
+	"github.com/resonatecoop/user-api-client/client/users"
 	"github.com/resonatecoop/user-api-client/models"
 
 	httptransport "github.com/go-openapi/runtime/client"
 )
 
 func (s *Service) accountForm(w http.ResponseWriter, r *http.Request) {
-	sessionService, client, user, isUserAccountComplete, userSession, err := s.profileCommon(r)
+	sessionService, client, user, isUserAccountComplete, credits, userSession, err := s.profileCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -47,6 +48,7 @@ func (s *Service) accountForm(w http.ResponseWriter, r *http.Request) {
 		user,
 		userSession,
 		isUserAccountComplete,
+		credits,
 		usergroups.Usergroup,
 		nil,
 		nil,
@@ -71,6 +73,7 @@ func (s *Service) accountForm(w http.ResponseWriter, r *http.Request) {
 		FullName:               user.FullName,
 		FirstName:              user.FirstName,
 		LastName:               user.LastName,
+		Credits:                credits,
 		Member:                 user.Member,
 		Country:                user.Country,
 		NewsletterNotification: user.NewsletterNotification,
@@ -103,7 +106,7 @@ func (s *Service) accountForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) account(w http.ResponseWriter, r *http.Request) {
-	sessionService, _, user, isUserAccountComplete, userSession, err := s.profileCommon(r)
+	sessionService, _, user, isUserAccountComplete, _, userSession, err := s.profileCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -363,6 +366,29 @@ func (s *Service) account(w http.ResponseWriter, r *http.Request) {
 
 	redirectWithQueryString(redirectURI, query, w, r)
 	return
+}
+
+func (s *Service) getUserCredits(user *model.User, accessToken string) (
+	*models.UserUserCreditResponse,
+	error,
+) {
+	client := config.NewAPIClient(s.cnf.UserAPIHostname, s.cnf.UserAPIPort)
+
+	bearer := httptransport.BearerToken(accessToken)
+
+	params := users.NewResonateUserGetUserCreditsParams()
+
+	params.WithID(user.ID.String())
+
+	result, err := client.Users.ResonateUserGetUserCredits(params, bearer)
+
+	if err != nil {
+		if casted, ok := err.(*usergroups.ResonateUserListUsersUserGroupsDefault); ok {
+			return nil, casted
+		}
+	}
+
+	return result.Payload, err
 }
 
 func (s *Service) getUserGroupList(user *model.User, accessToken string) (
