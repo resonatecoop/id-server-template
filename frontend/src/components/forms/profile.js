@@ -25,23 +25,28 @@ const inputField = require('../../elements/input-field')
 // prices for credits
 const prices = [
   {
+    amount: 0,
+    credits: 128,
+    hours: 4
+  },
+  {
     amount: 7,
-    credits: 50,
+    credits: 5000,
     hours: 16
   },
   {
     amount: 12,
-    credits: 10,
+    credits: 10000,
     hours: 32
   },
   {
     amount: 22,
-    credits: 20,
+    credits: 20000,
     hours: 64
   },
   {
     amount: 50,
-    credits: 50,
+    credits: 50000,
     hours: 128
   }
 ]
@@ -91,7 +96,7 @@ class Credits extends Component {
               const index = prices.findIndex((item) => item.amount === val)
               this.local.data = prices[index]
 
-              typeof this.onchange === 'function' && this.onchange(this.local.data.credits)
+              typeof this.onchange === 'function' && this.onchange(this.local.credits)
             },
             tabindex: -1,
             id: 'amount-' + index,
@@ -128,7 +133,7 @@ class Credits extends Component {
                   €${amount}
                 </div>
                 <div class="pa3 flex w-100 flex-auto f4 dark-gray">
-                  ${credits}
+                  ${formatCredit(credits)}
                 </div>
                 <div class="pa3 flex w-100 flex-auto f4 dark-gray">
                   ${hours}h
@@ -349,7 +354,7 @@ class AccountForm extends Component {
           membership: this.local.data.member || '',
           newsletter: this.local.data.newsletterNotification ? 'subscribe' : '',
           shares: this.local.shares || '',
-          credits: this.local.data.credits || ''
+          credits: this.local.credits || ''
         }
 
         response = await fetch('', {
@@ -533,7 +538,7 @@ class AccountForm extends Component {
               component: this.state.cache(Credits, 'credits-chooser').render({
                 form: this.local.form,
                 onchange: (value) => {
-                  this.local.data.credits = value
+                  this.local.credits = value
                 }
               })
             },
@@ -654,6 +659,10 @@ class AccountForm extends Component {
     }
     return false
   }
+}
+
+function formatCredit (tokens) {
+  return (tokens / 1000).toFixed(4)
 }
 
 module.exports = AccountForm
