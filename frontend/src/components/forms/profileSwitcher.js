@@ -58,69 +58,84 @@ class ProfileSwitcher extends Component {
   renderItems () {
     const length = this.local.items.length
 
+    const attrs = {
+      method: 'POST',
+      onsubmit: (e) => {
+        e.preventDefault()
+
+        this.onChangeCallback()
+      },
+      novalidate: 'novalidate',
+      action: '/'
+    }
+
     return html`
-      <div class="items overflow-x-auto overflow-y-hidden bg-light-gray bw bb b--mid-gray">
-        <div class="cf flex${length <= 3 ? ' justify-center' : ''}">
-          ${this.local.items.map((item, index) => {
-            const { value, name, avatar } = item
+      <form ${attrs}>
+        <div class="items overflow-x-auto overflow-y-hidden bg-light-gray bw bb b--mid-gray">
+          <div class="cf flex${length <= 3 ? ' justify-center' : ''}">
+            ${this.local.items.map((item, index) => {
+              const { value, name, avatar } = item
 
-            const id = 'usergroup-item-' + index
-            const length = this.local.items.length
-            const checked = value === this.local.value
+              const id = 'usergroup-item-' + index
+              const checked = value === this.local.value
 
-            // input attrs
-            const attrs = {
-              onchange: this.updateSelection,
-              id: id,
-              tabindex: -1,
-              name: 'usergroup',
-              type: 'radio',
-              disabled: length <= 1 ? 'disabled' : false,
-              checked: checked,
-              value: value
-            }
+              // input attrs
+              const attrs = {
+                onchange: this.updateSelection,
+                id: id,
+                tabindex: -1,
+                name: 'usergroup',
+                type: 'radio',
+                checked: checked,
+                value: value
+              }
 
-            // label attrs
-            const attrs2 = {
-              class: 'flex flex-column fw4',
-              style: 'outline:solid 1px var(--near-black);outline-offset:0px',
-              tabindex: '0',
-              title: 'Select profile',
-              onkeypress: this.handleKeyPress,
-              for: id
-            }
+              // label attrs
+              const attrs2 = {
+                class: 'flex flex-column fw4',
+                style: 'outline:solid 1px var(--near-black);outline-offset:0px',
+                tabindex: '0',
+                title: 'Select profile',
+                onkeypress: this.handleKeyPress,
+                for: id
+              }
 
-            const src = avatar !== NIL_UUID
-              ? `https://${process.env.STATIC_HOSTNAME}/images/${avatar}-x300.jpg`
-              : imagePlaceholder(400, 400)
+              const src = avatar !== NIL_UUID
+                ? `https://${process.env.STATIC_HOSTNAME}/images/${avatar}-x300.jpg`
+                : imagePlaceholder(400, 400)
 
-            // item background attrs
-            const attrs3 = {
-              class: 'flex items-end pb2 aspect-ratio--object z-1',
-              style: `background: url(${src}) center center / cover no-repeat;`
-            }
+              // item background attrs
+              const attrs3 = {
+                class: 'flex items-end pb2 aspect-ratio--object z-1',
+                style: `background: url(${src}) center center / cover no-repeat;`
+              }
 
-            return html`
-              <div class="fl flex flex-column justify-center flex-shrink-0 w4 pt2 pb4 ph3${length > 1 ? ' grow' : ''}">
-                <input ${attrs}>
-                <label ${attrs2}>
-                  <div class="aspect-ratio aspect-ratio--1x1">
-                    <div ${attrs3}>
-                      ${length > 1
-                        ? html`
-                          <div class="flex flex-shrink-0 justify-center items-center ml2">
-                            ${icon('circle', { size: 'sm', class: 'fill-transparent' })}
-                          </div>`
-                        : ''}
-                      <span class="absolute truncate w-100 f5 bottom-0${checked ? ' b' : ''}" style="transform:translateY(100%)">${name}</span>
+              return html`
+                <div class="fl flex flex-column justify-center flex-shrink-0 w4 pt2 pb4 ph3">
+                  <input ${attrs}>
+                  <label ${attrs2}>
+                    <div class="aspect-ratio aspect-ratio--1x1">
+                      <div ${attrs3}>
+                        <div class="flex flex-shrink-0 justify-center items-center ml2">
+                          ${icon('circle', { size: 'sm', class: 'fill-transparent' })}
+                        </div>
+                        <span class="absolute truncate w-100 f5 bottom-0${checked ? ' b' : ''}" style="transform:translateY(100%)">${name}</span>
+                      </div>
                     </div>
-                  </div>
-                </label>
-              </div>
-            `
-          })}
+                  </label>
+                </div>
+              `
+            })}
+            <div class="fl flex justify-center items-center flex-shrink-0 w4">
+              <button type="submit" class="bg-white ba b--mid-gray br-pill w3 h3 mb3 grow">
+                <div class="flex items-center justify-center">
+                  ${icon('add', { size: 'sm' })}
+                </div>
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
+      </form>
     `
   }
 

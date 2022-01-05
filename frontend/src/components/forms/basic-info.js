@@ -112,10 +112,13 @@ class ProfileForm extends Component {
           })
         }
 
+        this.local.machine.emit('machine:end')
+
         this.local.machine.emit('request:resolve')
       } catch (err) {
         this.local.machine.emit('request:reject')
         console.log(err)
+        this.emit('notify', { message: `ERR${err.response.body.code}: Display name is taken` })
       } finally {
         this.local.machine.emit('form:reset')
       }
@@ -203,7 +206,11 @@ class ProfileForm extends Component {
 
     // initial persona
     if (!this.local.usergroup.id) {
-      this.setUsergroup()
+      if (this.local.profile.usergroups.length) {
+        this.setUsergroup(this.local.profile.usergroups[0].id)
+      } else {
+        this.setUsergroup()
+      }
     }
 
     const machine = {
@@ -224,32 +231,36 @@ class ProfileForm extends Component {
    */
   setUsergroup (usergroupID) {
     const profile = Object.assign({}, this.local.profile)
-
     const avatar = profile.avatar || {}
-    const usergroup = profile.usergroups.find(usergroup => {
-      // try find usergroup by id first
-      if (usergroupID) return usergroup.id === usergroupID
-      // fallback to persona or label groupType
-      return usergroup
-    }) || {
-      // fallback to older profile data for returning members
-      displayName: profile.nickname,
-      description: profile.description || '',
-      avatar: avatar['profile_photo-m'] || avatar['profile_photo-l'] || imagePlaceholder(400, 400)
-    }
 
-    if (usergroup.id) {
+    if (usergroupID) {
+      const usergroup = profile.usergroups.find(usergroup => {
+        if (usergroupID) return usergroup.id === usergroupID
+        return false
+      }) || {
+        // fallback to older profile data for returning members
+        displayName: profile.nickname,
+        description: profile.description || '',
+        avatar: avatar['profile_photo-m'] || avatar['profile_photo-l'] || imagePlaceholder(400, 400)
+      }
+
       this.local.groupType = usergroup.groupType
       this.local.data.banner = usergroup.banner
       this.local.data.avatar = usergroup.avatar
       this.local.data.address = usergroup.address
       this.local.data.shortBio = usergroup.shortBio
+
+      this.local.data.description = usergroup.description
+      this.local.data.displayName = usergroup.displayName
+
+      this.local.usergroup = usergroup
+    } else {
+      this.local.usergroup = {}
+      this.local.data = {}
+      this.local.form.values.displayName = ''
+      this.local.form.values.description = ''
+      this.local.form.values.shortBio = ''
     }
-
-    this.local.data.description = usergroup.description
-    this.local.data.displayName = usergroup.displayName
-
-    this.local.usergroup = usergroup
   }
 
   /**
@@ -287,6 +298,7 @@ class ProfileForm extends Component {
           onchange: async (e) => {
             validator.validate(e.target.name, e.target.value)
             this.local.data.displayName = e.target.value
+            this.local.usergroup.displayName = this.local.data.displayName
             this.rerender()
 
             if (!this.local.usergroup.id) return
@@ -675,7 +687,17 @@ class ProfileForm extends Component {
       label: 'Label'
     }[this.local.role]
 
-    return this.renderForm(`Create your ${this.local.role ? `${role} ` : ''}profile`, elements)
+    // an artist, a label
+    const article = {
+      artist: 'an',
+      label: 'a'
+    }[this.local.role]
+
+    const title = html`${!this.local.usergroup.id ? 'Create' : 'Update'} ${!this.local.usergroup.id
+      ? `${article || 'your'} ${this.local.role ? `${role} ` : ''}`
+        : html`<span class="i">${this.local.usergroup.displayName}</span>`} profile`
+
+    return this.renderForm(title, elements)
   }
 
   /*
@@ -745,7 +767,6 @@ class ProfileForm extends Component {
       usergroups: this.local.profile.usergroups,
       onChangeCallback: (usergroupId) => {
         this.setUsergroup(usergroupId)
-
         this.rerender()
       }
     })
@@ -818,12 +839,11 @@ class ProfileForm extends Component {
       const attrs = {
         type: 'submit',
         class: 'bg-white near-black dib bn b pv3 ph5 flex-shrink-0 f5 grow',
-        style: 'outline:solid 1px var(--near-black);outline-offset:-1px',
-        text: 'Continue'
+        style: 'outline:solid 1px var(--near-black);outline-offset:-1px'
       }
       return html`
         <button ${attrs}>
-          Continue
+          ${this.local.form.changed ? !this.local.usergroup.id ? 'Create' : 'Update' : 'Continue'}
         </button>
       `
     }
