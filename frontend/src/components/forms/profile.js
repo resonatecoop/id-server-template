@@ -498,12 +498,13 @@ class AccountForm extends Component {
               type: 'text',
               name: 'displayName',
               required: true,
+              readonly: this.local.data.displayName ? 'readonly' : false,
               placeholder: 'Name'
             },
             {
               type: 'email',
               placeholder: 'E-mail',
-              readonly: true // can't change email address here
+              readonly: 'readonly' // can't change email address here
             },
             {
               component: this.state.cache(CountrySelect, 'update-country').render({

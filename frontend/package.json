@@ -52,7 +52,7 @@
     "@resonate/button-component": "^1.1.0",
     "@resonate/dialog-component": "^1.1.5",
     "@resonate/icon-element": "^1.4.0",
-    "@resonate/input-element": "^1.3.0",
+    "@resonate/input-element": "^1.4.1",
     "@resonate/link-element": "^1.2.0",
     "@resonate/rangeslider": "^1.1.3",
     "@resonate/search-component": "^1.1.0",
