@@ -88,7 +88,7 @@ func Init(cnf *config.Config, db *bun.DB) error {
 	}
 
 	if nil == reflect.TypeOf(WebHookService) {
-		WebHookService = webhook.NewService(cnf, OauthService)
+		WebHookService = webhook.NewService(cnf, db, OauthService)
 	}
 
 	return nil

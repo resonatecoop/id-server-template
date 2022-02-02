@@ -3,18 +3,21 @@ package webhook
 import (
 	"github.com/resonatecoop/id/config"
 	"github.com/resonatecoop/id/oauth"
+	"github.com/uptrace/bun"
 )
 
 // Service struct keeps variables for reuse
 type Service struct {
 	cnf          *config.Config
+	db           *bun.DB
 	oauthService oauth.ServiceInterface
 }
 
 // NewService returns a new Service instance
-func NewService(cnf *config.Config, oauthService oauth.ServiceInterface) *Service {
+func NewService(cnf *config.Config, db *bun.DB, oauthService oauth.ServiceInterface) *Service {
 	return &Service{
 		cnf:          cnf,
+		db:           db,
 		oauthService: oauthService,
 	}
 }
