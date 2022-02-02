@@ -75,7 +75,6 @@ app.use((state, emitter) => {
   async function getUserProfile () {
     try {
       // get v2 api profile for legacy values (old nickname, avatar)
-      // should get role value from id server backend instead
       const getClient = getAPIServiceClientWithAuth(state.token)
       const client = await getClient('profile')
       const result = await client.getUserProfile()
@@ -84,7 +83,6 @@ app.use((state, emitter) => {
       const { data: userData } = response
 
       state.profile.nickname = userData.nickname
-      state.profile.role = userData.role
       state.profile.avatar = userData.avatar || {}
 
       emitter.emit(state.events.RENDER)

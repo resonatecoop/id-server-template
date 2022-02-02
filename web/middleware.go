@@ -2,6 +2,7 @@ package web
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/context"
 	"github.com/gorilla/csrf"
@@ -179,6 +180,9 @@ func (m *loggedInMiddleware) authenticate(userSession *session.UserSession) erro
 		return err
 	}
 
+	scopes := strings.Split(accessToken.Scope, " ")
+
+	userSession.Role = scopes[1] // user, artist, label, admin, tenantadmin, ...
 	userSession.AccessToken = accessToken.Token
 	userSession.RefreshToken = refreshToken.Token
 

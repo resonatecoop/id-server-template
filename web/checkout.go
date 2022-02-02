@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/gorilla/csrf"
+	"github.com/resonatecoop/id/log"
 	"github.com/resonatecoop/id/session"
 
 	"github.com/stripe/stripe-go/v72"
@@ -160,16 +161,16 @@ func (s *Service) checkoutForm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = renderTemplate(w, "checkout.html", map[string]interface{}{
-		"products":              products,
 		"appURL":                s.cnf.AppURL,
-		"staticURL":             s.cnf.StaticURL,
-		"isUserAccountComplete": isUserAccountComplete,
-		"flash":                 flash,
-		"clientID":              client.Key,
 		"applicationName":       client.ApplicationName.String,
+		"clientID":              client.Key,
+		"flash":                 flash,
+		"initialState":          template.HTML(fragment),
+		"isUserAccountComplete": isUserAccountComplete,
+		"products":              products,
 		"profile":               profile,
 		"queryString":           getQueryString(query),
-		"initialState":          template.HTML(fragment),
+		"staticURL":             s.cnf.StaticURL,
 		csrf.TemplateTag:        csrf.TemplateField(r),
 	})
 	if err != nil {
@@ -505,6 +506,8 @@ func (s *Service) checkout(w http.ResponseWriter, r *http.Request) {
 	for _, item := range checkoutSession.Products {
 		p, err := product.Get(item.ID, nil)
 
+		log.INFO.Printf("Product id: %s", p.ID)
+
 		if err != nil {
 			break
 		}
@@ -522,19 +525,20 @@ func (s *Service) checkout(w http.ResponseWriter, r *http.Request) {
 
 		if item.ID == s.cnf.Stripe.SupporterShares.ID {
 			s := strconv.FormatInt(item.Quantity, 10)
+			log.INFO.Printf("Number of shares: %s", s)
 			params.AddMetadata("shares", s)
 			quantity = item.Quantity
 		}
 
 		switch item.ID {
 		case s.cnf.Stripe.StreamCredit5.ID:
-			credits = 5
+			credits = 5000
 		case s.cnf.Stripe.StreamCredit10.ID:
-			credits = 10
+			credits = 10000
 		case s.cnf.Stripe.StreamCredit20.ID:
-			credits = 20
+			credits = 20000
 		case s.cnf.Stripe.StreamCredit50.ID:
-			credits = 50
+			credits = 50000
 		}
 
 		if credits > 0 {

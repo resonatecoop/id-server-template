@@ -44,6 +44,7 @@ type CheckoutSession struct {
 type UserSession struct {
 	ClientID               string
 	Username               string
+	Role                   string // user, artist, label, admin, tenantadmin, ...
 	AccessToken            string
 	RefreshToken           string
 	CheckoutSessionID      string

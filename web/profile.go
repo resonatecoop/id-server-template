@@ -71,37 +71,19 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 		string(initialState),
 	)
 
-	displayName := ""
-
-	if len(usergroups.Usergroup) > 0 {
-		displayName = usergroups.Usergroup[0].DisplayName
-	}
-
-	profile := &Profile{
-		Email:          user.Username,
-		DisplayName:    displayName,
-		LegacyID:       user.LegacyID,
-		FullName:       user.FullName,
-		FirstName:      user.FirstName,
-		LastName:       user.LastName,
-		Country:        user.Country,
-		EmailConfirmed: user.EmailConfirmed,
-		Credits:        credits,
-		Complete:       isUserAccountComplete,
-		Usergroups:     usergroups.Usergroup,
-	}
+	profile := NewProfile(user, usergroups.Usergroup, isUserAccountComplete, credits, userSession.Role)
 
 	err = renderTemplate(w, "profile.html", map[string]interface{}{
 		"appURL":                s.cnf.AppURL,
-		"staticURL":             s.cnf.StaticURL,
-		"isUserAccountComplete": isUserAccountComplete,
-		"flash":                 flash,
+		"applicationName":       client.ApplicationName.String,
 		"clientID":              client.Key,
 		"countries":             countries,
-		"applicationName":       client.ApplicationName.String,
+		"flash":                 flash,
+		"initialState":          template.HTML(fragment),
+		"isUserAccountComplete": isUserAccountComplete,
 		"profile":               profile,
 		"queryString":           getQueryString(query),
-		"initialState":          template.HTML(fragment),
+		"staticURL":             s.cnf.StaticURL,
 		csrf.TemplateTag:        csrf.TemplateField(r),
 	})
 	if err != nil {

@@ -54,8 +54,8 @@ func (s *Service) joinForm(w http.ResponseWriter, r *http.Request) {
 	flash, _ := sessionService.GetFlashMessage()
 	err = renderTemplate(w, "join.html", map[string]interface{}{
 		"appURL":         s.cnf.AppURL,
-		"flash":          flash,
 		"countries":      countries,
+		"flash":          flash,
 		"initialState":   template.HTML(fragment),
 		"queryString":    getQueryString(r.URL.Query()),
 		csrf.TemplateTag: csrf.TemplateField(r),

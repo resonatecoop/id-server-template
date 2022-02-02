@@ -18,6 +18,7 @@ function routes (app) {
   app.route('/checkout/cancel', layoutNarrow(require('./views/checkout')))
   app.route('/profile', layout(require('./views/profile')))
   app.route('/account', layout(require('./views/account')))
+  app.route('/account-settings', layout(require('./views/account-settings')))
   app.route('*', layoutNarrow(require('./views/404')))
 }
 

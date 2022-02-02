@@ -54,7 +54,7 @@ class Form extends Component {
         <div class="mb3">
           ${fieldProps.label
             ? html`
-                <label for=${fieldProps.id || name} class="f5 db mb1">
+                <label for=${fieldProps.id || name} class="f5 db mb1 dark-gray">
                   ${fieldProps.label}
                 </label>
               `

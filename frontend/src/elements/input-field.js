@@ -72,9 +72,10 @@ function inputField (inputComponent, form = {}) {
     }
 
     function renderHelp (helpText) {
-      if (helpText) {
+      if (typeof helpText === 'string') {
         return html`<p class="lh-copy f5">${helpText}</p>`
       }
+      return helpText
     }
 
     function renderErrors (inputName) {

@@ -27,7 +27,8 @@ const prices = [
   {
     amount: 0,
     credits: 128,
-    hours: 4
+    hours: 4,
+    help: html`<p class="helptext f5 dark-gray ma0 pa0 tc">You already received free credits</p>`
   },
   {
     amount: 7,
@@ -51,6 +52,22 @@ const prices = [
   }
 ]
 
+// help text or link
+const helpText = (text, href) => {
+  const attrs = {
+    class: 'link underline f5 dark-gray tr',
+    href: href
+  }
+  if (href.startsWith('http')) {
+    attrs.target = '_blank'
+  }
+  return html`
+    <div class="flex justify-end mt2">
+      <a ${attrs}>${text}</a>
+    </div>
+  `
+}
+
 class Credits extends Component {
   constructor (id, state, emit) {
     super(id)
@@ -71,8 +88,11 @@ class Credits extends Component {
     this.onchange = props.onchange // optional callback
 
     return html`
-      <fieldset class="bg-light-gray ba bw b--mid-gray ma0 pa0 pb4 mb2">
+      <fieldset class="bg-light-gray ba bw b--mid-gray ma0 pa0 pb4 ph2 mb2">
         <legend class="clip">Add credits</legend>
+
+        ${helpText('What are credits?', 'https://community.resonate.is/docs?topic=1854')}
+
         <div class="flex">
           <div class="pa3 flex w-100 flex-auto">
           </div>
@@ -87,22 +107,22 @@ class Credits extends Component {
           </div>
         </div>
         ${prices.map((item, index) => {
-          const { amount, credits, hours } = item
+          const { amount, credits, hours, help } = item
+          const checked = amount === this.local.data.amount
           const attrs = {
-            style: 'opacity: 0;width: 0;height: 0;',
+            style: 'opacity:0;width:0;height:0;',
             onchange: (e) => {
               const val = Number(e.target.value)
               log.info(`select:${val}`)
               const index = prices.findIndex((item) => item.amount === val)
               this.local.data = prices[index]
-
-              typeof this.onchange === 'function' && this.onchange(this.local.credits)
+              typeof this.onchange === 'function' && this.onchange(this.local.data.credits / 1000)
             },
             tabindex: -1,
             id: 'amount-' + index,
             name: 'amount',
             type: 'radio',
-            checked: amount === this.local.data.amount,
+            checked: checked,
             value: amount
           }
 
@@ -123,22 +143,25 @@ class Credits extends Component {
           }
 
           return html`
-            <div class="flex w-100 flex-auto">
-              <input ${attrs}>
-              <label ${attrs2}>
-                <div class="pa3 flex w-100 items-center justify-center flex-auto">
-                  ${icon('circle', { size: 'sm', class: 'fill-transparent' })}
-                </div>
-                <div class="pa3 flex w-100 flex-auto f3">
-                  €${amount}
-                </div>
-                <div class="pa3 flex w-100 flex-auto f4 dark-gray">
-                  ${formatCredit(credits)}
-                </div>
-                <div class="pa3 flex w-100 flex-auto f4 dark-gray">
-                  ${hours}h
-                </div>
-              </label>
+            <div class="flex flex-column w-100 flex-auto">
+              <div class="flex">
+                <input ${attrs}>
+                <label ${attrs2}>
+                  <div class="pa3 flex w-100 items-center justify-center flex-auto">
+                    ${icon('circle', { size: 'sm', class: 'fill-transparent' })}
+                  </div>
+                  <div class="pa3 flex w-100 flex-auto f3">
+                    €${amount}
+                  </div>
+                  <div class="pa3 flex w-100 flex-auto f4 dark-gray">
+                    ${formatCredit(credits)}
+                  </div>
+                  <div class="pa3 flex w-100 flex-auto f4 dark-gray">
+                    ${hours}h
+                  </div>
+                </label>
+              </div>
+              ${help}
             </div>
           `
         })}
@@ -499,12 +522,18 @@ class AccountForm extends Component {
               name: 'displayName',
               required: true,
               readonly: this.local.data.displayName ? 'readonly' : false,
+              label: 'Display name',
+              help: this.local.data.displayName
+              ? helpText('Change your display name', '/profile')
+              : false,
               placeholder: 'Name'
             },
             {
               type: 'email',
-              placeholder: 'E-mail',
-              readonly: 'readonly' // can't change email address here
+              label: 'E-mail',
+              help: helpText('Change your email', '/account-settings'),
+              readonly: 'readonly', // can't change email address here
+              disabled: true
             },
             {
               component: this.state.cache(CountrySelect, 'update-country').render({
@@ -562,10 +591,8 @@ class AccountForm extends Component {
                   </dl>
                 `,
                 helpText: this.local.data.member
-                  ? html`
-                    <a class="link dim" href="/membership">Access your membership details</a>
-                  `
-                  : '',
+                  ? helpText('Access your membership details', '/membership')
+                  : helpText('Benefits of membership', 'https://community.resonate.is/docs?topic=1486'),
                 onchange: (value) => {
                   this.local.data.member = value
                 }
@@ -601,6 +628,7 @@ class AccountForm extends Component {
                     <dd class="f6 ma0">We would like to keep in touch using your email address. Is that OK?</dd>
                   </dl>
                 `,
+                helpText: helpText('About privacy', 'https://community.resonate.is/docs?search=privacy&topic=1863'),
                 onchange: (value) => {
                   this.local.data.newsletterNotification = value
                 }

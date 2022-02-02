@@ -138,16 +138,16 @@ class PasswordReset extends Component {
               if (status >= 400 && contentType && contentType.indexOf('application/json') !== -1) {
                 const { error } = await response.json()
                 this.local.error.message = error
-                return this.local.machine.emit('request:error')
+                this.local.machine.emit('request:error')
+              } else {
+                const { message } = await response.json()
+
+                this.local.success.message = message
+
+                this.local.machine.emit('request:resolve')
+
+                this.rerender()
               }
-
-              const { message } = await response.json()
-
-              this.local.success.message = message
-
-              this.local.machine.emit('request:resolve')
-
-              this.rerender()
             } catch (err) {
               this.local.error.message = err.message
               this.local.machine.emit('request:reject')

@@ -74,6 +74,7 @@ class SelectCountryList extends Component {
     return html`
       <div class="mb3">
         <div class="flex flex-auto flex-column">
+
           ${errors[attrs.name] && !pristine[attrs.name]
             ? html`
               <div class="absolute left-0 ph1 flex items-center" style="top:50%;transform: translate(-100%, -50%);">
@@ -82,7 +83,9 @@ class SelectCountryList extends Component {
             `
             : ''
           }
-
+          <label for="select-country" class="f5 db mb1 dark-gray">
+            Country
+          </label>
           <select ${attrs}>
             <option value="" selected=${!values[attrs.name]} disabled>Select a country</option>
             ${this.local.options.map(({ value, label, disabled = false }) => {

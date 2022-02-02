@@ -257,34 +257,20 @@ func (s *Service) membershipForm(w http.ResponseWriter, r *http.Request) {
 		string(initialState),
 	)
 
-	profile := &Profile{
-		Email:          user.Username,
-		LegacyID:       user.LegacyID,
-		FullName:       user.FullName,
-		FirstName:      user.FirstName,
-		LastName:       user.LastName,
-		Country:        user.Country,
-		EmailConfirmed: user.EmailConfirmed,
-		Complete:       isUserAccountComplete,
-		Usergroups:     usergroups.Usergroup,
-	}
-
-	if len(usergroups.Usergroup) > 0 {
-		profile.DisplayName = usergroups.Usergroup[0].DisplayName
-	}
+	profile := NewProfile(user, usergroups.Usergroup, isUserAccountComplete, credits, userSession.Role)
 
 	err = renderTemplate(w, "membership.html", map[string]interface{}{
-		"memberships":           memberships,
-		"shares":                shares,
 		"appURL":                s.cnf.AppURL,
-		"staticURL":             s.cnf.StaticURL,
-		"isUserAccountComplete": isUserAccountComplete,
-		"flash":                 flash,
-		"clientID":              client.Key,
 		"applicationName":       client.ApplicationName.String,
+		"clientID":              client.Key,
+		"flash":                 flash,
+		"initialState":          template.HTML(fragment),
+		"isUserAccountComplete": isUserAccountComplete,
+		"memberships":           memberships,
 		"profile":               profile,
 		"queryString":           getQueryString(query),
-		"initialState":          template.HTML(fragment),
+		"shares":                shares,
+		"staticURL":             s.cnf.StaticURL,
 		csrf.TemplateTag:        csrf.TemplateField(r),
 	})
 	if err != nil {

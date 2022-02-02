@@ -60,11 +60,11 @@ class UserMenu extends Nanocomponent {
       const machine = this.local.machine
 
       const dialogEl = this.state.cache(Dialog, 'header-dialog').render({
-        title: 'Log out',
+        title: 'Logout from Resonate',
         prefix: 'dialog-default dialog--sm',
         content: html`
           <div class="flex flex-column">
-            <p class="lh-copy f5">Confirm you want to log out.</p>
+            <p class="lh-copy f5">Please confirm the action.</p>
             <div class="flex items-center">
               <div class="mr3">
                 ${confirmButton}
@@ -77,7 +77,6 @@ class UserMenu extends Nanocomponent {
         `,
         onClose: function (e) {
           if (this.element.returnValue === 'yes') {
-            // emit('logout', false)
             window.location.href = '/web/logout'
           }
 
@@ -114,13 +113,13 @@ class UserMenu extends Nanocomponent {
           <a class="link db pv2 pl3" href="/account">Update your account</a>
         </li>
         <li class="mb1" role="menuitem">
+          <a class="link db pv2 pl3" href="/account-settings">Account settings</a>
+        </li>
+        <li class="mb1" role="menuitem">
           <a class="link db pv2 pl3" href="${process.env.APP_HOST}/faq">FAQ</a>
         </li>
         <li class="mb1" role="menuitem">
-          <a class="link db pv2 pl3" target="blank" rel="noreferer noopener" href="https://resonate.is/support">Support</a>
-        </li>
-        <li class="mb1" role="menuitem">
-          <a class="link db pv2 pl3" href="${process.env.APP_HOST}/settings">Settings</a>
+          <a class="link db pv2 pl3" target="blank" href="https://resonate.is/support">Support</a>
         </li>
         <li class="bb bw b--mid-gray b--mid-gray--light b--near-black--dark mb3" role="separator"></li>
           <li class="pr3 pb3" role="menuitem">

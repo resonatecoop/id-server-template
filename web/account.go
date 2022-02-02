@@ -67,36 +67,19 @@ func (s *Service) accountForm(w http.ResponseWriter, r *http.Request) {
 		string(initialState),
 	)
 
-	profile := &Profile{
-		Email:                  user.Username,
-		LegacyID:               user.LegacyID,
-		FullName:               user.FullName,
-		FirstName:              user.FirstName,
-		LastName:               user.LastName,
-		Credits:                credits,
-		Member:                 user.Member,
-		Country:                user.Country,
-		NewsletterNotification: user.NewsletterNotification,
-		EmailConfirmed:         user.EmailConfirmed,
-		Complete:               isUserAccountComplete,
-		Usergroups:             usergroups.Usergroup,
-	}
-
-	if len(usergroups.Usergroup) > 0 {
-		profile.DisplayName = usergroups.Usergroup[0].DisplayName
-	}
+	profile := NewProfile(user, usergroups.Usergroup, isUserAccountComplete, credits, userSession.Role)
 
 	err = renderTemplate(w, "account.html", map[string]interface{}{
 		"appURL":                s.cnf.AppURL,
-		"staticURL":             s.cnf.StaticURL,
-		"isUserAccountComplete": isUserAccountComplete,
-		"flash":                 flash,
+		"applicationName":       client.ApplicationName.String,
 		"clientID":              client.Key,
 		"countries":             countries,
-		"applicationName":       client.ApplicationName.String,
+		"flash":                 flash,
+		"initialState":          template.HTML(fragment),
+		"isUserAccountComplete": isUserAccountComplete,
 		"profile":               profile,
 		"queryString":           getQueryString(query),
-		"initialState":          template.HTML(fragment),
+		"staticURL":             s.cnf.StaticURL,
 		csrf.TemplateTag:        csrf.TemplateField(r),
 	})
 	if err != nil {
@@ -121,55 +104,20 @@ func (s *Service) account(w http.ResponseWriter, r *http.Request) {
 	shares := int64(0)
 	credits := int64(0)
 
-	if method == "delete" || r.Method == http.MethodDelete {
-		if s.oauthService.DeleteUser(
-			user,
-			r.Form.Get("password"),
-		); err != nil {
-			switch r.Header.Get("Accept") {
-			case "application/json":
-				response.Error(w, err.Error(), http.StatusBadRequest)
-			default:
-				err = sessionService.SetFlashMessage(&session.Flash{
-					Type:    "Error",
-					Message: err.Error(),
-				})
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-				http.Redirect(w, r, r.RequestURI, http.StatusFound)
-			}
-			return
-		}
-
-		// Delete the access and refresh tokens
-		s.oauthService.ClearUserTokens(userSession)
-
-		// Delete the user session
-		err = sessionService.ClearUserSession()
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		message = "Account is now scheduled for deletion"
-	}
-
 	if method == "put" || r.Method == http.MethodPut {
 		if r.Form.Get("membership") != "" && user.Member == false {
 			membership = true // get membership
 		}
 
 		if r.Form.Get("credits") != "" {
-			casted, err := strconv.ParseInt(r.Form.Get("credits"), 10, 64)
+			casted, err := strconv.ParseFloat(r.Form.Get("credits"), 10)
 
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
 
-			credits = casted
+			credits = int64(casted)
 		}
 
 		if r.Form.Get("shares") != "" {
@@ -184,30 +132,6 @@ func (s *Service) account(w http.ResponseWriter, r *http.Request) {
 			shares = casted
 		}
 
-		// username is always email
-		if r.Form.Get("email") != "" && r.Form.Get("email") != user.Username {
-			if err = s.oauthService.UpdateUsername(
-				user,
-				r.Form.Get("email"),
-			); err != nil {
-				switch r.Header.Get("Accept") {
-				case "application/json":
-					response.Error(w, err.Error(), http.StatusBadRequest)
-				default:
-					err = sessionService.SetFlashMessage(&session.Flash{
-						Type:    "Error",
-						Message: err.Error(),
-					})
-					if err != nil {
-						http.Error(w, err.Error(), http.StatusInternalServerError)
-						return
-					}
-					http.Redirect(w, r, r.RequestURI, http.StatusFound)
-				}
-				return
-			}
-		}
-
 		// update user (all optional)
 		if err = s.oauthService.UpdateUser(
 			user,
@@ -216,7 +140,6 @@ func (s *Service) account(w http.ResponseWriter, r *http.Request) {
 			r.Form.Get("lastName"),
 			r.Form.Get("country"),
 			r.Form.Get("newsletter") == "subscribe",
-			// credits ?
 		); err != nil {
 			switch r.Header.Get("Accept") {
 			case "application/json":
@@ -235,6 +158,7 @@ func (s *Service) account(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// init usergroup
 		if r.Form.Get("displayName") != "" {
 			result, err := s.getUserGroupList(user, userSession.AccessToken)
 
@@ -254,13 +178,13 @@ func (s *Service) account(w http.ResponseWriter, r *http.Request) {
 					http.Redirect(w, r, r.RequestURI, http.StatusFound)
 				}
 				return
-			} else {
-				if len(result.Usergroup) == 0 {
-					_, err = s.createUserGroup(user, r.Form.Get("displayName"), userSession.AccessToken)
+			}
 
-					if err != nil {
-						log.ERROR.Print(err)
-					}
+			if len(result.Usergroup) == 0 {
+				_, err = s.createUserGroup(user, r.Form.Get("displayName"), userSession.AccessToken)
+
+				if err != nil {
+					log.ERROR.Print(err)
 				}
 			}
 		}

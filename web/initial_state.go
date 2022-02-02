@@ -7,22 +7,53 @@ import (
 	"github.com/resonatecoop/user-api/model"
 )
 
-// user public profile
+// Profile user public profile
 type Profile struct {
-	ID                     string                                 `json:"id"`
-	LegacyID               int32                                  `json:"legacyID"`
-	DisplayName            string                                 `json:"displayName"`
-	Email                  string                                 `json:"email"`
-	Credits                string                                 `json:"credits"`
-	FullName               string                                 `json:"fullName"`
-	FirstName              string                                 `json:"firstName"`
-	LastName               string                                 `json:"lastName"`
+	ID          string `json:"id"`
+	Role        string `json:"role"`
+	LegacyID    int32  `json:"legacyID"`
+	DisplayName string `json:"displayName"`
+	Email       string `json:"email"`
+	Credits     string `json:"credits"`
+	// FullName               string                                 `json:"fullName"`
+	// FirstName              string                                 `json:"firstName"`
+	// LastName               string                                 `json:"lastName"`
 	Country                string                                 `json:"country"`
 	NewsletterNotification bool                                   `json:"newsletterNotification"`
 	EmailConfirmed         bool                                   `json:"emailConfirmed"`
 	Member                 bool                                   `json:"member"`
 	Complete               bool                                   `json:"complete"`
 	Usergroups             []*models.UserUserGroupPrivateResponse `json:"usergroups"`
+}
+
+// NewProfile
+func NewProfile(
+	user *model.User,
+	usergroups []*models.UserUserGroupPrivateResponse,
+	isUserAccountComplete bool,
+	credits string,
+	role string,
+) *Profile {
+	displayName := ""
+
+	if len(usergroups) > 0 {
+		displayName = usergroups[0].DisplayName
+	}
+
+	return &Profile{
+		ID:                     user.ID.String(),
+		Complete:               isUserAccountComplete,
+		Country:                user.Country,
+		Credits:                credits,
+		DisplayName:            displayName,
+		Role:                   role,
+		Email:                  user.Username,
+		EmailConfirmed:         user.EmailConfirmed,
+		LegacyID:               user.LegacyID,
+		Member:                 user.Member,
+		NewsletterNotification: user.NewsletterNotification,
+		Usergroups:             usergroups,
+	}
 }
 
 type InitialState struct {
@@ -52,30 +83,21 @@ func NewInitialState(
 	csrfToken string,
 ) *InitialState {
 	accessToken := ""
-	displayName := ""
 
 	if userSession != nil {
 		accessToken = userSession.AccessToken
 	}
 
-	if len(usergroups) > 0 {
-		displayName = usergroups[0].DisplayName
-	}
+	profile := NewProfile(
+		user,
+		usergroups,
+		isUserAccountComplete,
+		credits,
+		userSession.Role,
+	)
 
-	profile := &Profile{
-		ID:                     user.ID.String(),
-		DisplayName:            displayName,
-		Email:                  user.Username,
-		Member:                 user.Member,
-		FullName:               user.FullName,
-		FirstName:              user.FirstName,
-		LastName:               user.LastName,
-		Credits:                credits,
-		Country:                user.Country,
-		NewsletterNotification: user.NewsletterNotification,
-		EmailConfirmed:         user.EmailConfirmed,
-		Complete:               isUserAccountComplete,
-		Usergroups:             usergroups,
+	if len(usergroups) > 0 {
+		profile.DisplayName = usergroups[0].DisplayName
 	}
 
 	return &InitialState{

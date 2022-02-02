@@ -202,6 +202,59 @@ func (s *Service) GetRoutes() []routes.Route {
 			},
 		},
 		{
+			Name:        "account_settings_form",
+			Method:      "GET",
+			Pattern:     "/account-settings",
+			HandlerFunc: s.accountSettingsForm,
+			Middlewares: []negroni.Handler{
+				new(parseFormMiddleware),
+				newLoggedInMiddleware(s),
+				newClientMiddleware(s),
+			},
+		},
+		{
+			Name:        "account_settings",
+			Method:      "POST",
+			Pattern:     "/account-settings",
+			HandlerFunc: s.accountSettings,
+			Middlewares: []negroni.Handler{
+				tollbooth_negroni.LimitHandler(
+					tollbooth.NewLimiter(1, nil),
+				),
+				new(parseFormMiddleware),
+				newLoggedInMiddleware(s),
+				newClientMiddleware(s),
+			},
+		},
+		{
+			Name:        "account_settings_update",
+			Method:      "PUT",
+			Pattern:     "/account-settings",
+			HandlerFunc: s.accountSettings,
+			Middlewares: []negroni.Handler{
+				tollbooth_negroni.LimitHandler(
+					tollbooth.NewLimiter(1, nil),
+				),
+				new(parseFormMiddleware),
+				newLoggedInMiddleware(s),
+				newClientMiddleware(s),
+			},
+		},
+		{
+			Name:        "account_settings_delete",
+			Method:      "DELETE",
+			Pattern:     "/account-settings",
+			HandlerFunc: s.accountSettings,
+			Middlewares: []negroni.Handler{
+				tollbooth_negroni.LimitHandler(
+					tollbooth.NewLimiter(1, nil),
+				),
+				new(parseFormMiddleware),
+				newLoggedInMiddleware(s),
+				newClientMiddleware(s),
+			},
+		},
+		{
 			Name:        "membership_form",
 			Method:      "GET",
 			Pattern:     "/membership",

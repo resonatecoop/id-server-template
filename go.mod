@@ -34,7 +34,7 @@ require (
 	github.com/resonatecoop/user-api-client v0.0.0-20211208125639-09593c2f55ba
 	github.com/rs/xid v1.3.0
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
-	github.com/shopspring/decimal v1.3.1 // indirect
+	github.com/shopspring/decimal v1.3.1
 	github.com/stretchr/testify v1.7.0
 	github.com/stripe/stripe-go/v72 v72.77.0
 	github.com/test-go/testify v1.1.4 // indirect

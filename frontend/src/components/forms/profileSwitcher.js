@@ -127,7 +127,7 @@ class ProfileSwitcher extends Component {
               `
             })}
             <div class="fl flex justify-center items-center flex-shrink-0 w4">
-              <button type="submit" class="bg-white ba b--mid-gray br-pill w3 h3 mb3 grow">
+              <button type="submit" title="Create new profile" class="bg-white ba b--mid-gray br-pill w3 h3 mb3 grow">
                 <div class="flex items-center justify-center">
                   ${icon('add', { size: 'sm' })}
                 </div>

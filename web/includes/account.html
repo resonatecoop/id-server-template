@@ -45,6 +45,7 @@
                     value="{{ if .profile.Usergroups }}{{ (index .profile.Usergroups 0).DisplayName }}{{ end }}"
                     autocomplete="false"
                     id="displayName"
+                    disabled="{{ if .profile.Usergroups }}disabled{{ else }}false{{ end }}"
                     type="text"
                     name="displayName"
                     placeholder="Name"
@@ -81,50 +82,6 @@
                   </select>
                 </div>
               </div>
-              <!--
-              <div class="mb3">
-                <div class="flex flex-column flex-column-reverse">
-                  <input
-                    value="{{ .profile.FullName }}"
-                    autocomplete="false"
-                    id="fullName"
-                    type="text"
-                    name="fullName"
-                    placeholder="Full Name"
-                    class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid"
-                  />
-                </div>
-                <p class="lh-copy f5 red"></p>
-              </div>
-              <div class="mb3">
-                <div class="flex flex-column flex-column-reverse">
-                  <input
-                    value="{{ .profile.FirstName }}"
-                    autocomplete="false"
-                    id="firstName"
-                    type="text"
-                    name="firstName"
-                    placeholder="First Name"
-                    class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid"
-                  />
-                </div>
-                <p class="lh-copy f5 red"></p>
-              </div>
-              <div class="mb3">
-                <div class="flex flex-column flex-column-reverse">
-                  <input
-                    value="{{ .profile.LastName }}"
-                    autocomplete="false"
-                    id="lastName"
-                    type="text"
-                    name="lastName"
-                    placeholder="Last Name"
-                    class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid"
-                  />
-                </div>
-                <p class="lh-copy f5 red"></p>
-              </div>
-              -->
               <div class="flex flex-auto">
                 <button style="outline:solid 1px var(--near-black);outline-offset:-1px" type="submit" class="bg-white dib bn pv3 ph5 mt3 flex-shrink-0 f5 grow">
                   {{ if .profile.Complete }}Update{{ else }}Next{{ end }}

@@ -116,3 +116,7 @@
     padding-top: 0;
   }
 }
+
+input[disabled][type=number] {
+  -moz-appearance: textfield;
+}

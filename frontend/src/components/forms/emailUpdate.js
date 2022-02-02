@@ -3,24 +3,25 @@
 const html = require('choo/html')
 const Component = require('choo/component')
 const Form = require('./generic')
+
+const isEqual = require('is-equal-shallow')
 const logger = require('nanologger')
-const log = logger('form:updatePassword')
+const log = logger('form:updateProfile')
 
 const isEmpty = require('validator/lib/isEmpty')
-const isLength = require('validator/lib/isLength')
+const isEmail = require('validator/lib/isEmail')
 const validateFormdata = require('validate-formdata')
 const nanostate = require('nanostate')
-const PasswordMeter = require('../password-meter')
-const zxcvbnAsync = require('zxcvbn-async')
 
-class UpdatePasswordForm extends Component {
+// EMailUpdateForm ...
+class EmailUpdateForm extends Component {
   constructor (id, state, emit) {
     super(id)
 
     this.emit = emit
     this.state = state
 
-    this.local = Object.create({
+    this.local = state.components[id] = Object.create({
       machine: nanostate.parallel({
         form: nanostate('idle', {
           idle: { submit: 'submitted' },
@@ -33,11 +34,14 @@ class UpdatePasswordForm extends Component {
           loading: { resolve: 'data', reject: 'error' },
           data: { start: 'loading' },
           error: { start: 'loading', stop: 'idle' }
+        }),
+        loader: nanostate('off', {
+          on: { toggle: 'off' },
+          off: { toggle: 'on' }
         })
       })
     })
 
-    this.local.data = {}
     this.local.error = {}
 
     this.local.machine.on('form:reset', () => {
@@ -45,14 +49,20 @@ class UpdatePasswordForm extends Component {
       this.local.form = this.validator.state
     })
 
-    this.local.machine.on('request:start', () => {})
+    this.local.machine.on('request:start', () => {
+      this.loaderTimeout = setTimeout(() => {
+        this.local.machine.emit('loader:toggle')
+      }, 300)
+    })
 
     this.local.machine.on('request:reject', () => {
       this.emit('notify', { type: 'error', message: this.local.error.message || 'Something went wrong' })
+
+      clearTimeout(this.loaderTimeout)
     })
 
     this.local.machine.on('request:resolve', () => {
-      this.emit('notify', { type: 'success', message: 'Password changed!' })
+      clearTimeout(this.loaderTimeout)
     })
 
     this.local.machine.on('form:valid', async () => {
@@ -65,16 +75,16 @@ class UpdatePasswordForm extends Component {
 
         const csrfToken = response.headers.get('X-CSRF-Token')
 
-        response = await fetch('/password', {
+        response = await fetch('', {
           method: 'PUT',
           headers: {
             Accept: 'application/json',
             'X-CSRF-Token': csrfToken
           },
+          redirect: 'follow',
           body: new URLSearchParams({
-            password: this.local.data.password,
-            password_new: this.local.data.password_new,
-            password_confirm: this.local.data.password_confirm
+            email: this.local.data.email || '',
+            password: this.local.data.password
           })
         })
 
@@ -87,10 +97,19 @@ class UpdatePasswordForm extends Component {
           this.local.machine.emit('request:reject')
         } else {
           this.local.machine.emit('request:resolve')
+
+          emit('notify', {
+            timeout: 3000,
+            type: 'info',
+            message: 'You have been logged out.'
+          })
+          setTimeout(() => {
+            window.location.reload()
+          }, 3000)
         }
       } catch (err) {
-        this.local.error.message = err.message
         this.local.machine.emit('request:reject')
+        console.log(err)
       }
     })
 
@@ -121,25 +140,29 @@ class UpdatePasswordForm extends Component {
 
       this.rerender()
 
-      if (this.local.form.valid) {
-        return this.local.machine.emit('form:valid')
-      }
-
-      return this.local.machine.emit('form:invalid')
+      this.local.machine.emit(`form:${this.local.form.valid ? 'valid' : 'invalid'}`)
     })
 
     this.validator = validateFormdata()
     this.local.form = this.validator.state
   }
 
-  createElement (props) {
+  createElement (props = {}) {
+    this.local.data = this.local.data || props.data
+
+    const values = this.local.form.values
+
+    for (const [key, value] of Object.entries(this.local.data)) {
+      values[key] = value
+    }
+
     return html`
-      <div class="flex flex-column flex-auto pb6">
-        ${this.state.cache(Form, 'password-update-form').render({
-          id: 'password-update-form',
+      <div class="flex flex-column flex-auto">
+        ${this.state.cache(Form, 'account-form-update').render({
+          id: 'account-update-email-form',
           method: 'POST',
           action: '',
-          buttonText: 'Update my password',
+          buttonText: 'Update my email',
           validate: (props) => {
             this.local.data[props.name] = props.value
             this.validator.validate(props.name, props.value)
@@ -153,35 +176,19 @@ class UpdatePasswordForm extends Component {
             values: {},
             errors: {}
           },
-          submit: () => {
+          submit: (data) => {
             this.local.machine.emit('form:submit')
           },
           fields: [
             {
+              type: 'email',
+              placeholder: 'E-mail'
+            },
+            {
               type: 'password',
-              id: 'password_current',
-              autocomplete: 'on',
               name: 'password',
+              id: 'password_new_email',
               placeholder: 'Current password'
-            },
-            {
-              type: 'password',
-              id: 'password_new',
-              autocomplete: 'on',
-              name: 'password_new',
-              placeholder: 'New password',
-              help: (value) => {
-                return this.state.cache(PasswordMeter, 'password-meter').render({
-                  password: value
-                })
-              }
-            },
-            {
-              type: 'password',
-              id: 'password_confirm',
-              autocomplete: 'on',
-              name: 'password_confirm',
-              placeholder: 'Password confirmation'
             }
           ]
         })}
@@ -190,36 +197,22 @@ class UpdatePasswordForm extends Component {
   }
 
   load () {
-    const zxcvbn = zxcvbnAsync.load({
-      sync: true,
-      libUrl: 'https://cdn.jsdelivr.net/npm/zxcvbn@4.4.2/dist/zxcvbn.js',
-      libIntegrity: 'sha256-9CxlH0BQastrZiSQ8zjdR6WVHTMSA5xKuP5QkEhPNRo='
+    this.validator.field('email', (data) => {
+      if (isEmpty(data)) return new Error('Email is required')
+      if (!isEmail(data)) return new Error('Email is invalid')
     })
-
-    this.validator.field('password', { required: !!this.local.token }, (data) => {
-      if (isEmpty(data)) return new Error('Current password is required')
-      if (/[À-ÖØ-öø-ÿ]/.test(data)) return new Error('Current password may contain unsupported characters. You should ask for a password reset.')
-    })
-    this.validator.field('password_new', (data) => {
-      if (isEmpty(data)) return new Error('New password is required')
-      if (data === this.local.data.password) return new Error('Current password and new password are identical')
-      const { score, feedback } = zxcvbn(data)
-      if (score < 3) {
-        return new Error(feedback.warning || (feedback.suggestions.length ? feedback.suggestions[0] : 'Password is too weak'))
-      }
-      if (!isLength(data, { max: 72 })) {
-        return new Error('Password length should not be more than 72 characters')
-      }
-    })
-    this.validator.field('password_confirm', (data) => {
-      if (isEmpty(data)) return new Error('Password confirmation is required')
-      if (data !== this.local.data.password_new) return new Error('Password mismatch')
+    this.validator.field('password', (data) => {
+      if (isEmpty(data)) return new Error('Password is required')
     })
   }
 
-  update () {
+  update (props) {
+    if (!isEqual(props.data, this.local.data)) {
+      this.local.data = props.data
+      return true
+    }
     return false
   }
 }
 
-module.exports = UpdatePasswordForm
+module.exports = EmailUpdateForm

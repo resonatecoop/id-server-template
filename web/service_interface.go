@@ -32,6 +32,8 @@ type ServiceInterface interface {
 	profileForm(w http.ResponseWriter, r *http.Request)
 	accountForm(w http.ResponseWriter, r *http.Request)
 	account(w http.ResponseWriter, r *http.Request)
+	accountSettingsForm(w http.ResponseWriter, r *http.Request)
+	accountSettings(w http.ResponseWriter, r *http.Request)
 	membershipForm(w http.ResponseWriter, r *http.Request)
 	membership(w http.ResponseWriter, r *http.Request)
 	cancelSubscription(w http.ResponseWriter, r *http.Request)

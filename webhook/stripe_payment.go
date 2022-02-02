@@ -13,6 +13,7 @@ import (
 	"github.com/mailgun/mailgun-go/v4"
 	"github.com/resonatecoop/id/log"
 	"github.com/resonatecoop/user-api/model"
+	"github.com/uptrace/bun"
 
 	"github.com/stripe/stripe-go/v72"
 	cus "github.com/stripe/stripe-go/v72/customer"
@@ -51,6 +52,15 @@ func (s *Service) stripePayment(w http.ResponseWriter, r *http.Request) {
 	})
 
 	switch event.Type {
+	case "customer.created":
+		var customer stripe.Customer
+		err := json.Unmarshal(event.Data.Raw, &customer)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error parsing webhook JSON: %v\n", err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		fmt.Println("Customer was created!")
 	case "customer.subscription.created":
 		var subscription stripe.Subscription
 		err := json.Unmarshal(event.Data.Raw, &subscription)
@@ -78,17 +88,6 @@ func (s *Service) stripePayment(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// TODO may add some product metadata in email
-		// p := &stripe.Product{}
-		//
-		// for _, item := range subscription.Items.Data {
-		// 	if item.Price.Product.ID != s.cnf.Stripe.SupporterShares.ID {
-		// 		p, _ = product.Get(item.Price.Product.ID, nil)
-		// 		// do something
-		// 		break
-		// 	}
-		// }
-
 		fmt.Println("Subscription was deleted!")
 
 		customer, err := cus.Get(subscription.Customer.ID, nil)
@@ -112,32 +111,13 @@ func (s *Service) stripePayment(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if !subscriptionList.Next() {
-			err := s.oauthService.GrantMemberStatus(customer.Email, false)
+			err := s.GrantMemberStatus(customer.Email, false)
 			if err != nil {
 				log.ERROR.Print(err)
 			}
 		}
 
-		mg := mailgun.NewMailgun(s.cnf.Mailgun.Domain, s.cnf.Mailgun.Key)
-		sender := s.cnf.Mailgun.Sender
-		body := ""
-		email := model.NewOauthEmail(
-			customer.Email,
-			"Sorry you are leaving!",
-			"cancel-subscription",
-		)
-		subject := email.Subject
-		recipient := email.Recipient
-		message := mg.NewMessage(sender, subject, body, recipient)
-		message.SetTemplate(email.Template) // set mailgun template
-
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-		defer cancel()
-
-		// Send the message with a 10 second timeout
-		_, _, err = mg.Send(ctx, message)
-
-		if err != nil {
+		if err = s.sendEmail(customer.Email, "Sorry you are leaving!", "cancel-subscription"); err != nil {
 			log.ERROR.Print(err)
 		}
 	case "checkout.session.completed":
@@ -151,6 +131,10 @@ func (s *Service) stripePayment(w http.ResponseWriter, r *http.Request) {
 
 		productID := session.Metadata["product_id"]
 
+		if productID != "" {
+			fmt.Printf("Product id: %s", productID)
+		}
+
 		customer, err := cus.Get(session.Customer.ID, nil)
 
 		if err != nil {
@@ -159,22 +143,69 @@ func (s *Service) stripePayment(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		err = s.processMembership(customer, productID)
-
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
+		if session.Subscription != nil {
+			if err = s.processMembership(customer.Email, session.Subscription.ID, productID); err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
 		}
 
-		shares, err := strconv.ParseInt(session.Metadata["shares"], 10, 64)
+		if session.Metadata["shares"] != "" {
+			log.INFO.Printf("Number of shares: %s", session.Metadata["shares"])
 
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
+			shares, err := strconv.ParseInt(session.Metadata["shares"], 10, 64)
+
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			user, err := s.oauthService.FindUserByUsername(customer.Email)
+
+			if err != nil {
+				log.ERROR.Print(err)
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+
+			invoiceID := ""
+
+			if session.Subscription != nil {
+				if session.Subscription.LatestInvoice != nil {
+					invoiceID = session.Subscription.LatestInvoice.ID
+				}
+			}
+
+			if err = s.AddShares(user, invoiceID, shares); err != nil {
+				log.ERROR.Print(err)
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
 		}
 
-		if shares > 0 {
-			// handle shares
+		if session.Metadata["credits"] != "" {
+			log.INFO.Printf("Number of credits: %s", session.Metadata["credits"])
+
+			credits, err := strconv.ParseInt(session.Metadata["credits"], 10, 64)
+
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			user, err := s.oauthService.FindUserByUsername(customer.Email)
+
+			if err != nil {
+				log.ERROR.Print(err)
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+
+			if err = s.AddCredits(user, credits); err != nil {
+				log.ERROR.Print(err)
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
 		}
 	case "payment_intent.succeeded":
 		var paymentIntent stripe.PaymentIntent
@@ -204,48 +235,55 @@ func (s *Service) stripePayment(w http.ResponseWriter, r *http.Request) {
 }
 
 // processMembership
-func (s *Service) processMembership(customer *stripe.Customer, productID string) error {
-	member := false
+func (s *Service) processMembership(customerEmail, subscriptionID, productID string) error {
+	user, err := s.oauthService.FindUserByUsername(customerEmail)
+
+	if err != nil {
+		log.ERROR.Print(err)
+		return err
+	}
+
+	templateName := ""
 
 	switch productID {
 	case s.cnf.Stripe.ListenerSubscription.ID:
-		_ = s.sendWelcomeEmail(customer, "listener-subscription")
-
-		member = true
+		templateName = "listener-subscription"
 	case s.cnf.Stripe.ArtistMembership.ID:
-		_ = s.sendWelcomeEmail(customer, "artist-subscription")
-
-		// TODO
+		templateName = "artist-subscription"
 	case s.cnf.Stripe.LabelMembership.ID:
-		_ = s.sendWelcomeEmail(customer, "label-subscription")
-
-		// TODO
+		templateName = "label-subscription"
 	}
 
-	if member == true {
-		err := s.oauthService.GrantMemberStatus(customer.Email, true)
-
-		if err != nil {
+	if templateName != "" {
+		if err = s.AddMembership(user, productID, subscriptionID); err != nil {
 			log.ERROR.Print(err)
 			return err
+		}
+
+		if err = s.GrantMemberStatus(customerEmail, true); err != nil {
+			log.ERROR.Print(err)
+			return err
+		}
+
+		if err = s.sendEmail(customerEmail, "Welcome to Resonate!", templateName); err != nil {
+			log.ERROR.Print(err)
 		}
 	}
 
 	return nil
 }
 
-// sendWelcomeEmail
-func (s *Service) sendWelcomeEmail(customer *stripe.Customer, templateName string) error {
+// sendEmail
+func (s *Service) sendEmail(to, subject, templateName string) error {
 	mg := mailgun.NewMailgun(s.cnf.Mailgun.Domain, s.cnf.Mailgun.Key)
 	sender := s.cnf.Mailgun.Sender
 	body := ""
 	email := model.NewOauthEmail(
-		customer.Email,
-		"Welcome to Resonate!",
+		to,
+		subject,
 		templateName,
 	)
 
-	subject := email.Subject
 	recipient := email.Recipient
 	message := mg.NewMessage(sender, subject, body, recipient)
 	message.SetTemplate(email.Template) // set mailgun template
@@ -261,4 +299,128 @@ func (s *Service) sendWelcomeEmail(customer *stripe.Customer, templateName strin
 	}
 
 	return nil
+}
+
+// GrantMemberStatus
+func (s *Service) GrantMemberStatus(email string, status bool) error {
+	ctx := context.Background()
+	user, err := s.oauthService.FindUserByUsername(email)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = s.db.NewUpdate().
+		Model(user).
+		Set("member = ?", status).
+		WherePK().
+		Exec(ctx)
+
+	return err
+}
+
+// AddShares ...
+func (s *Service) AddShares(user *model.User, invoiceID string, quantity int64) error {
+	return s.addSharesCommon(s.db, user, invoiceID, quantity)
+}
+
+// addSharesCommon
+func (s *Service) addSharesCommon(db *bun.DB, user *model.User, invoiceID string, quantity int64) error {
+	ctx := context.Background()
+
+	shareTransaction := &model.ShareTransaction{
+		UserID:    user.ID,
+		InvoiceID: invoiceID,
+		Quantity:  quantity,
+	}
+
+	_, err := db.NewInsert().
+		Column(
+			"id",
+			"user_id",
+			"invoice_id", // optional
+			"quantity",
+		).
+		Model(shareTransaction).
+		Exec(ctx)
+
+	return err
+}
+
+// AddMembership
+func (s *Service) AddMembership(user *model.User, productID, subscriptionID string) error {
+	return s.addMembershipCommon(s.db, user, productID, subscriptionID)
+}
+
+// addMembershipCommon
+func (s *Service) addMembershipCommon(db *bun.DB, user *model.User, productID, subscriptionID string) error {
+	ctx := context.Background()
+
+	membershipClass := new(model.MembershipClass)
+
+	err := s.db.NewSelect().
+		Model(membershipClass).
+		Where("product_id = ?", productID).
+		Limit(1).
+		Scan(ctx)
+
+	if err != nil {
+		return err
+	}
+
+	membership := &model.UserMembership{
+		UserID:            user.ID,
+		SubscriptionID:    subscriptionID,
+		MembershipClassID: membershipClass.ID,
+		MembershipClass:   membershipClass,
+		Start:             time.Now().UTC(),
+		End:               time.Now().UTC(),
+	}
+
+	_, err = db.NewInsert().
+		Column(
+			"id",
+			"user_id",
+			"subscription_id",
+			"membership_class_id",
+			"membership_class",
+			"start",
+			"end",
+		).
+		Model(membership).
+		Exec(ctx)
+
+	return err
+}
+
+// AddCredits ...
+func (s *Service) AddCredits(user *model.User, tokens int64) error {
+	return s.addCreditsCommon(s.db, user, tokens)
+}
+
+// addCreditsCommon ...
+func (s *Service) addCreditsCommon(db *bun.DB, user *model.User, amount int64) error {
+	ctx := context.Background()
+
+	credit := new(model.Credit)
+
+	err := s.db.NewSelect().
+		Model(credit).
+		Where("user_id = ?", user.IDRecord.ID).
+		Limit(1).
+		Scan(ctx)
+
+	if err != nil {
+		return nil
+	}
+
+	total := credit.Total + amount
+
+	_, err = db.NewUpdate().
+		Model(credit).
+		Set("total = ?", total).
+		Where("user_id = ?", user.IDRecord.ID).
+		Exec(ctx)
+
+	return err
 }
