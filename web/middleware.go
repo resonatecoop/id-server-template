@@ -113,6 +113,20 @@ func (m *loggedInMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, n
 
 	// Authenticate
 	if err := m.authenticate(userSession); err != nil {
+		// Delete the user session
+		err = sessionService.ClearUserSession()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// Delete the checkout session
+		err = sessionService.ClearCheckoutSession()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		query := r.URL.Query()
 		query.Set("login_redirect_uri", r.URL.Path)
 		redirectWithQueryString("/web/login", query, w, r)
