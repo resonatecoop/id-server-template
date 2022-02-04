@@ -9,7 +9,6 @@ require (
 	github.com/didip/tollbooth v4.0.2+incompatible
 	github.com/didip/tollbooth_negroni v0.0.0-20170928042109-a4e3efc33255
 	github.com/dlclark/regexp2 v1.4.0 // indirect
-	github.com/fatih/color v1.12.0 // indirect
 	github.com/form3tech-oss/jwt-go v3.2.3+incompatible
 	github.com/go-openapi/runtime v0.19.29
 	github.com/go-openapi/strfmt v0.20.1
@@ -24,13 +23,12 @@ require (
 	github.com/json-iterator/go v1.1.11 // indirect
 	github.com/lib/pq v1.10.2
 	github.com/mailgun/mailgun-go/v4 v4.5.1
-	github.com/mattn/go-isatty v0.0.13 // indirect
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c
 	github.com/pariz/gountries v0.0.0-20200430155801-1c6a393df9c7
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/phyber/negroni-gzip v1.0.0
-	github.com/resonatecoop/user-api v1.0.0-4
+	github.com/resonatecoop/user-api v1.0.0-6
 	github.com/resonatecoop/user-api-client v0.0.0-20211208125639-09593c2f55ba
 	github.com/rs/xid v1.3.0
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
@@ -41,9 +39,9 @@ require (
 	github.com/thanhpk/randstr v1.0.4
 	github.com/trustelem/zxcvbn v1.0.1
 	github.com/unrolled/secure v1.0.9
-	github.com/uptrace/bun v0.3.0
-	github.com/uptrace/bun/dialect/pgdialect v0.3.0
-	github.com/uptrace/bun/extra/bundebug v0.3.0
+	github.com/uptrace/bun v1.0.22
+	github.com/uptrace/bun/dialect/pgdialect v1.0.19
+	github.com/uptrace/bun/extra/bundebug v1.0.22
 	github.com/urfave/cli v1.22.5
 	github.com/urfave/negroni v1.0.0
 	go.etcd.io/etcd v0.0.0-20191023171146-3cf2f69b5738
@@ -55,7 +53,6 @@ require (
 	go.uber.org/zap v1.18.1 // indirect
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e
-	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba // indirect
 	google.golang.org/genproto v0.0.0-20210714021259-044028024a4f // indirect
 	google.golang.org/grpc v1.40.0-dev.0.20210623211556-d9eb12feed7a // indirect
