@@ -36,7 +36,7 @@ func NewDatabase(cnf *config.Config) (*bun.DB, error) {
 	db := bun.NewDB(sqldb, pgdialect.New())
 
 	if cnf.IsDevelopment {
-		db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose()))
+		db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
 	}
 
 	if err != nil {
