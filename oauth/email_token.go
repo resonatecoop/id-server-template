@@ -96,6 +96,8 @@ func (s *Service) CreateEmailToken(email string) (*model.EmailToken, error) {
 
 	emailToken := model.NewOauthEmailToken(&expiresIn)
 
+	emailToken.EmailSentAt = &time.Time{}
+
 	ctx := context.Background()
 
 	_, err := s.db.NewInsert().Model(emailToken).Exec(ctx)
