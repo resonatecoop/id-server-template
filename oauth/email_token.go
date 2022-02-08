@@ -97,27 +97,23 @@ func (s *Service) CreateEmailToken(email string) (*model.EmailToken, error) {
 	emailToken := model.NewOauthEmailToken(&expiresIn)
 
 	emailToken.EmailSentAt = &time.Time{}
+	emailToken.Reference = uuid.New()
 
 	ctx := context.Background()
 
-	_, err := s.db.NewInsert().Model(emailToken).Exec(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	reference := uuid.New()
-
-	_, err = s.db.NewUpdate().
+	_, err := s.db.NewInsert().Column(
+		"id",
+		"reference",
+		"email_sent_at",
+		"email_sent",
+		"expires_at",
+	).
 		Model(emailToken).
-		Set("reference = ?", reference).
-		WherePK().
 		Exec(ctx)
 
 	if err != nil {
 		return nil, err
 	}
-
-	emailToken.Reference = reference
 
 	return emailToken, nil
 }
@@ -207,7 +203,7 @@ func (s *Service) sendEmailTokenCommon(
 		Model(emailToken).
 		Set("email_sent = ?", true).
 		Set("email_sent_at = ?", time.Now().UTC()).
-		WherePK().
+		Where("reference = ?", emailToken.Reference).
 		Exec(ctx)
 
 	if err != nil {
