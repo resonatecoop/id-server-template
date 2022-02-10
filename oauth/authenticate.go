@@ -92,7 +92,6 @@ func (s *Service) ClearUserTokens(userSession *session.UserSession) {
 		_, err = s.db.NewDelete().
 			Model(refreshToken).
 			Where("client_id = ? AND user_id = ?", refreshToken.ClientID, refreshToken.UserID).
-			ForceDelete().
 			Exec(ctx)
 	}
 
@@ -110,7 +109,6 @@ func (s *Service) ClearUserTokens(userSession *session.UserSession) {
 		_, err = s.db.NewDelete().
 			Model(accessToken).
 			Where("client_id = ? AND user_id = ?", accessToken.ClientID, accessToken.UserID).
-			ForceDelete().
 			Exec(ctx)
 	}
 }
