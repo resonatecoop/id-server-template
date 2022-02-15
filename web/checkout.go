@@ -134,6 +134,7 @@ func (s *Service) checkoutForm(w http.ResponseWriter, r *http.Request) {
 		nil,
 		products,
 		csrfToken,
+		nil,
 	))
 
 	if err != nil {

@@ -40,6 +40,15 @@ func (s *Service) accountForm(w http.ResponseWriter, r *http.Request) {
 	q := gountries.New()
 	countries := q.FindAllCountries()
 
+	var countryList []Country
+
+	for i := range countries {
+		countryList = append(countryList, Country{
+			Name: countries[i].Name.Common,
+			Code: countries[i].Codes.Alpha2,
+		})
+	}
+
 	usergroups, _ := s.getUserGroupList(user, userSession.AccessToken)
 
 	initialState, err := json.Marshal(NewInitialState(
@@ -54,6 +63,7 @@ func (s *Service) accountForm(w http.ResponseWriter, r *http.Request) {
 		nil,
 		nil,
 		"",
+		countryList,
 	))
 
 	if err != nil {

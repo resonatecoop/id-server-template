@@ -67,6 +67,7 @@ type InitialState struct {
 	Shares          []Share               `json:"shares"`
 	Products        []Product             `json:"products"`
 	CSRFToken       string                `json:"csrfToken"`
+	CountryList     []Country             `json:"countries"`
 }
 
 func NewInitialState(
@@ -81,6 +82,7 @@ func NewInitialState(
 	shares []Share,
 	products []Product,
 	csrfToken string,
+	countryList []Country,
 ) *InitialState {
 	accessToken := ""
 
@@ -110,5 +112,6 @@ func NewInitialState(
 		Shares:          shares,
 		Products:        products,
 		CSRFToken:       csrfToken,
+		CountryList:     countryList,
 	}
 }

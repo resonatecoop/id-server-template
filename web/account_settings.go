@@ -40,6 +40,7 @@ func (s *Service) accountSettingsForm(w http.ResponseWriter, r *http.Request) {
 		nil,
 		nil,
 		"",
+		nil,
 	))
 
 	if err != nil {

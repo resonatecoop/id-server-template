@@ -244,6 +244,7 @@ func (s *Service) membershipForm(w http.ResponseWriter, r *http.Request) {
 		shares,
 		nil,
 		csrf.Token(r),
+		nil,
 	))
 
 	if err != nil {
