@@ -18,7 +18,7 @@ import (
 var ErrIncorrectResponseType = errors.New("Response type not one of token or code")
 
 func (s *Service) authorizeForm(w http.ResponseWriter, r *http.Request) {
-	sessionService, client, user, userSession, credits, responseType, _, err := s.authorizeCommon(r)
+	sessionService, client, user, userSession, responseType, credits, _, err := s.authorizeCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
