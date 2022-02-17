@@ -316,6 +316,10 @@ func (s *Service) getUserCredits(user *model.User, accessToken string) (
 
 	result, err := client.Users.ResonateUserGetUserCredits(params, bearer)
 
+	if result == nil {
+		panic("User API not started")
+	}
+
 	if err != nil {
 		if casted, ok := err.(*users.ResonateUserGetUserCreditsDefault); ok {
 			return nil, casted
@@ -338,6 +342,10 @@ func (s *Service) getUserGroupList(user *model.User, accessToken string) (
 	params.WithID(user.ID.String())
 
 	result, err := client.Usergroups.ResonateUserListUsersUserGroups(params, bearer)
+
+	if result == nil {
+		panic("User API not started")
+	}
 
 	if err != nil {
 		if casted, ok := err.(*usergroups.ResonateUserListUsersUserGroupsDefault); ok {
@@ -363,6 +371,10 @@ func (s *Service) createUserGroup(user *model.User, displayName, accessToken str
 	}
 
 	result, err := client.Usergroups.ResonateUserAddUserGroup(params, bearer)
+
+	if result == nil {
+		panic("User API not started")
+	}
 
 	if err != nil {
 		return nil, err
