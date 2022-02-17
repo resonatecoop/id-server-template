@@ -317,7 +317,7 @@ func (s *Service) getUserCredits(user *model.User, accessToken string) (
 	result, err := client.Users.ResonateUserGetUserCredits(params, bearer)
 
 	if err != nil {
-		if casted, ok := err.(*usergroups.ResonateUserListUsersUserGroupsDefault); ok {
+		if casted, ok := err.(*users.ResonateUserGetUserCreditsDefault); ok {
 			return nil, casted
 		}
 	}
