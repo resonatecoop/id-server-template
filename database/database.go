@@ -39,10 +39,6 @@ func NewDatabase(cnf *config.Config) (*bun.DB, error) {
 		db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
 	}
 
-	if err != nil {
-		return nil, err
-	}
-
 	_, err = db.Exec("SELECT 1=1")
 
 	if err != nil {
