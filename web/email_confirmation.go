@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/csrf"
 	"github.com/resonatecoop/id/session"
@@ -86,6 +87,7 @@ func (s *Service) getEmailConfirmationToken(w http.ResponseWriter, r *http.Reque
 	userSession := &session.UserSession{
 		ClientID:     client.Key,
 		Username:     user.Username,
+		Role:         strings.Split(accessToken.Scope, " ")[1],
 		AccessToken:  accessToken.Token,
 		RefreshToken: refreshToken.Token,
 	}

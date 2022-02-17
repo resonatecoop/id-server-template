@@ -2,8 +2,10 @@ package web
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/context"
+	"github.com/gorilla/csrf"
 	"github.com/resonatecoop/id/session"
 )
 
@@ -16,6 +18,23 @@ func (m *parseFormMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, 
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	next(w, r)
+}
+
+// skipCSRFMiddleware just initialises session
+type skipCSRFMiddleware struct {
+	service ServiceInterface
+}
+
+// newSkipCSRFMiddleware creates a new skipCSRFMiddleware instance
+func newSkipCSRFMiddleware(service ServiceInterface) *skipCSRFMiddleware {
+	return &skipCSRFMiddleware{service: service}
+}
+
+// ServeHTTP as per the negroni.Handler interface
+func (m *skipCSRFMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	r = csrf.UnsafeSkipCheck(r)
 
 	next(w, r)
 }
@@ -95,6 +114,20 @@ func (m *loggedInMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, n
 
 	// Authenticate
 	if err := m.authenticate(userSession); err != nil {
+		// Delete the user session
+		err = sessionService.ClearUserSession()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// Delete the checkout session
+		err = sessionService.ClearCheckoutSession()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		query := r.URL.Query()
 		query.Set("login_redirect_uri", r.URL.Path)
 		redirectWithQueryString("/web/login", query, w, r)
@@ -147,6 +180,9 @@ func (m *loggedInMiddleware) authenticate(userSession *session.UserSession) erro
 		return err
 	}
 
+	scopes := strings.Split(accessToken.Scope, " ")
+
+	userSession.Role = scopes[1] // user, artist, label, admin, tenantadmin, ...
 	userSession.AccessToken = accessToken.Token
 	userSession.RefreshToken = refreshToken.Token
 

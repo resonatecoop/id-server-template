@@ -135,13 +135,13 @@ func (s *Service) AuthUser(username, password string) (*model.User, error) {
 }
 
 // UpdateUsername ...
-func (s *Service) UpdateUsername(user *model.User, username string) error {
-	return s.updateUsernameCommon(s.db, user, username)
+func (s *Service) UpdateUsername(user *model.User, username, password string) error {
+	return s.updateUsernameCommon(s.db, user, username, password)
 }
 
 // UpdateUsernameTx ...
-func (s *Service) UpdateUsernameTx(tx *bun.DB, user *model.User, username string) error {
-	return s.updateUsernameCommon(tx, user, username)
+func (s *Service) UpdateUsernameTx(tx *bun.DB, user *model.User, username, password string) error {
+	return s.updateUsernameCommon(tx, user, username, password)
 }
 
 func (s *Service) ConfirmUserEmail(email string) error {
@@ -162,8 +162,8 @@ func (s *Service) ConfirmUserEmail(email string) error {
 }
 
 // UpdateUser ...
-func (s *Service) UpdateUser(user *model.User, fullName, firstName, lastName, country string) error {
-	return s.updateUserCommon(s.db, user, fullName, firstName, lastName, country)
+func (s *Service) UpdateUser(user *model.User, fullName, firstName, lastName, country string, newsletter bool) error {
+	return s.updateUserCommon(s.db, user, fullName, firstName, lastName, country, newsletter)
 }
 
 // SetUserCountry ...
@@ -188,17 +188,16 @@ func (s *Service) DeleteUserTx(tx *bun.DB, user *model.User, password string) er
 
 func (s *Service) deleteUserCommon(db *bun.DB, user *model.User, password string) error {
 	ctx := context.Background()
-	// Check that the password is set
-	/*
-		if !user.Password.Valid {
-			return ErrUserPasswordNotSet
-		}
 
-		// Verify the password
-		if pass.VerifyPassword(user.Password.String, password) != nil {
-			return ErrInvalidUserPassword
-		}
-	*/
+	// Check that the password is set
+	if !user.Password.Valid {
+		return ErrUserPasswordNotSet
+	}
+
+	// Verify the password
+	if pass.VerifyPassword(user.Password.String, password) != nil {
+		return ErrInvalidUserPassword
+	}
 
 	// will set deleted_at to current time using soft delete
 	_, err := db.NewDelete().
@@ -267,8 +266,8 @@ func (s *Service) setPasswordCommon(db *bun.DB, user *model.User, password strin
 	return nil
 }
 
-// updateUserCommon
-func (s *Service) updateUserCommon(db *bun.DB, user *model.User, fullName, firstName, lastName, country string) error {
+// updateUserCommon ...
+func (s *Service) updateUserCommon(db *bun.DB, user *model.User, fullName, firstName, lastName, country string, newsletter bool) error {
 	ctx := context.Background()
 
 	update := db.NewUpdate().Model(user)
@@ -290,6 +289,10 @@ func (s *Service) updateUserCommon(db *bun.DB, user *model.User, fullName, first
 		if country != user.Country {
 			update.Set("country = ?", country)
 		}
+	}
+
+	if newsletter != user.NewsletterNotification {
+		update.Set("newsletter_notification = ?", newsletter)
 	}
 
 	if fullName != user.FullName && fullName != "" {
@@ -315,7 +318,6 @@ func (s *Service) setUserCountryCommon(db *bun.DB, user *model.User, country str
 	ctx := context.Background()
 
 	// validate country code
-
 	query := gountries.New()
 	gountry, err := query.FindCountryByAlpha(strings.ToLower(country))
 
@@ -338,30 +340,83 @@ func (s *Service) setUserCountryCommon(db *bun.DB, user *model.User, country str
 	return err
 }
 
-func (s *Service) updateUsernameCommon(db *bun.DB, user *model.User, username string) error {
+// updateUsernameCommon ...
+func (s *Service) updateUsernameCommon(db *bun.DB, user *model.User, username, password string) error {
 	ctx := context.Background()
+
 	if username == "" {
 		return ErrCannotSetEmptyUsername
 	}
+
 	// Check the email/username is available
 	if s.UserExists(username) {
 		return ErrUsernameTaken
 	}
 
-	err := db.NewSelect().
-		Model(user).
-		Where("username = ?", user.Username).
-		Scan(ctx)
-
-	if err != nil {
-		return err
+	// Check that the password is set
+	if !user.Password.Valid {
+		return ErrUserPasswordNotSet
 	}
 
-	_, err = db.NewUpdate().
+	// Verify the password
+	if pass.VerifyPassword(user.Password.String, password) != nil {
+		return ErrInvalidUserPassword
+	}
+
+	_, err := db.NewUpdate().
 		Model(user).
 		Set("username = ?", strings.ToLower(username)).
-		Where("id = ?", user.ID).
+		Set("email_confirmed = ?", false).
+		WherePK().
 		Exec(ctx)
 
-	return err
+	// sends email with token for verification
+	email := model.NewOauthEmail(
+		username,
+		"Confirm email change",
+		"email-change-confirmation",
+	)
+
+	_, err = s.SendEmailToken(
+		email,
+		fmt.Sprintf(
+			"https://%s/email-confirmation",
+			s.cnf.Hostname,
+		),
+	)
+
+	if err != nil {
+		log.ERROR.Print(err)
+	}
+
+	// notify current email address
+	mg := mailgun.NewMailgun(s.cnf.Mailgun.Domain, s.cnf.Mailgun.Key)
+	sender := s.cnf.Mailgun.Sender
+	body := ""
+	email = model.NewOauthEmail(
+		user.Username,
+		"Email change notification",
+		"email-change-notification",
+	)
+	subject := email.Subject
+	recipient := email.Recipient
+	message := mg.NewMessage(sender, subject, body, recipient)
+	message.SetTemplate(email.Template) // set mailgun template
+	err = message.AddTemplateVariable("email", recipient)
+
+	if err != nil {
+		log.ERROR.Print(err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	// Send the message with a 10 second timeout
+	_, _, err = mg.Send(ctx, message)
+
+	if err != nil {
+		log.ERROR.Print(err)
+	}
+
+	return nil
 }

@@ -141,7 +141,7 @@ class Authorize extends Component {
     return html`
       <div class="flex flex-column flex-auto">
         <form ${attrs}>
-          <p>Logging in as ${this.state.profile.email}</p>
+          <p class="lh-copy">Logging in as <b>${this.state.profile.displayName ? this.state.profile.displayName : this.state.profile.email}</b></p>
 
           <div class="flex">
             <div class="mr3">

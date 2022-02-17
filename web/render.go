@@ -20,21 +20,26 @@ var (
 
 // load and parse hash.json from data dir
 func loadData(dirname string) (map[string]interface{}, error) {
-	data, err := os.Open(filepath.Join("data", dirname, "hash.json"))
-
-	if err != nil {
-		return nil, err
-	}
-
-	defer data.Close()
-
-	byteValue, err := ioutil.ReadAll(data)
-
-	if err != nil {
-		return nil, err
-	}
-
 	var result map[string]interface{}
+
+	file, err := os.Open(filepath.Join("data", dirname, "hash.json"))
+
+	if err != nil {
+		return nil, err
+	}
+
+	byteValue, err := ioutil.ReadAll(file)
+
+	if err != nil {
+		file.Close()
+		return nil, err
+	}
+
+	err = file.Close()
+
+	if err != nil {
+		return nil, err
+	}
 
 	if err = json.Unmarshal([]byte(byteValue), &result); err != nil {
 		return nil, err
@@ -115,7 +120,10 @@ func loadTemplates() {
 			"./web/includes/authorize.html",
 			"./web/includes/client.html",
 			"./web/includes/account.html",
+			"./web/includes/account_settings.html",
+			"./web/includes/membership.html",
 			"./web/includes/profile.html",
+			"./web/includes/checkout.html",
 		},
 	}
 

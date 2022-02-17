@@ -27,6 +27,11 @@ var (
 	ErrEmailInvalid = errors.New("Not a valid email")
 )
 
+type Country struct {
+	Name string `json:"name"`
+	Code string `json:"code"`
+}
+
 func (s *Service) joinForm(w http.ResponseWriter, r *http.Request) {
 	// Get the session service from the request context
 	sessionService, err := getSessionService(r)
@@ -37,8 +42,21 @@ func (s *Service) joinForm(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("X-CSRF-Token", csrf.Token(r))
 
+	q := gountries.New()
+	countries := q.FindAllCountries()
+
+	var countryList []Country
+
+	for i := range countries {
+		countryList = append(countryList, Country{
+			Name: countries[i].Name.Common,
+			Code: countries[i].Codes.Alpha2,
+		})
+	}
+
 	initialState, _ := json.Marshal(map[string]interface{}{
-		"clients": s.cnf.Clients,
+		"clients":   s.cnf.Clients,
+		"countries": countryList,
 	})
 
 	// Inject initial state into choo app
@@ -47,15 +65,12 @@ func (s *Service) joinForm(w http.ResponseWriter, r *http.Request) {
 		string(initialState),
 	)
 
-	q := gountries.New()
-	countries := q.FindAllCountries()
-
 	// Render the template
 	flash, _ := sessionService.GetFlashMessage()
 	err = renderTemplate(w, "join.html", map[string]interface{}{
 		"appURL":         s.cnf.AppURL,
-		"flash":          flash,
 		"countries":      countries,
+		"flash":          flash,
 		"initialState":   template.HTML(fragment),
 		"queryString":    getQueryString(r.URL.Query()),
 		csrf.TemplateTag: csrf.TemplateField(r),
@@ -153,16 +168,18 @@ func (s *Service) createUser(r *http.Request) (
 	switch r.Form.Get("role") {
 	case "artist":
 		params.Body.RoleID = int32(model.ArtistRole)
-	case "label":
-		params.Body.RoleID = int32(model.LabelRole)
 	}
+	// case "label":
+	//	params.Body.RoleID = int32(model.LabelRole)
+	//}
 
 	// Create a user
 	_, err := client.Users.ResonateUserAddUser(params, nil)
 
 	if err != nil {
 		if casted, ok := err.(*users.ResonateUserAddUserDefault); ok {
-			return nil, casted
+			err = errors.New(casted.Payload.Message)
+			return nil, err
 		}
 	}
 

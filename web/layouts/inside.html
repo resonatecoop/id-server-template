@@ -19,6 +19,8 @@
   <link href="/css/{{ .stylesheet }}" rel="stylesheet">
   
   <script type="text/javascript" defer src="/js/{{ .javascript }}"></script>
+  <script src="https://polyfill.io/v3/polyfill.min.js?version=3.52.1&features=fetch"></script>
+  <script src="https://js.stripe.com/v3/"></script>
 </head>
 <body class="ff-no-fouc color-scheme--light">
   {{ if .isUserAccountComplete }}
@@ -112,8 +114,26 @@
               </div>
             </li>
             <li class="bb bw b--mid-gray b--mid-gray--light b--near-black--dark mv3" role="separator"></li>
+            <li class="flex items-center ph3" role="menuitem">
+              <div class="flex flex-column">
+                <label for="credits">Credits</label>
+                <input disabled tabindex="-1" name="credits" type="number" value="{{ .profile.Credits }}" readonly class="bn br0 bg-transparent b">
+              </Div>
+              <div class="flex flex-auto justify-end">
+              </div>
+            </li>
+            <li class="bb bw b--mid-gray b--mid-gray--light b--near-black--dark mt3 mb2" role="separator"></li>
             <li role="menuitem" class="mb1">
               <a href="../web/account{{ .queryString }}" class="link db pv2 pl3">Update your account</a>
+            </li>
+            <li role="menuitem" class="mb1">
+              <a href="../web/account-settings{{ .queryString }}" class="link db pv2 pl3">Account settings</a>
+            </li>
+            <li role="menuitem" class="mb1">
+              <a class="link db pv2 pl3" href="{{ .appURL }}/faq" target="blank">FAQ</a>
+            </li>
+            <li class="mb1" role="menuitem">
+              <a class="link db pv2 pl3" target="blank" href="https://resonate.is/support">Support</a>
             </li>
             <li role="separator" class="bb bw b--mid-gray b--mid-gray--light b--near-black--dark mv3"></li>
             <li role="menuitem" class="mb1">

@@ -1,8 +1,6 @@
 const html = require('choo/html')
 const Component = require('choo/component')
 const isEmpty = require('validator/lib/isEmpty')
-const { getData, getName, getCode } = require('country-list')
-const countryList = getData() // get country list data
 const validateFormdata = require('validate-formdata')
 const icon = require('@resonate/icon-element')
 
@@ -22,16 +20,12 @@ class SelectCountryList extends Component {
 
     this.local = state.components[id] = {}
 
-    this.local.options = countryList.map(({ code, name }) => {
-      return {
-        value: code,
-        label: name
-      }
-    }).sort((a, b) => a.label.localeCompare(b.label, 'en', {}))
-
     this._onchange = this._onchange.bind(this)
     this.validator = validateFormdata()
     this.form = this.validator.state
+
+    this.nameMap = {}
+    this.codeMap = {}
   }
 
   /***
@@ -46,6 +40,15 @@ class SelectCountryList extends Component {
    * @returns {HTMLElement}
    */
   createElement (props = {}) {
+    this.state.countries.forEach(this.mapCodeAndName.bind(this))
+
+    this.local.options = this.state.countries.map(({ code, name }) => {
+      return {
+        value: code,
+        label: name
+      }
+    }).sort((a, b) => a.label.localeCompare(b.label, 'en', {}))
+
     this.validator = props.validator || this.validator
     this.form = props.form || this.validator.state
 
@@ -59,14 +62,14 @@ class SelectCountryList extends Component {
     const values = this.form.values
 
     if (!this.local.country) {
-      this.local.country = props.country || getName(values[this.local.name] || '') || ''
+      this.local.country = props.country || this.getName(values[this.local.name] || '') || ''
     }
 
     // select attributes
     const attrs = {
       id: 'select-country',
       required: this.local.required,
-      class: 'bn br0 bg-black white bg-white--dark black--dark bg-black--light white--light pa3',
+      class: 'w-100 bn br0 bg-black white bg-white--dark black--dark bg-black--light white--light pa3',
       onchange: this._onchange,
       name: this.local.name
     }
@@ -74,6 +77,7 @@ class SelectCountryList extends Component {
     return html`
       <div class="mb3">
         <div class="flex flex-auto flex-column">
+
           ${errors[attrs.name] && !pristine[attrs.name]
             ? html`
               <div class="absolute left-0 ph1 flex items-center" style="top:50%;transform: translate(-100%, -50%);">
@@ -82,11 +86,13 @@ class SelectCountryList extends Component {
             `
             : ''
           }
-
+          <label for="select-country" class="f5 db mb1 dark-gray">
+            Country
+          </label>
           <select ${attrs}>
             <option value="" selected=${!values[attrs.name]} disabled>Select a country</option>
             ${this.local.options.map(({ value, label, disabled = false }) => {
-              const selected = this.local.country === value || getCode(this.local.country) === value
+              const selected = this.local.country === value || this.getCode(this.local.country) === value
               return html`
                 <option value=${value} disabled=${disabled} selected=${selected}>
                   ${label}
@@ -103,6 +109,19 @@ class SelectCountryList extends Component {
     `
   }
 
+  mapCodeAndName (country) {
+    this.nameMap[country.name.toLowerCase()] = country.code
+    this.codeMap[country.code.toLowerCase()] = country.name
+  }
+
+  getCode (name) {
+    return this.nameMap[name.toLowerCase()]
+  }
+
+  getName (code) {
+    return this.codeMap[code.toLowerCase()]
+  }
+
   /**
    * Select element onchange event handler
    * @param {Object} e Event
@@ -111,7 +130,7 @@ class SelectCountryList extends Component {
     const value = e.target.value
 
     this.local.code = value
-    this.local.country = getName(value)
+    this.local.country = this.getName(value)
 
     this.validator.validate('country', value)
     this.rerender()

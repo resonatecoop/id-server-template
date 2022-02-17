@@ -15,16 +15,21 @@ function inputField (inputComponent, form = {}) {
       labelImage = false,
       labelImageSrc,
       labelText,
+      disabled = false,
       inputName,
       helpText,
-      displayErrors
+      displayErrors,
+      columnReverse = false,
+      flexRow = false
     } = props
 
     return html`
       <div class=${prefix}>
-        <div class="flex flex-column">
-          ${renderLabel(labelText, labelIconName, labelPrefix)}
-          ${inputComponent}
+        <div class="flex flex-column${columnReverse ? ' flex-column-reverse' : ''}">
+          <div class="flex ${flexRow ? 'flex-row items-center' : 'flex-column-reverse'}">
+            ${inputComponent}
+            ${renderLabel(labelText, labelIconName, labelPrefix)}
+          </div>
           ${renderHelp(helpText)}
         </div>
         ${displayErrors ? renderErrors(inputName) : ''}
@@ -37,7 +42,7 @@ function inputField (inputComponent, form = {}) {
           <div class="flex items-center">
             ${iconName
               ? html`
-                <div style="width:3rem;height:3rem;" class="flex flex-shrink-0 justify-center bg-white items-center ba bw b--dark-gray mr2">
+                <div style="width:3rem;height:3rem;" class="flex flex-shrink-0 justify-center bg-white items-center ba bw b--${disabled ? 'light-gray' : 'dark-gray'} mr2">
                   ${icon(iconName, { size: 'sm', class: 'fill-transparent' })}
                 </div>
               `
@@ -67,17 +72,20 @@ function inputField (inputComponent, form = {}) {
     }
 
     function renderHelp (helpText) {
-      if (helpText) {
-        return html`<p class="lh-copy dark-gray f5">${helpText}</p>`
+      if (typeof helpText === 'string') {
+        return html`<p class="lh-copy f5">${helpText}</p>`
       }
+      return helpText
     }
 
     function renderErrors (inputName) {
-      return html`
-        <p class="lh-copy f5 red">
-          ${errors[inputName] && !pristine[inputName] ? errors[inputName].message : ''}
-        </p>
-      `
+      if (errors[inputName] && !pristine[inputName]) {
+        return html`
+          <p class="lh-copy f5 red">
+            ${errors[inputName].message}
+          </p>
+        `
+      }
     }
   }
 }

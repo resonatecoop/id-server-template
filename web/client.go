@@ -35,7 +35,13 @@ func (s *Service) clientForm(w http.ResponseWriter, r *http.Request) {
 		user,
 		nil,
 		false,
+		"",
 		[]*models.UserUserGroupPrivateResponse{},
+		nil,
+		nil,
+		nil,
+		"",
+		nil,
 	))
 
 	if err != nil {
@@ -54,13 +60,13 @@ func (s *Service) clientForm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = renderTemplate(w, "client.html", map[string]interface{}{
-		"staticURL":       s.cnf.StaticURL,
-		"flash":           flash,
-		"clientID":        client.Key,
 		"applicationName": client.ApplicationName.String,
+		"clientID":        client.Key,
+		"flash":           flash,
+		"initialState":    template.HTML(fragment),
 		"profile":         profile,
 		"queryString":     getQueryString(query),
-		"initialState":    template.HTML(fragment),
+		"staticURL":       s.cnf.StaticURL,
 		csrf.TemplateTag:  csrf.TemplateField(r),
 	})
 	if err != nil {

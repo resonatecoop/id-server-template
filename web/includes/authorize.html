@@ -52,7 +52,7 @@
           </div>
           {{ end }}
 
-          <p>Logging in as {{ .profile.Email }}</p>
+          <p class="lh-copy">Logging in as <b>{{ if .profile.DisplayName }}{{ .profile.DisplayName }}{{ else }}{{ .profile.Email }}{{ end }}</b></p>
           
           <div class="flex">
             <div class="mr3">

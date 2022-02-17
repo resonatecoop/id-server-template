@@ -10,10 +10,11 @@ import (
 	"github.com/pariz/gountries"
 	"github.com/resonatecoop/id/session"
 	"github.com/resonatecoop/user-api/model"
+	"github.com/shopspring/decimal"
 )
 
 func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
-	sessionService, client, user, isUserAccountComplete, userSession, err := s.profileCommon(r)
+	sessionService, client, user, isUserAccountComplete, credits, userSession, err := s.profileCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -51,7 +52,13 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 		user,
 		userSession,
 		isUserAccountComplete,
+		credits,
 		usergroups.Usergroup,
+		nil,
+		nil,
+		nil,
+		"",
+		nil,
 	))
 
 	if err != nil {
@@ -65,36 +72,19 @@ func (s *Service) profileForm(w http.ResponseWriter, r *http.Request) {
 		string(initialState),
 	)
 
-	displayName := ""
-
-	if len(usergroups.Usergroup) > 0 {
-		displayName = usergroups.Usergroup[0].DisplayName
-	}
-
-	profile := &Profile{
-		Email:          user.Username,
-		DisplayName:    displayName,
-		LegacyID:       user.LegacyID,
-		FullName:       user.FullName,
-		FirstName:      user.FirstName,
-		LastName:       user.LastName,
-		Country:        user.Country,
-		EmailConfirmed: user.EmailConfirmed,
-		Complete:       isUserAccountComplete,
-		Usergroups:     usergroups.Usergroup,
-	}
+	profile := NewProfile(user, usergroups.Usergroup, isUserAccountComplete, credits, userSession.Role)
 
 	err = renderTemplate(w, "profile.html", map[string]interface{}{
 		"appURL":                s.cnf.AppURL,
-		"staticURL":             s.cnf.StaticURL,
-		"isUserAccountComplete": isUserAccountComplete,
-		"flash":                 flash,
+		"applicationName":       client.ApplicationName.String,
 		"clientID":              client.Key,
 		"countries":             countries,
-		"applicationName":       client.ApplicationName.String,
+		"flash":                 flash,
+		"initialState":          template.HTML(fragment),
+		"isUserAccountComplete": isUserAccountComplete,
 		"profile":               profile,
 		"queryString":           getQueryString(query),
-		"initialState":          template.HTML(fragment),
+		"staticURL":             s.cnf.StaticURL,
 		csrf.TemplateTag:        csrf.TemplateField(r),
 	})
 	if err != nil {
@@ -108,25 +98,26 @@ func (s *Service) profileCommon(r *http.Request) (
 	*model.Client,
 	*model.User,
 	bool,
+	string,
 	*session.UserSession,
 	error,
 ) {
 	// Get the session service from the request context
 	sessionService, err := getSessionService(r)
 	if err != nil {
-		return nil, nil, nil, false, nil, err
+		return nil, nil, nil, false, "", nil, err
 	}
 
 	// Get the client from the request context
 	client, err := getClient(r)
 	if err != nil {
-		return nil, nil, nil, false, nil, err
+		return nil, nil, nil, false, "", nil, err
 	}
 
 	// Get the user session
 	userSession, err := sessionService.GetUserSession()
 	if err != nil {
-		return nil, nil, nil, false, nil, err
+		return nil, nil, nil, false, "", nil, err
 	}
 
 	// Fetch the user
@@ -134,15 +125,25 @@ func (s *Service) profileCommon(r *http.Request) (
 		userSession.Username,
 	)
 	if err != nil {
-		return nil, nil, nil, false, nil, err
+		return nil, nil, nil, false, "", nil, err
 	}
+
+	result, err := s.getUserCredits(user, userSession.AccessToken)
 
 	// Check if user account is complete
 	isUserAccountComplete := s.isUserAccountComplete(userSession)
 
-	return sessionService, client, user, isUserAccountComplete, userSession, nil
+	return sessionService, client, user, isUserAccountComplete, formatCredit(result.Total), userSession, nil
 }
 
+// formatCredit
+func formatCredit(credits string) string {
+	val, _ := decimal.NewFromString(credits)
+	result := val.Div(decimal.NewFromInt(1000))
+	return result.StringFixed(4)
+}
+
+// isUserAccountComplete checks if user account completeness (email confirmation, ...)
 func (s *Service) isUserAccountComplete(userSession *session.UserSession) bool {
 	user, err := s.oauthService.FindUserByUsername(userSession.Username)
 

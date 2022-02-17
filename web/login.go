@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/csrf"
 	"github.com/resonatecoop/id/session"
@@ -37,8 +38,8 @@ func (s *Service) loginForm(w http.ResponseWriter, r *http.Request) {
 	err = renderTemplate(w, "login.html", map[string]interface{}{
 		"appURL":         s.cnf.AppURL,
 		"flash":          flash,
-		"queryString":    getQueryString(r.URL.Query()),
 		"initialState":   template.HTML(fragment),
+		"queryString":    getQueryString(r.URL.Query()),
 		csrf.TemplateTag: csrf.TemplateField(r),
 	})
 	if err != nil {
@@ -155,10 +156,13 @@ func (s *Service) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	scopes := strings.Split(accessToken.Scope, " ")
+
 	// Log in the user and store the user session in a cookie
 	userSession := &session.UserSession{
 		ClientID:     client.Key,
 		Username:     user.Username,
+		Role:         scopes[1],
 		AccessToken:  accessToken.Token,
 		RefreshToken: refreshToken.Token,
 	}

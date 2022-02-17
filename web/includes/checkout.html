@@ -1,0 +1,68 @@
+{{ define "title"}}Checkout{{ end }}
+
+{{ define "content" }}
+
+{{ if .flash }}
+<div class="sticky z-1 mb3 flex {{ if eq .flash.Type "Error" }}bg-red white{{ else }}bb b--light-gray black{{ end }}" style="top:3rem">
+  <p class="ma0 pa3 w-100">{{ .flash.Message }}</p>
+</div>
+{{ end }}
+
+<div id="app">
+  <div class="flex pb6">
+    <div class="flex flex-column justify-center items-center w-100 mh3 mh0-ns">
+      <section id="checkout" class="flex flex-column">
+        <div class="flex flex-column flex-auto pt4 ph3 mw6 ph0-l">
+          <div class="flex">
+            <a href="../web/account" class="link db flex items-center pv2 ph3 mb2">
+              <svg viewBox="0 0 16 16" class="icon icon--sm icon fill-black fill-white--dark fill-black--light">
+                <use xlink:href="#icon-arrow" />
+              </svg>
+              <span class="pl2">
+                {{ if not .isUserAccountComplete }}
+                  <svg viewBox="0 0 16 16" class="icon icon--lg icon fill-black fill-white--dark fill-black--light">
+                    <use xlink:href="#icon-logo" />
+                  </svg>
+                  {{ end }}
+              </span>
+            </a>
+          </div>
+          {{range $product := .products }} 
+          {{ $image := (index $product.Images 0) }}
+          <article class="flex ba bw b--mid-gray pv3 ph4 mb3">
+            <div>
+              <figure class="ma0 w4 h4">
+                <img src="{{ $image }}">
+                <figcaption class="clip">Product image</figcaption>
+              </figure>
+            </div>
+            <div class="ph3">
+              <p class="ma0 f3 fw1 lh-title">{{ $product.Name }}</p>
+              <dl>
+                <dt class="clip">Description</dt>
+                <dd class="ma0">
+                  <p class="lh-copy f5">{{ $product.Description }}</p>
+                </dd>
+                {{ if ne $product.Quantity 0 }}
+                  <dt class="dib mr2">Qty</dt>
+                  <dd class="ma0 dib">
+                    <p class="lh-copy f5 b">{{ $product.Quantity }}</p>
+                  </dd>
+                {{ end }}
+              </dl>
+            </div>
+          </article>
+          {{end}}
+          <div class="flex items-center">
+            <form action="" method="POST">
+              {{ .csrfField }}
+              <button type="submit" style="outline:solid 1px var(--near-black);outline-offset:-1px" type="submit" class="bg-white b dib bn pv3 ph5 flex-shrink-0 f5 grow">Checkout</button>
+            </form>
+            <p class="lh-copy pl3 f5">Powered by <a href="https://stripe.com" target="_blank" re="noreferer noopener" class="link b">Stripe</a></p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+{{ end }}

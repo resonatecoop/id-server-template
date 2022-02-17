@@ -59,6 +59,48 @@ var Cnf = &Config{
 	UserAPIPort:         ":11000",
 	StaticURL:           "https://dash.resonate.coop",
 	AppURL:              "https://stream.resonate.coop",
+	Stripe: StripeConfig{
+		WebHookSecret: "wh_",
+		Domain:        "id.resonate.coop",
+		Secret:        "sk_test_xxx",
+		Token:         "pk_test_xxx",
+		StreamCredit5: Product{
+			ID:      "",
+			PriceID: "price_xx",
+		},
+		StreamCredit10: Product{
+			ID:      "",
+			PriceID: "price_xx",
+		},
+		StreamCredit20: Product{
+			ID:      "",
+			PriceID: "price_xx",
+		},
+		StreamCredit50: Product{
+			ID:      "",
+			PriceID: "price_xx",
+		},
+		ListenerSubscription: Product{
+			ID:       "",
+			PriceID:  "price_xx",
+			Quantity: int64(1),
+		},
+		SupporterShares: Product{
+			ID:       "",
+			PriceID:  "price_xx",
+			Quantity: int64(0),
+		},
+		ArtistMembership: Product{
+			ID:       "",
+			PriceID:  "price_xx",
+			Quantity: int64(1),
+		},
+		LabelMembership: Product{
+			ID:       "",
+			PriceID:  "price_xx",
+			Quantity: int64(1),
+		},
+	},
 }
 
 // NewConfig loads configuration from etcd and returns *Config struct

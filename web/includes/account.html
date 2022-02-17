@@ -5,7 +5,7 @@
 {{ define "content" }}
 
 {{ if .flash }}
-<div class="mb3 flex {{ if eq .flash.Type "Error" }}bg-red white{{ else }}bb b--light-gray black{{ end }}">
+<div class="sticky top-0 z-999 mb3 flex {{ if eq .flash.Type "Error" }}bg-red white{{ else }}bg-white black bb b--light-gray black{{ end }}">
   <p class="ma0 pa3 w-100">{{ .flash.Message }}</p>
   {{ if not .isUserAccountComplete }}
   <p class="ma0 pa3 tr w-100">
@@ -14,7 +14,7 @@
   {{ end}}
 </div>
 {{ else if not .isUserAccountComplete }}
-<div class="mb3 flex bb b--light-gray black">
+<div class="sticky top-0 z-999 bg-white black mb3 flex bb b--light-gray black">
   <p class="ma0 pa3 w-100">Account not complete</p>
   <p class="ma0 pa3 tr w-100">
     <a href="../web/logout" class="db ph3">Log out</a>
@@ -24,116 +24,73 @@
 
 <div id="app">
   <div class="flex pb6">
-    <div class="flex flex-column justify-center items-center w-100 mh3 mh0-ns">
-      <section id="account-settings" class="flex flex-column">
-        <div class="flex flex-column flex-auto pt4 ph3 mw6 ph0-l">
-          {{ if not .isUserAccountComplete }}
-          <svg viewBox="0 0 16 16" class="icon icon--lg icon icon--lg fill-black fill-white--dark fill-black--light">
-            <use xlink:href="#icon-logo" />
-          </svg>
-          {{ end }}
-          <h2 class="lh-title f3 fw1">{{ if not .isUserAccountComplete }}Create{{else }}Update{{ end }} your account</h2>
-          <div>
-            <div class="flex flex-column flex-auto pb6">
-              <form action="" method="POST">
-                {{ .csrfField }}
-                <input type="hidden" name="_method" value="PUT" />
-                <div class="mb3">
-                  <div class="flex flex-column flex-column-reverse">
-                    <input
-                      value="{{ if .profile.Usergroups }}{{ (index .profile.Usergroups 0).DisplayName }}{{ end }}"
-                      autocomplete="false"
-                      id="displayName"
-                      type="text"
-                      name="displayName"
-                      placeholder="Name"
-                      class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid"
-                    />
-                  </div>
-                  <p class="lh-copy f5 red"></p>
+    <div class="flex flex-column justify-center items-center w-100">
+      <div class="flex flex-column flex-auto pt4 ph3 mw6 ph0-l">
+        {{ if not .isUserAccountComplete }}
+        <svg viewBox="0 0 16 16" class="icon icon--lg icon icon--lg fill-black fill-white--dark fill-black--light">
+          <use xlink:href="#icon-logo" />
+        </svg>
+        {{ end }}
+        <h2 class="lh-title f3 fw1">{{ if not .isUserAccountComplete }}Create{{else }}Update{{ end }} your account</h2>
+        <div>
+          <div class="flex flex-column flex-auto pb6">
+            <form action="" method="POST">
+              {{ .csrfField }}
+              <input type="hidden" name="_method" value="PUT" />
+              <input type="hidden" name="membership" value="yes" />
+              <input type="hidden" name="shares" value="5" />
+              <div class="mb3">
+                <div class="flex flex-column flex-column-reverse">
+                  <input
+                    value="{{ if .profile.Usergroups }}{{ (index .profile.Usergroups 0).DisplayName }}{{ end }}"
+                    autocomplete="false"
+                    id="displayName"
+                    disabled="{{ if .profile.Usergroups }}disabled{{ else }}false{{ end }}"
+                    type="text"
+                    name="displayName"
+                    placeholder="Name"
+                    class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid"
+                  />
                 </div>
-                <div class="mb3">
-                  <div class="flex flex-column flex-column-reverse">
-                    <input
-                      value="{{ .profile.Email }}"
-                      autocomplete="false"
-                      id="email"
-                      type="text"
-                      name="email"
-                      disabled="disabled"
-                      placeholder="E-mail"
-                      required="required"
-                      class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid"
-                    />
-                  </div>
-                  <p class="lh-copy f5 red"></p>
+                <p class="lh-copy f5 red"></p>
+              </div>
+              <div class="mb3">
+                <div class="flex flex-column flex-column-reverse">
+                  <input
+                    value="{{ .profile.Email }}"
+                    autocomplete="false"
+                    id="email"
+                    type="text"
+                    name="email"
+                    disabled="disabled"
+                    placeholder="E-mail"
+                    required="required"
+                    class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid"
+                  />
                 </div>
-                <div class="mb3">
-                  <div class="flex flex-auto flex-column">
-                    <select id="country" name="country" class="bn bg-black white bg-white--dark black--dark bg-black--light white--light pa3">
-                      <option value="" selected="selected" disabled="disabled">Select a country</option>
-                      {{ range .countries }}
-                      <option label={{.Name.Common}} value="{{.Codes.Alpha2}}" {{ if eq .Codes.Alpha2 $.profile.Country }}selected="selected"{{ end }}>
-                        {{.Name.Official}}
-                      </option>
-                      {{end}}
-                    </select>
-                  </div>
+                <p class="lh-copy f5 red"></p>
+              </div>
+              <div class="mb3">
+                <div class="flex flex-auto flex-column">
+                  <select id="country" name="country" class="bn bg-black white bg-white--dark black--dark bg-black--light white--light pa3">
+                    <option value="" selected="selected" disabled="disabled">Select a country</option>
+                    {{ range .countries }}
+                    <option label={{.Name.Common}} value="{{.Codes.Alpha2}}" {{ if eq .Codes.Alpha2 $.profile.Country }}selected="selected"{{ end }}>
+                      {{.Name.Official}}
+                    </option>
+                    {{end}}
+                  </select>
                 </div>
-                <!--
-                <div class="mb3">
-                  <div class="flex flex-column flex-column-reverse">
-                    <input
-                      value="{{ .profile.FullName }}"
-                      autocomplete="false"
-                      id="fullName"
-                      type="text"
-                      name="fullName"
-                      placeholder="Full Name"
-                      class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid"
-                    />
-                  </div>
-                  <p class="lh-copy f5 red"></p>
-                </div>
-                <div class="mb3">
-                  <div class="flex flex-column flex-column-reverse">
-                    <input
-                      value="{{ .profile.FirstName }}"
-                      autocomplete="false"
-                      id="firstName"
-                      type="text"
-                      name="firstName"
-                      placeholder="First Name"
-                      class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid"
-                    />
-                  </div>
-                  <p class="lh-copy f5 red"></p>
-                </div>
-                <div class="mb3">
-                  <div class="flex flex-column flex-column-reverse">
-                    <input
-                      value="{{ .profile.LastName }}"
-                      autocomplete="false"
-                      id="lastName"
-                      type="text"
-                      name="lastName"
-                      placeholder="Last Name"
-                      class="bg-black white bg-white--dark black--dark bg-black--light white--light placeholder--dark-gray input-reset w-100 bn pa3 valid"
-                    />
-                  </div>
-                  <p class="lh-copy f5 red"></p>
-                </div>
-                -->
-                <div class="flex flex-auto">
-                  <button style="outline:solid 1px var(--near-black);outline-offset:-1px" type="submit" class="bg-white dib bn pv3 ph5 mt3 flex-shrink-0 f5 grow">
-                    {{ if .profile.Complete }}Update{{ else }}Next{{ end }}
-                  </button>
-                </div>
-              </form>
-            </div>
+              </div>
+              <div class="flex flex-auto">
+                <button style="outline:solid 1px var(--near-black);outline-offset:-1px" type="submit" class="bg-white dib bn pv3 ph5 mt3 flex-shrink-0 f5 grow">
+                  {{ if .profile.Complete }}Update{{ else }}Next{{ end }}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
-      </section>
+      </div>
     </div>
   </div>
 </div>

@@ -48,6 +48,7 @@ func RunServer(configBackend string) error {
 	// Add routes
 	services.HealthService.RegisterRoutes(router, "/v1")
 	services.OauthService.RegisterRoutes(router, "/v1/oauth")
+	services.WebHookService.RegisterRoutes(router, "/webhook")
 
 	webRoutes := mux.NewRouter()
 	services.WebService.RegisterRoutes(webRoutes, "/web")

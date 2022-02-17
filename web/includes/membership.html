@@ -1,0 +1,100 @@
+{{ define "title"}}
+Your membership
+{{ end }}
+
+{{ define "content" }}
+
+<div id="app">
+  <div class="flex pb6">
+    <div class="flex flex-column justify-center items-center w-100 mh3 mh0-ns">
+      <section id="membership-settings" class="flex flex-column">
+        <div class="flex flex-column flex-auto pt4 ph3 mw6 ph0-l">
+          {{ if not .isUserAccountComplete }}
+          <svg viewBox="0 0 16 16" class="icon icon--lg icon icon--lg fill-black fill-white--dark fill-black--light">
+            <use xlink:href="#icon-logo" />
+          </svg>
+          {{ end }}
+          <h2 class="lh-title f3 fw1">Your memberships</h2>
+          <div>
+            <div class="flex flex-column flex-auto pb6">
+              <div>
+                <div class="overflow-auto ph4 ba bw b--black-20 pv4">
+                  <table class="f6 w-100 mw8 center" cellspacing="0">
+                    <thead>
+                      <tr>
+                        <th class="fw6 bb b--black-20 tl pb3 pr3 bg-white">Name</th>
+                        <th class="fw6 bb b--black-20 tl pb3 pr3 bg-white">Date From</th>
+                        <th class="fw6 bb b--black-20 tl pb3 pr3 bg-white">Until</th>
+                        <th class="fw6 bb b--black-20 tl pb3 pr3 bg-white">Contribution</th>
+                        <th class="fw6 bb b--black-20 tl pb3 pr3 bg-white"></th>
+                      </tr>
+                    </thead>
+                    <tbody class="lh-copy">
+                      {{ $csrfField := .csrfField }}
+                      {{range $membership := .memberships }} 
+                      <tr>
+                        <td class="pv3 pr3 bb b--black-20">
+                          {{ $membership.Name }}
+                        </td>
+                        <td class="pv3 pr3 bb b--black-20">{{ $membership.DateFrom.Format "02 January 2006" }}</td>
+                        <td class="pv3 pr3 bb b--black-20">{{ $membership.DateTo.Format "02 January 2006" }}</td>
+                        <td class="pv3 pr3 bb b--black-20">
+                          {{ $membership.Contribution }}
+                        </td>
+                        <td class="pv3 pr3 bb b--black-20">
+                          {{ if eq $membership.Active true }}
+                            <form action="" method="POST">
+                              {{ $csrfField }}
+                              <input type="hidden" name="_method" value="DELETE" />
+                              <input type="hidden" name="id" value="{{ $membership.SubscriptionID }}" /> 
+                              <div class="flex flex-auto">
+                                <button style="outline:solid 1px var(--near-black);outline-offset:-1px" type="submit" class="bg-white dib bn pa1 flex-shrink-0 f6 grow">
+                                  Cancel
+                                </button>
+                              </div>
+                            </form>
+                          {{ end }}
+                        </td>
+                      </tr>
+                      {{ end }}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+          <h2 class="lh-title f3 fw1">Your shares</h2>
+          <div>
+            <div class="flex flex-column flex-auto pb6">
+              <div>
+                <div class="overflow-auto">
+                  <table class="f6 w-100 mw8 center" cellspacing="0">
+                    <thead>
+                      <tr>
+                        <th class="fw6 bb b--black-20 tl pb3 pr3 bg-white">Amount (1€ par value)</th>
+                        <th class="fw6 bb b--black-20 tl pb3 pr3 bg-white">Date Purchased</th>
+                      </tr>
+                    </thead>
+                    <tbody class="lh-copy">
+                      {{range $share := .shares }} 
+                      <tr>
+                        <td class="pv3 pr3 bb b--black-20">
+                          {{ $share.Amount }}
+                        </td>
+                        <td class="pv3 pr3 bb b--black-20">
+                          {{ $share.DatePurchased.Format "02 January 2006" }}
+                        </td>
+                      </tr>
+                      {{ end }}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+{{ end }}
