@@ -23,8 +23,8 @@ class RoleSwitcher extends Component {
 
     this.local.items = [
       { value: 'user', name: 'I\'m a listener' }, // for both artists and listeners
-      { value: 'artist', name: 'I\'m an artist' },
-      { value: 'label', name: 'I am a label' }
+      { value: 'artist', name: 'I\'m an artist' }
+      // { value: 'label', name: 'I am a label' }
     ]
 
     this.handleKeyPress = this.handleKeyPress.bind(this)
