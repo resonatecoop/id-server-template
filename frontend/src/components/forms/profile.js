@@ -523,9 +523,7 @@ class AccountForm extends Component {
               required: true,
               readonly: this.local.data.displayName ? 'readonly' : false,
               label: 'Display name',
-              help: this.local.data.displayName
-              ? helpText('Change your display name', '/profile')
-              : false,
+              help: this.local.data.displayName ? helpText('Change your display name', '/profile') : '',
               placeholder: 'Name'
             },
             {
