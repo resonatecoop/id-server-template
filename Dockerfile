@@ -41,7 +41,7 @@ WORKDIR /build
 
 RUN export GO111MODULE=on
 RUN apt-get -y update
-RUN go get github.com/resonatecoop/id@${RELEASE_TAG}
+RUN go install github.com/resonatecoop/id@${RELEASE_TAG}
 RUN cd /build && git clone --branch ${RELEASE_TAG} --single-branch --depth 1 https://github.com/resonatecoop/id
 
 RUN cd id && go build
