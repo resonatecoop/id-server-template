@@ -9,7 +9,8 @@ window.initialState = initialState // hack to bring back initial state (should b
 const { isBrowser } = require('browser-or-node')
 const setTitle = require('./lib/title')
 const { getAPIServiceClientWithAuth } = require('@resonate/api-service')({
-  apiHost: process.env.APP_HOST
+  apiHost: process.env.APP_HOST,
+  base: process.env.API_BASE || '/api/v3'
 })
 
 const SearchOuter = require('./components/header')
