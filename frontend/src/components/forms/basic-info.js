@@ -752,7 +752,7 @@ class ProfileForm extends Component {
           <h2 class="lh-title fw1 f2">Thank you for completing your profile!</h2>
 
           <p>
-            <a style="outline:solid 1px var(--near-black);outline-offset:-1px" class="link bg-white near-black b pv3 ph5 flex-shrink-0 f5" href="${process.env.APP_HOST}/api/v2/user/connect/resonate">Listen</a>
+            <a style="outline:solid 1px var(--near-black);outline-offset:-1px" class="link bg-white near-black b pv3 ph5 flex-shrink-0 f5" href="${process.env.APP_HOST}/api/v3/user/connect/resonate">Listen</a>
           </p>
         </div>
       </div>
