@@ -582,8 +582,8 @@ class AccountForm extends Component {
                     <dt class="f5">${this.local.data.member ? 'You are a member' : 'Become a member?'}</dt>
                     <dd class="f6 ma0">
                       ${this.local.data.member
-                        ? 'Your membership is currently valid until: xxx'
-                        : '5 Euros a year (listener) / Membership is free for artists (and label owners)'
+                        ? 'You are a member' // TODO show membership end date
+                        : '10 Euros a year (listener) / Membership is free for artists (and label owners)'
                       }
                     </dd>
                   </dl>
