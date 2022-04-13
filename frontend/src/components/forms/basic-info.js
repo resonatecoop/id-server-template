@@ -14,7 +14,6 @@ const textarea = require('@resonate/textarea-element')
 const messages = require('./messages')
 
 const Uploader = require('../image-upload')
-const AutocompleteTypeahead = require('../autocomplete-typeahead')
 
 const imagePlaceholder = require('../../lib/image-placeholder')
 const inputField = require('../../elements/input-field')
@@ -47,8 +46,7 @@ class ProfileForm extends Component {
           error: { start: 'loading', stop: 'idle' }
         }),
         machine: nanostate('basicInfo', {
-          basicInfo: { next: 'customInfo', end: 'recap' },
-          customInfo: { next: 'recap', prev: 'basicInfo' },
+          basicInfo: { next: 'recap', end: 'recap' }, // allow adding more later
           recap: { prev: 'basicInfo' }
         })
       })
@@ -164,7 +162,6 @@ class ProfileForm extends Component {
     this.local.form = this.validator.state
 
     this.renderBasicInfoForm = this.renderBasicInfoForm.bind(this)
-    this.renderCustomInfoForm = this.renderCustomInfoForm.bind(this)
     this.renderRecap = this.renderRecap.bind(this)
 
     // cached swagger client
@@ -215,7 +212,6 @@ class ProfileForm extends Component {
 
     const machine = {
       basicInfo: this.renderBasicInfoForm, // basic infos for everyone
-      customInfo: this.renderCustomInfoForm, // label, artist infos
       recap: this.renderRecap // recap
     }[this.local.machine.state.machine]
 
@@ -269,7 +265,6 @@ class ProfileForm extends Component {
   rerender () {
     const machine = {
       basicInfo: this.renderBasicInfoForm, // basic infos for everyone
-      customInfo: this.renderCustomInfoForm, // label, artist infos
       recap: this.renderRecap // recap
     }[this.local.machine.state.machine]
 
@@ -696,48 +691,6 @@ class ProfileForm extends Component {
     const title = html`${!this.local.usergroup.id ? 'Create' : 'Update'} ${!this.local.usergroup.id
       ? `${article || 'your'} ${this.local.role ? `${role} ` : ''}`
         : html`<span class="i">${this.local.usergroup.displayName}</span>`} profile`
-
-    return this.renderForm(title, elements)
-  }
-
-  /*
-   * renderCustomInfoForm
-   */
-  renderCustomInfoForm () {
-    const elements = {
-      /**
-       * Add artists to profile
-       * @param {Object} validator Form data validator
-       * @param {Object} form Form data object
-       */
-      artists: (validator, form) => {
-        const component = this.state.cache(AutocompleteTypeahead, 'artists-list')
-
-        const el = component.render({
-          form: this.local.form,
-          validator: this.validator,
-          title: 'Artists',
-          eachItem: function (item, index) {
-            return html`
-              <div>
-                ${item}
-              </div>
-            `
-          },
-          placeholder: 'Members name',
-          items: ['Item 1', 'Item 2']
-        })
-
-        const labelOpts = {
-          labelText: 'Add artists to be featured in your label profile and on the player.',
-          inputName: 'artists'
-        }
-
-        return inputField(el, form)(labelOpts)
-      }
-    }
-
-    const title = `Your label: ${this.local.data.displayName}`
 
     return this.renderForm(title, elements)
   }
