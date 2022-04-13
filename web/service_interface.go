@@ -36,7 +36,6 @@ type ServiceInterface interface {
 	accountSettings(w http.ResponseWriter, r *http.Request)
 	membershipForm(w http.ResponseWriter, r *http.Request)
 	membership(w http.ResponseWriter, r *http.Request)
-	cancelSubscription(w http.ResponseWriter, r *http.Request)
 	checkoutForm(w http.ResponseWriter, r *http.Request)
 	checkoutCancel(w http.ResponseWriter, r *http.Request)
 	checkoutSuccess(w http.ResponseWriter, r *http.Request)

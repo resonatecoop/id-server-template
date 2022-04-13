@@ -282,8 +282,30 @@ func (s *Service) membershipForm(w http.ResponseWriter, r *http.Request) {
 
 // membership
 func (s *Service) membership(w http.ResponseWriter, r *http.Request) {
-}
+	sessionService, _, _, _, _, _, err := s.profileCommon(r)
 
-// cancelSubscription
-func (s *Service) cancelSubscription(w http.ResponseWriter, r *http.Request) {
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	_, err = sub.Cancel(r.Form.Get("id"), nil)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = sessionService.SetFlashMessage(&session.Flash{
+		Type:    "Info",
+		Message: "Membership was cancelled.",
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	query := r.URL.Query()
+	redirectWithQueryString("/web/membership", query, w, r)
+	return
 }
