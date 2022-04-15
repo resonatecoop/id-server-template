@@ -28,8 +28,8 @@ require (
 	github.com/pariz/gountries v0.0.0-20200430155801-1c6a393df9c7
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/phyber/negroni-gzip v1.0.0
-	github.com/resonatecoop/user-api v1.0.0-6
-	github.com/resonatecoop/user-api-client v0.0.0-20220217140316-855cba7c723d
+	github.com/resonatecoop/user-api v1.0.0-10
+	github.com/resonatecoop/user-api-client v0.0.0-20220414135746-4287bec2bff3
 	github.com/rs/xid v1.3.0
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/shopspring/decimal v1.3.1
