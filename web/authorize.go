@@ -116,6 +116,12 @@ func (s *Service) authorize(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check redirect uri
+	if redirectURI.String() != client.RedirectURI.String {
+		errorRedirect(w, r, redirectURI, "invalid_redirect_uri", state, responseType)
+		return
+	}
+
 	query := redirectURI.Query()
 
 	// When response_type == "code", we will grant an authorization code
