@@ -1,10 +1,7 @@
-/* global fetch */
-
 const html = require('choo/html')
 const Component = require('choo/component')
 const nanostate = require('nanostate')
-const nanologger = require('nanologger')
-const logger = nanologger('authorize')
+const icon = require('@resonate/icon-element')
 
 class Authorize extends Component {
   constructor (id, state, emit) {
@@ -74,73 +71,50 @@ class Authorize extends Component {
     }
 
     const attrs = {
-      novalidate: 'novalidate',
       class: 'flex flex-column flex-auto ma0 pa0',
       action: '',
-      method: 'POST',
-      onsubmit: async (e) => {
-        e.preventDefault()
-
-        if (this.local.machine.state === 'loading') {
-          return
-        }
-
-        const loaderTimeout = setTimeout(() => {
-          this.local.machine.emit('loader:toggle')
-        }, 1000)
-
-        try {
-          this.local.machine.emit('request:start')
-
-          let response = await fetch('')
-
-          const csrfToken = response.headers.get('X-CSRF-Token')
-
-          const { name = 'continue', value = 'Continue' } = e.submitter // may need polyfill for edge ?
-
-          response = await fetch('', {
-            method: 'POST',
-            credentials: 'include',
-            headers: {
-              Accept: 'application/json',
-              'X-CSRF-Token': csrfToken,
-              Pragma: 'no-cache',
-              'Cache-Control': 'no-cache'
-            },
-            body: new URLSearchParams({
-              [name]: value
-            })
-          })
-
-          this.local.machine.state.loader === 'on' && this.local.machine.emit('loader:toggle')
-
-          const contentType = response.headers.get('content-type')
-
-          if (response.status >= 400 && contentType && contentType.indexOf('application/json') !== -1) {
-            const { error } = await response.json()
-            this.local.error.message = error
-            return this.local.machine.emit('request:error')
-          }
-
-          this.local.machine.emit('request:resolve')
-
-          if (response.redirected) {
-            window.location.href = response.url
-          }
-        } catch (err) {
-          logger.error(err.message)
-          this.local.error.message = err.message
-          this.local.machine.emit('request:reject')
-          this.emit('error', err)
-        } finally {
-          clearTimeout(loaderTimeout)
-        }
-      }
+      method: 'POST'
     }
 
     return html`
       <div class="flex flex-column flex-auto">
         <form ${attrs}>
+          <input type="hidden" name="gorilla.csrf.Token" value=${this.state.csrfToken}>
+
+          ${this.state.query.response_type === 'token'
+          ? html`
+            <p>How long do you want to authorize <b>${this.state.applicationName}</b> for?</p>
+            <div class="flex w-100">
+              <div class="flex items-center flex-auto">
+                <input tabindex="-1" type="radio" name="lifetime" id="hour" value="3600">
+                <label tabindex="0" class="flex flex-auto items-center justify-center w-100" for="hour">
+                  <div class="pv3 flex justify-center w-100 flex-auto">
+                    ${icon('circle', { class: 'fill-white' })}
+                  </div>
+                  <div class="pv3 flex w-100 flex-auto">1 hour</div>
+                </label>
+              </div>
+              <div class="flex items-center flex-auto">
+                <input tabindex="-1" type="radio" name="lifetime" id="day" value="86400">
+                <label tabindex="0" class="flex flex-auto items-center justify-center w-100" for="day">
+                  <div class="pv3 flex justify-center w-100 flex-auto">
+                    ${icon('circle', { class: 'fill-white' })}
+                  </div>
+                  <div class="pv3 flex w-100 flex-auto">1 day</div>
+                </label>
+              </div>
+              <div class="flex items-center flex-auto">
+                <input tabindex="-1" type="radio" name="lifetime" id="week" value="604800" checked>
+                <label tabindex="0" class="flex flex-auto items-center justify-center w-100" for="week">
+                  <div class="pv3 flex justify-center w-100 flex-auto">
+                    ${icon('circle', { class: 'fill-white' })}
+                  </div>
+                  <div class="pv3 flex w-100 flex-auto">1 week</div>
+                </label>
+              </div>
+            </div>`
+          : ''}
+
           <p class="lh-copy">Logging in as <b>${this.state.profile.displayName ? this.state.profile.displayName : this.state.profile.email}</b></p>
 
           <div class="flex">
