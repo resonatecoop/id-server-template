@@ -46,7 +46,7 @@ func (s *Service) authorizeForm(w http.ResponseWriter, r *http.Request) {
 		nil,
 		nil,
 		nil,
-		"",
+		csrf.Token(r),
 		nil,
 	))
 
