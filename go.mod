@@ -5,7 +5,6 @@ go 1.16
 require (
 	github.com/RichardKnop/jsonhal v0.0.0-20181101035658-9ef775cfa6bf
 	github.com/RichardKnop/logging v0.0.0-20190827224416-1a693bdd4fae
-	github.com/apokalyptik/phpass v0.0.0-20140806224508-cd4a744fe20c
 	github.com/didip/tollbooth v4.0.2+incompatible
 	github.com/didip/tollbooth_negroni v0.0.0-20170928042109-a4e3efc33255
 	github.com/dlclark/regexp2 v1.4.0 // indirect

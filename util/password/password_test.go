@@ -19,11 +19,6 @@ func TestVerifyPassword(t *testing.T) {
 		"test_password",
 	))
 
-	assert.Nil(t, password.VerifyPassword(
-		"$P$5ZDzPE45C7nt/53A.Slxyhx5GxHxs8/",
-		"phpassword",
-	))
-
 	// Test invalid password
 	assert.NotNil(t, password.VerifyPassword("bogus", "password"))
 }
