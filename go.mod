@@ -20,7 +20,6 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.5.0 // indirect
 	github.com/hashicorp/consul/api v1.8.1
 	github.com/jackc/pgx/v4 v4.12.0
-	github.com/json-iterator/go v1.1.11 // indirect
 	github.com/lib/pq v1.10.2
 	github.com/mailgun/mailgun-go/v4 v4.5.1
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
@@ -45,9 +44,8 @@ require (
 	github.com/urfave/cli v1.22.5
 	github.com/urfave/negroni v1.0.0
 	go.etcd.io/etcd v0.0.0-20191023171146-3cf2f69b5738
-	go.etcd.io/etcd/api/v3 v3.5.0
-	go.etcd.io/etcd/client/pkg/v3 v3.5.0 // indirect
-	go.etcd.io/etcd/client/v3 v3.5.0-rc.0
+	go.etcd.io/etcd/api/v3 v3.5.4
+	go.etcd.io/etcd/client/v3 v3.5.4
 	go.uber.org/atomic v1.8.0 // indirect
 	go.uber.org/multierr v1.7.0 // indirect
 	go.uber.org/zap v1.18.1 // indirect
