@@ -22,10 +22,6 @@ class UserMenu extends Nanocomponent {
     this.local = state.components[id] = {}
 
     this.local.machine = nanostate.parallel({
-      creditsDialog: nanostate('close', {
-        open: { close: 'close' },
-        close: { open: 'open' }
-      }),
       logoutDialog: nanostate('close', {
         open: { close: 'close' },
         close: { open: 'open' }
@@ -35,10 +31,6 @@ class UserMenu extends Nanocomponent {
     this.local.usergroup = {
       avatar: imagePlaceholder(400, 400)
     }
-
-    this.local.machine.on('creditsDialog:open', async () => {
-      // do something, redirects or open dialog
-    })
 
     this.local.machine.on('logoutDialog:open', () => {
       const confirmButton = button({
@@ -99,27 +91,12 @@ class UserMenu extends Nanocomponent {
             <span class="b">${this.local.displayName}</span>
           </div>
         </li>
-        <li class="bb bw b--mid-gray b--mid-gray--light b--near-black--dark mv3" role="separator"></li>
-        <li class="flex items-center ph3" role="menuitem">
-          <div class="flex flex-column">
-            <label for="credits">Credits</label>
-            <input disabled tabindex="-1" name="credits" type="number" value=${this.state.profile.credits} readonly class="bn br0 bg-transparent b ${this.state.profile.credits < 0.128 ? 'red' : ''}">
-          </Div>
-          <div class="flex flex-auto justify-end">
-          </div>
-        </li>
         <li class="bb bw b--mid-gray b--mid-gray--light b--near-black--dark mt3 mb2" role="separator"></li>
         <li class="mb1" role="menuitem">
           <a class="link db pv2 pl3" href="/account">Update your account</a>
         </li>
         <li class="mb1" role="menuitem">
           <a class="link db pv2 pl3" href="/account-settings">Account settings</a>
-        </li>
-        <li class="mb1" role="menuitem">
-          <a class="link db pv2 pl3" href="${process.env.APP_HOST}/faq">FAQ</a>
-        </li>
-        <li class="mb1" role="menuitem">
-          <a class="link db pv2 pl3" target="blank" href="https://resonate.is/support">Support</a>
         </li>
         <li class="bb bw b--mid-gray b--mid-gray--light b--near-black--dark mb3" role="separator"></li>
           <li class="pr3 pb3" role="menuitem">

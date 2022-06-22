@@ -18,7 +18,7 @@ import (
 var ErrIncorrectResponseType = errors.New("Response type not one of token or code")
 
 func (s *Service) authorizeForm(w http.ResponseWriter, r *http.Request) {
-	sessionService, client, user, userSession, responseType, credits, _, err := s.authorizeCommon(r)
+	sessionService, client, user, userSession, responseType, _, err := s.authorizeCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -41,11 +41,7 @@ func (s *Service) authorizeForm(w http.ResponseWriter, r *http.Request) {
 		user,
 		userSession,
 		isUserAccountComplete,
-		credits,
 		usergroups.Usergroup,
-		nil,
-		nil,
-		nil,
 		csrf.Token(r),
 		nil,
 	))
@@ -93,7 +89,7 @@ func (s *Service) authorizeForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) authorize(w http.ResponseWriter, r *http.Request) {
-	_, client, user, _, responseType, _, redirectURI, err := s.authorizeCommon(r)
+	_, client, user, _, responseType, redirectURI, err := s.authorizeCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -191,26 +187,25 @@ func (s *Service) authorizeCommon(r *http.Request) (
 	*model.User,
 	*session.UserSession,
 	string,
-	string,
 	*url.URL,
 	error,
 ) {
 	// Get the session service from the request context
 	sessionService, err := getSessionService(r)
 	if err != nil {
-		return nil, nil, nil, nil, "", "", nil, err
+		return nil, nil, nil, nil, "", nil, err
 	}
 
 	// Get the client from the request context
 	client, err := getClient(r)
 	if err != nil {
-		return nil, nil, nil, nil, "", "", nil, err
+		return nil, nil, nil, nil, "", nil, err
 	}
 
 	// Get the user session
 	userSession, err := sessionService.GetUserSession()
 	if err != nil {
-		return nil, nil, nil, nil, "", "", nil, err
+		return nil, nil, nil, nil, "", nil, err
 	}
 
 	// Fetch the user
@@ -218,21 +213,8 @@ func (s *Service) authorizeCommon(r *http.Request) (
 		userSession.Username,
 	)
 	if err != nil {
-		return nil, nil, nil, nil, "", "", nil, err
+		return nil, nil, nil, nil, "", nil, err
 	}
-
-	// Fetch the user
-	// user, err := s.oauthService.FindUserByEmail(
-	// 	userSession.Username,
-	// )
-	// if err != nil {
-	// 	return nil, nil, nil, "", "", nil, err
-	// }
-
-	// nickname, err := s.oauthService.FindNicknameByWpUserID(wpuser.ID)
-	// if err != nil {
-	// 	return nil, nil, nil, "", "", nil, err
-	// }
 
 	// Set default response type
 	responseType := "code"
@@ -243,7 +225,7 @@ func (s *Service) authorizeCommon(r *http.Request) (
 	}
 
 	if responseType != "code" && responseType != "token" {
-		return nil, nil, nil, nil, "", "", nil, ErrIncorrectResponseType
+		return nil, nil, nil, nil, "", nil, ErrIncorrectResponseType
 	}
 
 	// Fallback to the client redirect URI if not in query string
@@ -255,10 +237,8 @@ func (s *Service) authorizeCommon(r *http.Request) (
 	// // Parse the redirect URL
 	parsedRedirectURI, err := url.ParseRequestURI(redirectURI)
 	if err != nil {
-		return nil, nil, nil, nil, "", "", nil, err
+		return nil, nil, nil, nil, "", nil, err
 	}
 
-	result, err := s.getUserCredits(user, userSession.AccessToken)
-
-	return sessionService, client, user, userSession, responseType, formatCredit(result.Total), parsedRedirectURI, nil
+	return sessionService, client, user, userSession, responseType, parsedRedirectURI, nil
 }

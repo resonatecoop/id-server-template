@@ -14,7 +14,6 @@ type Profile struct {
 	LegacyID    int32  `json:"legacyID"`
 	DisplayName string `json:"displayName"`
 	Email       string `json:"email"`
-	Credits     string `json:"credits"`
 	// FullName               string                                 `json:"fullName"`
 	// FirstName              string                                 `json:"firstName"`
 	// LastName               string                                 `json:"lastName"`
@@ -31,7 +30,6 @@ func NewProfile(
 	user *model.User,
 	usergroups []*models.UserUserGroupPrivateResponse,
 	isUserAccountComplete bool,
-	credits string,
 	role string,
 ) *Profile {
 	displayName := ""
@@ -44,7 +42,6 @@ func NewProfile(
 		ID:                     user.ID.String(),
 		Complete:               isUserAccountComplete,
 		Country:                user.Country,
-		Credits:                credits,
 		DisplayName:            displayName,
 		Role:                   role,
 		Email:                  user.Username,
@@ -63,9 +60,6 @@ type InitialState struct {
 	Token           string                `json:"token"`
 	Clients         []config.ClientConfig `json:"clients"`
 	Profile         *Profile              `json:"profile"`
-	Memberships     []Membership          `json:"memberships"`
-	Shares          []Share               `json:"shares"`
-	Products        []Product             `json:"products"`
 	CSRFToken       string                `json:"csrfToken"`
 	CountryList     []Country             `json:"countries"`
 }
@@ -76,11 +70,7 @@ func NewInitialState(
 	user *model.User,
 	userSession *session.UserSession,
 	isUserAccountComplete bool,
-	credits string,
 	usergroups []*models.UserUserGroupPrivateResponse,
-	memberships []Membership,
-	shares []Share,
-	products []Product,
 	csrfToken string,
 	countryList []Country,
 ) *InitialState {
@@ -94,7 +84,6 @@ func NewInitialState(
 		user,
 		usergroups,
 		isUserAccountComplete,
-		credits,
 		userSession.Role,
 	)
 
@@ -108,9 +97,6 @@ func NewInitialState(
 		Clients:         cnf.Clients,
 		Profile:         profile,
 		Token:           accessToken,
-		Memberships:     memberships,
-		Shares:          shares,
-		Products:        products,
 		CSRFToken:       csrfToken,
 		CountryList:     countryList,
 	}

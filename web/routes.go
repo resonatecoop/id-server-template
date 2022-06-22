@@ -255,31 +255,6 @@ func (s *Service) GetRoutes() []routes.Route {
 			},
 		},
 		{
-			Name:        "membership_form",
-			Method:      "GET",
-			Pattern:     "/membership",
-			HandlerFunc: s.membershipForm,
-			Middlewares: []negroni.Handler{
-				new(parseFormMiddleware),
-				newLoggedInMiddleware(s),
-				newClientMiddleware(s),
-			},
-		},
-		{
-			Name:        "cancel_subscription",
-			Method:      "POST",
-			Pattern:     "/membership",
-			HandlerFunc: s.membership,
-			Middlewares: []negroni.Handler{
-				tollbooth_negroni.LimitHandler(
-					tollbooth.NewLimiter(1, nil),
-				),
-				new(parseFormMiddleware),
-				newLoggedInMiddleware(s),
-				newClientMiddleware(s),
-			},
-		},
-		{
 			Name:        "account_update",
 			Method:      "PUT",
 			Pattern:     "/account",
@@ -298,103 +273,6 @@ func (s *Service) GetRoutes() []routes.Route {
 			Method:      "DELETE",
 			Pattern:     "/account",
 			HandlerFunc: s.account,
-			Middlewares: []negroni.Handler{
-				tollbooth_negroni.LimitHandler(
-					tollbooth.NewLimiter(1, nil),
-				),
-				new(parseFormMiddleware),
-				newLoggedInMiddleware(s),
-				newClientMiddleware(s),
-			},
-		},
-		{
-			Name:        "checkout_form",
-			Method:      "GET",
-			Pattern:     "/checkout",
-			HandlerFunc: s.checkoutForm,
-			Middlewares: []negroni.Handler{
-				new(parseFormMiddleware),
-				newLoggedInMiddleware(s),
-				newClientMiddleware(s),
-			},
-		},
-		{
-			Name:        "checkout_success",
-			Method:      "GET",
-			Pattern:     "/checkout/success",
-			HandlerFunc: s.checkoutSuccess,
-			Middlewares: []negroni.Handler{
-				new(parseFormMiddleware),
-				newLoggedInMiddleware(s),
-				newClientMiddleware(s),
-			},
-		},
-		{
-			Name:        "checkout_cancel_form",
-			Method:      "GET",
-			Pattern:     "/checkout/cancel",
-			HandlerFunc: s.checkoutCancel,
-			Middlewares: []negroni.Handler{
-				new(parseFormMiddleware),
-				newLoggedInMiddleware(s),
-				newClientMiddleware(s),
-			},
-		},
-		{
-			Name:        "checkout",
-			Method:      "POST",
-			Pattern:     "/checkout",
-			HandlerFunc: s.checkout,
-			Middlewares: []negroni.Handler{
-				tollbooth_negroni.LimitHandler(
-					tollbooth.NewLimiter(1, nil),
-				),
-				new(parseFormMiddleware),
-				newLoggedInMiddleware(s),
-				newClientMiddleware(s),
-			},
-		},
-		{
-			Name:        "profile_form",
-			Method:      "GET",
-			Pattern:     "/profile",
-			HandlerFunc: s.profileForm,
-			Middlewares: []negroni.Handler{
-				new(parseFormMiddleware),
-				newLoggedInMiddleware(s),
-				newClientMiddleware(s),
-			},
-		},
-		{
-			Name:        "client_form",
-			Method:      "GET",
-			Pattern:     "/apps",
-			HandlerFunc: s.clientForm,
-			Middlewares: []negroni.Handler{
-				new(parseFormMiddleware),
-				newLoggedInMiddleware(s),
-				newClientMiddleware(s),
-			},
-		},
-		{
-			Name:        "client",
-			Method:      "POST",
-			Pattern:     "/apps",
-			HandlerFunc: s.client,
-			Middlewares: []negroni.Handler{
-				tollbooth_negroni.LimitHandler(
-					tollbooth.NewLimiter(1, nil),
-				),
-				new(parseFormMiddleware),
-				newLoggedInMiddleware(s),
-				newClientMiddleware(s),
-			},
-		},
-		{
-			Name:        "client_delete",
-			Method:      "DELETE",
-			Pattern:     "/apps",
-			HandlerFunc: s.clientDelete,
 			Middlewares: []negroni.Handler{
 				tollbooth_negroni.LimitHandler(
 					tollbooth.NewLimiter(1, nil),

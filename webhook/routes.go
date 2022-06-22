@@ -13,12 +13,5 @@ func (s *Service) RegisterRoutes(router *mux.Router, prefix string) {
 
 // GetRoutes returns []routes.Route slice for the health service
 func (s *Service) GetRoutes() []routes.Route {
-	return []routes.Route{
-		{
-			Name:        "stripe_payment",
-			Method:      "POST",
-			Pattern:     "/payment",
-			HandlerFunc: s.stripePayment,
-		},
-	}
+	return []routes.Route{}
 }
