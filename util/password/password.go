@@ -33,8 +33,8 @@ var (
 // Fallback to phpass if bcrypt fails
 func VerifyPassword(passwordHash, password string) error {
 	if bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(password)) != nil {
-		fmt.Fprintln(os.Stderr, "Not Bcrypt password")
-		return nil
+		fmt.Fprintln(os.Stderr, "No password match")
+		return bcrypt.ErrMismatchedHashAndPassword
 	}
 	fmt.Fprintln(os.Stderr, "Bcrypt Password matched")
 	return nil
