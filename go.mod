@@ -29,13 +29,10 @@ require (
 	github.com/phyber/negroni-gzip v1.0.0
 	github.com/resonatecoop/user-api v1.0.0-10
 	github.com/resonatecoop/user-api-client v0.0.0-20220414135746-4287bec2bff3
-	github.com/rs/xid v1.3.0
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
-	github.com/shopspring/decimal v1.3.1
+	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/stretchr/testify v1.7.0
-	github.com/stripe/stripe-go/v72 v72.77.0
 	github.com/test-go/testify v1.1.4 // indirect
-	github.com/thanhpk/randstr v1.0.4
 	github.com/trustelem/zxcvbn v1.0.1
 	github.com/unrolled/secure v1.0.9
 	github.com/uptrace/bun v1.0.22

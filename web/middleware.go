@@ -72,7 +72,7 @@ func (m *guestMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next
 			Type:    "Info",
 			Message: "You are already logged in",
 		})
-		redirectWithQueryString("/web/profile", query, w, r)
+		redirectWithQueryString("/web/account", query, w, r)
 		return
 	}
 
@@ -116,13 +116,6 @@ func (m *loggedInMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, n
 	if err := m.authenticate(userSession); err != nil {
 		// Delete the user session
 		err = sessionService.ClearUserSession()
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		// Delete the checkout session
-		err = sessionService.ClearCheckoutSession()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

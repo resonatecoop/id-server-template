@@ -118,12 +118,8 @@ func loadTemplates() {
 		},
 		"web/layouts/inside.html": {
 			"./web/includes/authorize.html",
-			"./web/includes/client.html",
 			"./web/includes/account.html",
 			"./web/includes/account_settings.html",
-			"./web/includes/membership.html",
-			"./web/includes/profile.html",
-			"./web/includes/checkout.html",
 		},
 	}
 

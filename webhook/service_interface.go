@@ -1,8 +1,6 @@
 package webhook
 
 import (
-	"net/http"
-
 	"github.com/gorilla/mux"
 	"github.com/resonatecoop/id/config"
 	"github.com/resonatecoop/id/oauth"
@@ -16,6 +14,4 @@ type ServiceInterface interface {
 	GetRoutes() []routes.Route
 	RegisterRoutes(router *mux.Router, prefix string)
 	Close()
-
-	stripePayment(w http.ResponseWriter, r *http.Request)
 }

@@ -13,7 +13,7 @@ import (
 )
 
 func (s *Service) accountSettingsForm(w http.ResponseWriter, r *http.Request) {
-	sessionService, client, user, isUserAccountComplete, credits, userSession, err := s.profileCommon(r)
+	sessionService, client, user, isUserAccountComplete, userSession, err := s.profileCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -34,11 +34,7 @@ func (s *Service) accountSettingsForm(w http.ResponseWriter, r *http.Request) {
 		user,
 		userSession,
 		isUserAccountComplete,
-		credits,
 		usergroups.Usergroup,
-		nil,
-		nil,
-		nil,
 		"",
 		nil,
 	))
@@ -54,7 +50,7 @@ func (s *Service) accountSettingsForm(w http.ResponseWriter, r *http.Request) {
 		string(initialState),
 	)
 
-	profile := NewProfile(user, usergroups.Usergroup, isUserAccountComplete, credits, userSession.Role)
+	profile := NewProfile(user, usergroups.Usergroup, isUserAccountComplete, userSession.Role)
 
 	err = renderTemplate(w, "account_settings.html", map[string]interface{}{
 		"appURL":                s.cnf.AppURL,
@@ -75,7 +71,7 @@ func (s *Service) accountSettingsForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) accountSettings(w http.ResponseWriter, r *http.Request) {
-	sessionService, _, user, isUserAccountComplete, _, userSession, err := s.profileCommon(r)
+	sessionService, _, user, isUserAccountComplete, userSession, err := s.profileCommon(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
