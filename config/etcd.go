@@ -6,9 +6,6 @@ import (
 	"os"
 	"strings"
 
-	//"github.com/etcd-io/etcdetcd/etcdserver/api/v3rpc/rpctypes"
-	//"github.com/etcd-io/etcdetcd/pkg/transport"
-
 	"github.com/resonatecoop/id/log"
 	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
 	clientv3 "go.etcd.io/etcd/client/v3"
