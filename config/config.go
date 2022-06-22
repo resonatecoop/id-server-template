@@ -48,29 +48,6 @@ type SessionConfig struct {
 	SameSite bool
 }
 
-type Product struct {
-	ID          string
-	PriceID     string
-	Name        string
-	Description string
-	Quantity    int64
-}
-
-type StripeConfig struct {
-	Domain               string
-	Token                string
-	Secret               string
-	WebHookSecret        string
-	ListenerSubscription Product
-	SupporterShares      Product
-	ArtistMembership     Product
-	LabelMembership      Product
-	StreamCredit50       Product
-	StreamCredit20       Product
-	StreamCredit10       Product
-	StreamCredit5        Product
-}
-
 // Config stores all configuration options
 type Config struct {
 	Hostname            string
@@ -89,5 +66,4 @@ type Config struct {
 	UserAPIPort         string
 	StaticURL           string
 	AppURL              string
-	Stripe              StripeConfig
 }
