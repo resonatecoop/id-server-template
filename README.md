@@ -1,3 +1,7 @@
+> 🛠 **Status: Maintenance Mode | Stable**
+>
+> This project is currently in [maintenance mode](https://en.wikipedia.org/wiki/Maintenance_mode) - users should feel free to continue to use this app and expect bug fixes, but not expect many additional features.
+
 # Resonate ID Template
 
 Resonate's ID server is a Go OAuth2 Server based on [RichardKnop/go-oauth2-server](https://github.com/RichardKnop/go-oauth2-server).
